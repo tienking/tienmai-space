@@ -44,81 +44,24 @@ function applyTheme(theme) {
 
 function applyFonts(fonts) {
   const root = document.documentElement;
+  // Load Google Fonts dynamically
   const displayFont = fonts.display || "Syne";
   const monoFont = fonts.mono || "DM Mono";
+  const googleFontsUrl = `https://fonts.googleapis.com/css2?family=${displayFont.replace(/ /g, "+")}:wght@400;500;700&family=${monoFont.replace(/ /g, "+")}:wght@400;500&display=swap`;
+
+  // Remove old font link if exists
   const oldLink = document.getElementById("google-fonts");
   if (oldLink) oldLink.remove();
+
   const link = document.createElement("link");
   link.id = "google-fonts";
   link.rel = "stylesheet";
-  link.href = `https://fonts.googleapis.com/css2?family=${displayFont.replace(/ /g, "+")}:wght@400;500;700&family=${monoFont.replace(/ /g, "+")}:wght@400;500&display=swap`;
+  link.href = googleFontsUrl;
   document.head.appendChild(link);
+
+  // Apply CSS variables
   root.style.setProperty("--font-display", `'${displayFont}', sans-serif`);
   root.style.setProperty("--font-mono", `'${monoFont}', monospace`);
-}
-
-// ─── Resume Popup ──────────────────────────────────────────────────────────────
-
-function ResumePopup({ onClose }) {
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
-
-  useEffect(() => {
-    const handleKey = e => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose]);
-
-  return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeUp 0.2s ease" }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: "min(860px, 92vw)", height: "88vh", background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 18, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 24px 80px rgba(0,0,0,0.8)" }}>
-        {/* Header */}
-        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-card)", flexShrink: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 500 }}>Resume</span>
-            <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>PDF</span>
-          </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
-        </div>
-
-        {/* PDF Viewer */}
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <iframe
-            src={`https://docs.google.com/viewer?url=https://tienmai.space/api/resume/file&embedded=true`}
-            style={{ width: "100%", height: "100%", border: "none" }}
-            title="Resume"
-          />
-        </div>
-
-        {/* Footer with Download button */}
-        <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "flex-end", background: "var(--bg-card)", flexShrink: 0 }}>
-          <button
-            onClick={async () => {
-              const res = await fetch("/api/resume/file");
-              const blob = await res.blob();
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = "Tien_Mai_Resume.pdf";
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 18px", borderRadius: 9,
-              background: "var(--accent)", color: "#0a0a0b",
-              border: "none", fontSize: 13, fontWeight: 500,
-              cursor: "pointer", fontFamily: "var(--font-display)",
-            }}
-          >
-            ↓ Download
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
@@ -174,26 +117,58 @@ function ChatMessage({ msg }) {
   );
 }
 
-function ChatPopup({ onClose, messages, setMessages, sessionId }) {
+function ChatPopup({ onClose }) {
+  const [sessionId] = useState(generateSessionId);
+  const [messages, setMessages] = useState([{ role: "assistant", content: "Hey! Ask me anything about Tien 👋" }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
   const bottomRef = useRef(null);
+  const fileRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if ((!text && !selectedFile) || loading) return;
+
     setInput("");
-    setMessages(prev => [...prev, { role: "user", content: text }]);
     setLoading(true);
-    try {
-      const reply = await sendMessage(text, sessionId);
-      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
+
+    if (selectedFile) {
+      // Send with file
+      const file = selectedFile;
+      setSelectedFile(null);
+      const displayMsg = text || "Please analyze this file and evaluate how well it matches my profile.";
+      setMessages(prev => [...prev, { role: "user", content: `📎 ${file.name}\n${displayMsg}` }]);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("message", displayMsg);
+        formData.append("session_id", sessionId);
+        const res = await fetch("/api/chat/file", { method: "POST", body: formData });
+        const data = await res.json();
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      } catch {
+        setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong processing the file." }]);
+      }
+    } else {
+      // Send text only
+      setMessages(prev => [...prev, { role: "user", content: text }]);
+      try {
+        const reply = await sendMessage(text, sessionId);
+        setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+      } catch {
+        setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
+      }
     }
     setLoading(false);
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) setSelectedFile(file);
+    e.target.value = "";
   };
 
   return (
@@ -205,6 +180,7 @@ function ChatPopup({ onClose, messages, setMessages, sessionId }) {
         </div>
         <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
       </div>
+
       <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
         {messages.map((msg, i) => <ChatMessage key={i} msg={msg} />)}
         {loading && (
@@ -215,15 +191,31 @@ function ChatPopup({ onClose, messages, setMessages, sessionId }) {
         )}
         <div ref={bottomRef} />
       </div>
-      <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border)", display: "flex", gap: 7 }}>
+
+      {/* Selected file preview */}
+      {selectedFile && (
+        <div style={{ padding: "6px 12px", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8, background: "var(--accent-dim)" }}>
+          <span style={{ fontSize: 12, color: "var(--accent)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>📎 {selectedFile.name}</span>
+          <button onClick={() => setSelectedFile(null)} style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>×</button>
+        </div>
+      )}
+
+      <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border)", display: "flex", gap: 7, alignItems: "center" }}>
+        {/* File upload button */}
+        <button onClick={() => fileRef.current?.click()} disabled={loading} style={{ width: 36, height: 36, borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-muted)", cursor: loading ? "default" : "pointer", fontSize: 15, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}
+          title="Upload PDF, Word, or Text file"
+        >📎</button>
+        <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFileSelect} style={{ display: "none" }} />
+
         <textarea value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          placeholder="Type a message..." rows={1}
+          placeholder={selectedFile ? "Add a message (optional)..." : "Type a message..."}
+          rows={1}
           style={{ flex: 1, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, padding: "8px 12px", color: "var(--text)", fontSize: 13, fontFamily: "var(--font-display)", resize: "none", outline: "none", lineHeight: 1.5, transition: "border 0.2s" }}
           onFocus={e => e.target.style.borderColor = "var(--accent-border)"}
           onBlur={e => e.target.style.borderColor = "var(--border)"}
         />
-        <button onClick={handleSend} disabled={loading || !input.trim()} style={{ width: 36, height: 36, borderRadius: 9, border: "1px solid var(--border)", background: input.trim() && !loading ? "var(--accent)" : "var(--bg-card)", color: input.trim() && !loading ? "#0a0a0b" : "var(--text-muted)", cursor: input.trim() && !loading ? "pointer" : "default", fontSize: 16, transition: "all 0.2s", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>↑</button>
+        <button onClick={handleSend} disabled={loading || (!input.trim() && !selectedFile)} style={{ width: 36, height: 36, borderRadius: 9, border: "1px solid var(--border)", background: (input.trim() || selectedFile) && !loading ? "var(--accent)" : "var(--bg-card)", color: (input.trim() || selectedFile) && !loading ? "#0a0a0b" : "var(--text-muted)", cursor: (input.trim() || selectedFile) && !loading ? "pointer" : "default", fontSize: 16, transition: "all 0.2s", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>↑</button>
       </div>
     </div>
   );
@@ -277,17 +269,6 @@ export default function App() {
   const profile = useProfile();
   const [chatOpen, setChatOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
-  const [resumeOpen, setResumeOpen] = useState(false);
-  const [hasResume, setHasResume] = useState(false);
-  const [chatMessages, setChatMessages] = useState([{ role: "assistant", content: "Hey! Ask me anything about Tien 👋" }]);
-  const [chatSessionId] = useState(generateSessionId);
-
-  useEffect(() => {
-    fetch("/api/resume/exists")
-      .then(r => r.json())
-      .then(data => setHasResume(data.exists))
-      .catch(() => setHasResume(false));
-  }, []);
 
   if (!profile) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -301,17 +282,6 @@ export default function App() {
   return (
     <>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      {/* Admin button */}
-      <a href="/admin" style={{
-        position: "fixed", top: 16, right: 16, zIndex: 100,
-        fontSize: 11, color: "var(--text-dim)", fontFamily: "var(--font-mono)",
-        background: "var(--bg-card)", border: "1px solid var(--border)",
-        borderRadius: 8, padding: "5px 10px", textDecoration: "none",
-        letterSpacing: "0.06em", transition: "all 0.2s",
-      }}
-        onMouseEnter={e => { e.target.style.color = "var(--accent)"; e.target.style.borderColor = "var(--accent-border)"; }}
-        onMouseLeave={e => { e.target.style.color = "var(--text-dim)"; e.target.style.borderColor = "var(--border)"; }}
-      >⚙</a>
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 24px 120px" }}>
 
         {/* Hero */}
@@ -325,11 +295,6 @@ export default function App() {
               {profile.email && <a href={`mailto:${profile.email}`} style={linkStyle}>✉ Email</a>}
               {profile.github && <a href={profile.github} target="_blank" rel="noreferrer" style={linkStyle}>⌥ GitHub</a>}
               {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer" style={linkStyle}>in LinkedIn</a>}
-              {hasResume && (
-                <button onClick={() => setResumeOpen(true)} style={{ ...linkStyle, cursor: "pointer", border: "1px solid var(--accent-border)", color: "var(--accent)", background: "var(--accent-dim)" }}>
-                  ↓ Resume
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -421,9 +386,8 @@ export default function App() {
 
       </div>
 
-      {resumeOpen && <ResumePopup onClose={() => setResumeOpen(false)} />}
       {lightboxIndex !== null && <Lightbox images={profile.gallery} index={lightboxIndex} onClose={() => setLightboxIndex(null)} />}
-      {chatOpen && <ChatPopup onClose={() => setChatOpen(false)} messages={chatMessages} setMessages={setChatMessages} sessionId={chatSessionId} />}
+      {chatOpen && <ChatPopup onClose={() => setChatOpen(false)} />}
       <FloatingButton onClick={() => setChatOpen(p => !p)} isOpen={chatOpen} />
     </>
   );

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
@@ -9,6 +9,9 @@ from database import save_message, get_chat_history, log_visitor, get_profile, u
 from auth import create_access_token, authenticate_user, verify_token
 import os
 import shutil
+import base64
+import docx
+import io
 
 # --- Gemini Client ---
 client = genai.Client(api_key=GEMINI_API_KEY)
@@ -71,6 +74,7 @@ def build_system_prompt(profile: dict) -> str:
 Your role is to answer questions about {name} based on the information provided below.
 Always respond in the same language the user is writing in.
 Be friendly, professional, and concise. If asked something not in the profile, politely say you don't have that information.
+When analyzing job descriptions (JD), compare them thoroughly with the profile and give a detailed match assessment including: match percentage, matching skills, missing skills, and overall recommendation.
 
 === PROFILE INFORMATION ===
 
@@ -95,6 +99,11 @@ Projects:{projects}
 
 Important: Only answer based on the profile information above. Do not make up or assume information not provided."""
 
+# --- Extract text from docx ---
+def extract_docx_text(file_bytes: bytes) -> str:
+    doc = docx.Document(io.BytesIO(file_bytes))
+    return "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
+
 # --- Public: Profile ---
 @router.get("/api/profile")
 async def profile():
@@ -116,7 +125,7 @@ async def resume_exists():
     """Check if resume file exists."""
     return {"exists": os.path.exists(RESUME_PATH)}
 
-# --- Public: Chat ---
+# --- Public: Chat (text only) ---
 @router.post("/api/chat")
 async def web_chat(request: ChatRequest):
     """Web chatbot endpoint - RAG with profile data."""
@@ -127,24 +136,19 @@ async def web_chat(request: ChatRequest):
         await log_visitor(session_id)
         await save_message(session_id, "user", user_text, source="web")
 
-        # Get profile for system prompt
         profile = await get_profile()
         system_prompt = build_system_prompt(profile)
 
-        # Get chat history
         history = await get_chat_history(session_id, limit=20)
         contents = [
             types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])])
             for msg in history
         ]
 
-        # Call Gemini with system prompt
         response = client.models.generate_content(
             model=GEMINI_MODEL,
             contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-            )
+            config=types.GenerateContentConfig(system_instruction=system_prompt)
         )
         reply = response.text
 
@@ -154,6 +158,68 @@ async def web_chat(request: ChatRequest):
     except Exception as e:
         print(f"Web chat error: {e}")
         return {"reply": "Sorry, I'm having trouble processing that right now."}
+
+# --- Public: Chat with file ---
+@router.post("/api/chat/file")
+async def web_chat_file(
+    message: str = Form(default="Please analyze this job description and evaluate how well it matches my profile."),
+    session_id: str = Form(default="default"),
+    file: UploadFile = File(...)
+):
+    """Web chatbot endpoint - chat with file attachment."""
+    try:
+        await log_visitor(session_id)
+
+        file_bytes = await file.read()
+        filename = file.filename.lower()
+        profile = await get_profile()
+        system_prompt = build_system_prompt(profile)
+
+        # Build message label for history
+        user_label = f"[Uploaded file: {file.filename}] {message}"
+        await save_message(session_id, "user", user_label, source="web")
+
+        # Get history (excluding current)
+        history = await get_chat_history(session_id, limit=18)
+        history_contents = [
+            types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])])
+            for msg in history[:-1]  # Exclude the just-saved message
+        ]
+
+        # Build current message with file
+        if filename.endswith(".pdf"):
+            file_part = types.Part(
+                inline_data=types.Blob(
+                    mime_type="application/pdf",
+                    data=base64.b64encode(file_bytes).decode()
+                )
+            )
+            current_parts = [file_part, types.Part(text=message)]
+        elif filename.endswith(".docx"):
+            extracted_text = extract_docx_text(file_bytes)
+            current_parts = [types.Part(text=f"File content ({file.filename}):\n\n{extracted_text}\n\n{message}")]
+        elif filename.endswith(".txt"):
+            text_content = file_bytes.decode("utf-8", errors="ignore")
+            current_parts = [types.Part(text=f"File content ({file.filename}):\n\n{text_content}\n\n{message}")]
+        else:
+            return {"reply": "Sorry, only PDF, Word (.docx), and Text (.txt) files are supported."}
+
+        current_content = types.Content(role="user", parts=current_parts)
+        all_contents = history_contents + [current_content]
+
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=all_contents,
+            config=types.GenerateContentConfig(system_instruction=system_prompt)
+        )
+        reply = response.text
+
+        await save_message(session_id, "model", reply, source="web")
+        return {"reply": reply}
+
+    except Exception as e:
+        print(f"File chat error: {e}")
+        return {"reply": "Sorry, I'm having trouble processing that file right now."}
 
 # --- Admin: Login ---
 @router.post("/api/admin/login")
