@@ -450,7 +450,7 @@ function SkillsTab({ profile, onSave, saving }) {
 function ExperienceTab({ items, onSave, saving }) {
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 40 }, (_, i) => currentYear - i);
+  const years = Array.from({ length: 46 }, (_, i) => currentYear + 5 - i);
 
   const parsePeriod = (period) => {
     if (!period) return { startMonth: "", startYear: "", endMonth: "", endYear: "", current: false };
@@ -483,8 +483,8 @@ function ExperienceTab({ items, onSave, saving }) {
   const add = () => setList(p => [...p, { company: "", role: "", description: "", period: "", startMonth: "", startYear: "", endMonth: "", endYear: "", current: false }]);
   const remove = i => setList(p => p.filter((_, idx) => idx !== i));
   const update = (i, k, v) => setList(p => p.map((item, idx) => idx === i ? { ...item, [k]: v } : item));
-  const moveUp = i => { if (i === 0) return; const l = [...list]; [l[i-1], l[i]] = [l[i], l[i-1]]; setList(l); };
-  const moveDown = i => { if (i === list.length - 1) return; const l = [...list]; [l[i], l[i+1]] = [l[i+1], l[i]]; setList(l); };
+  const moveUp = i => { if (i === 0) return; const l = [...list];[l[i - 1], l[i]] = [l[i], l[i - 1]]; setList(l); };
+  const moveDown = i => { if (i === list.length - 1) return; const l = [...list];[l[i], l[i + 1]] = [l[i + 1], l[i]]; setList(l); };
 
   const handleSave = () => {
     const experiences = list.map(({ startMonth, startYear, endMonth, endYear, current, ...rest }) => ({
@@ -588,8 +588,8 @@ function CertificationTab({ items, onSave, saving }) {
   const add = () => setList(p => [...p, { name: "", issuer: "", credentialId: "", link: "", date: "", issueMonth: "", issueYear: "", expMonth: "", expYear: "", noExpiry: false }]);
   const remove = i => setList(p => p.filter((_, idx) => idx !== i));
   const update = (i, k, v) => setList(p => p.map((item, idx) => idx === i ? { ...item, [k]: v } : item));
-  const moveUp = i => { if (i === 0) return; const l = [...list]; [l[i-1], l[i]] = [l[i], l[i-1]]; setList(l); };
-  const moveDown = i => { if (i === list.length - 1) return; const l = [...list]; [l[i], l[i+1]] = [l[i+1], l[i]]; setList(l); };
+  const moveUp = i => { if (i === 0) return; const l = [...list];[l[i - 1], l[i]] = [l[i], l[i - 1]]; setList(l); };
+  const moveDown = i => { if (i === list.length - 1) return; const l = [...list];[l[i], l[i + 1]] = [l[i + 1], l[i]]; setList(l); };
 
   const handleSave = () => {
     const certifications = list.map(({ issueMonth, issueYear, expMonth, expYear, noExpiry, ...rest }) => ({
