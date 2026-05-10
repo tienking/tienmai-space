@@ -347,6 +347,11 @@ export default function App() {
   return (
     <>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      {/* Admin button */}
+      <a href="/admin" style={{ position: "fixed", top: 16, right: 16, zIndex: 100, fontSize: 11, color: "var(--text-dim)", fontFamily: "var(--font-mono)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 10px", textDecoration: "none", letterSpacing: "0.06em", transition: "all 0.2s" }}
+        onMouseEnter={e => { e.target.style.color = "var(--accent)"; e.target.style.borderColor = "var(--accent-border)"; }}
+        onMouseLeave={e => { e.target.style.color = "var(--text-dim)"; e.target.style.borderColor = "var(--border)"; }}
+      >⚙</a>
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 24px 120px" }}>
 
         {/* Hero */}
