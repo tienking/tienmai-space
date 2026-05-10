@@ -385,11 +385,11 @@ function ColorPicker({ label, value, onChange }) {
 // ─── Other Tabs ────────────────────────────────────────────────────────────────
 
 function BasicTab({ profile, onSave, saving }) {
-  const [form, setForm] = useState({ name: profile.name || "", title: profile.title || "", location: profile.location || "", email: profile.email || "", github: profile.github || "", linkedin: profile.linkedin || "", avatar: profile.avatar || "" });
+  const [form, setForm] = useState({ name: profile.name || "", title: profile.title || "", location: profile.location || "", email: profile.email || "", github: profile.github || "", gitlab: profile.gitlab || "", linkedin: profile.linkedin || "", avatar: profile.avatar || "" });
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
   return (
     <TabCard title="Basic Info" onSave={() => onSave(form)} saving={saving}>
-      {[["name", "Name"], ["title", "Title / Headline"], ["location", "Location"], ["email", "Email"], ["github", "GitHub URL"], ["linkedin", "LinkedIn URL"], ["avatar", "Avatar URL (Cloudinary)"]].map(([key, label]) => (
+      {[["name", "Name"], ["title", "Title / Headline"], ["location", "Location"], ["email", "Email"], ["github", "GitHub URL"], ["gitlab", "GitLab URL"], ["linkedin", "LinkedIn URL"], ["avatar", "Avatar URL (Cloudinary)"]].map(([key, label]) => (
         <Field key={key} label={label}><input value={form[key]} onChange={e => set(key, e.target.value)} style={inputStyle} /></Field>
       ))}
     </TabCard>

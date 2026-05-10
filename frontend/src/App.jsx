@@ -359,6 +359,7 @@ export default function App() {
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {profile.email && <a href={`mailto:${profile.email}`} style={linkStyle}>✉ Email</a>}
               {profile.github && <a href={profile.github} target="_blank" rel="noreferrer" style={linkStyle}>⌥ GitHub</a>}
+              {profile.gitlab && <a href={profile.gitlab} target="_blank" rel="noreferrer" style={linkStyle}>⌦ GitLab</a>}
               {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer" style={linkStyle}>in LinkedIn</a>}
               {hasResume && (
                 <button onClick={() => setResumeOpen(true)} style={{ ...linkStyle, cursor: "pointer", border: "1px solid var(--accent-border)", color: "var(--accent)", background: "var(--accent-dim)" }}>

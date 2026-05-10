@@ -37,6 +37,7 @@ class ProfileUpdate(BaseModel):
     location: Optional[str] = None
     email: Optional[str] = None
     github: Optional[str] = None
+    gitlab: Optional[str] = None
     linkedin: Optional[str] = None
     about: Optional[str] = None
     avatar: Optional[str] = None
