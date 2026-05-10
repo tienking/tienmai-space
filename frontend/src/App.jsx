@@ -232,6 +232,7 @@ function FloatingButton({ onClick, isOpen }) {
 // ─── Resume Popup ──────────────────────────────────────────────────────────────
 
 function ResumePopup({ onClose }) {
+  const [iframeLoading, setIframeLoading] = useState(true);
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -253,11 +254,17 @@ function ResumePopup({ onClose }) {
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
         </div>
-        <div style={{ flex: 1, overflow: "hidden" }}>
+        <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+          {iframeLoading && (
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-surface)", zIndex: 1 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid var(--accent-border)", borderTopColor: "var(--accent)", animation: "spin 0.8s linear infinite" }} />
+            </div>
+          )}
           <iframe
             src={`https://docs.google.com/viewer?url=https://tienmai.space/api/resume/file&embedded=true`}
             style={{ width: "100%", height: "100%", border: "none" }}
             title="Resume"
+            onLoad={() => setIframeLoading(false)}
           />
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "flex-end", background: "var(--bg-card)", flexShrink: 0 }}>
