@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profile>
+
+  <!-- ===== BASIC INFO ===== -->
+  <name>Tien Mai Duc</name>
+  <title>Senior Master Data Operations Analyst</title>
+  <location>Ho Chi Minh City, Vietnam</location>
+  <email>tienmai0494@gmail.com</email>
+  <github></github>
+  <linkedin>https://linkedin.com/in/tien-mai-ab0004193</linkedin>
+
+  <!-- ===== ABOUT ===== -->
+  <about>
+    Data Analyst with over 4 years of experience transforming complex datasets into useful business insights.
+    Proficient in SQL, Python, and Power BI to build interactive dashboards, perform statistical analysis,
+    and support data-driven decision-making. Experienced in data analytics, ETL development, Power Platform,
+    data visualization, and business intelligence across various industries including technology, banking,
+    retail, and market research.
+  </about>
+
+  <!-- ===== SKILLS ===== -->
+  <skills>
+    <skill>Python</skill>
+    <skill>SQL</skill>
+    <skill>Power BI</skill>
+    <skill>Microsoft Excel (Advanced)</skill>
+    <skill>Power Apps</skill>
+    <skill>Power Automate</skill>
+    <skill>ETL Pipelines</skill>
+    <skill>Snowflake</skill>
+    <skill>PostgreSQL</skill>
+    <skill>Microsoft Fabric</skill>
+    <skill>Dataverse</skill>
+    <skill>Web Scraping</skill>
+    <skill>VBA</skill>
+    <skill>Sisense</skill>
+    <skill>AWS</skill>
+  </skills>
+
+  <!-- ===== EXPERIENCE ===== -->
+  <experiences>
+    <experience>
+      <company>Renesas Electronics</company>
+      <role>Senior Master Data Operations Analyst</role>
+      <period>March 2026 – Present</period>
+      <description>Senior data operations role at Renesas Electronics, Ho Chi Minh City, Vietnam.</description>
+    </experience>
+    <experience>
+      <company>Nova Group</company>
+      <role>Senior Data Management Specialist</role>
+      <period>September 2025 – November 2025</period>
+      <description>Collected, cleaned, and standardized real estate and travel market data of more than 1,000 partners from multiple sources. Developed interactive dashboards in Microsoft Excel and Power BI to track market trends and identify investment opportunities. Built scoring models and evaluation frameworks to assess and classify partner performance.</description>
+    </experience>
+    <experience>
+      <company>FPT Software</company>
+      <role>Power Apps Developer</role>
+      <period>August 2024 – September 2025</period>
+      <description>Built internal applications using Microsoft Power Apps to digitize Credit and Debt Management processes. Implemented Power Automate flows for data validation and automated approval routing. Designed Dataverse data model architecture with optimized table relationships for application performance.</description>
+    </experience>
+    <experience>
+      <company>FPT Software</company>
+      <role>Data Analyst</role>
+      <period>April 2024 – July 2024</period>
+      <description>Collaborated with the Data Engineering team to visualize US customer car sales data, transforming data from AWS and Snowflake into Power BI dashboards. Built monthly and quarterly automotive sales reports for clients and supported internal operational performance projects.</description>
+    </experience>
+    <experience>
+      <company>Profectus Group</company>
+      <role>Data Analyst</role>
+      <period>October 2019 – January 2024</period>
+      <description>Analyzed retail contracts and promotional programs in Australia to identify data discrepancies and contract violations. Built and maintained automated ETL pipelines using Python, VBA, and SQL. Developed web scraping tools using Scrapy and Selenium across 20+ websites. Created automated report generation scripts in Python and VBA.</description>
+    </experience>
+    <experience>
+      <company>NielsenIQ</company>
+      <role>Data Processing Trainee</role>
+      <period>February 2019 – September 2019</period>
+      <description>Processed and validated large volumes of market research data for the Analytics team. Built automation tools using Microsoft Excel (VBA) and Python to streamline report validation and error detection workflows.</description>
+    </experience>
+  </experiences>
+
+  <!-- ===== EDUCATION ===== -->
+  <educations>
+    <education>
+      <school>Hoa Sen University</school>
+      <degree>Bachelor's Degree, Information Technology</degree>
+      <period>2015 – 2019</period>
+    </education>
+  </educations>
+
+  <!-- ===== PROJECTS ===== -->
+  <projects>
+    <project>
+      <title>Vietnamese RAG Chatbot</title>
+      <tag>AI / NLP</tag>
+      <description>Domain-specific chatbot using Ollama, ChromaDB, and multilingual embeddings (paraphrase-multilingual-mpnet-base-v2) for Vietnamese language business analytics.</description>
+      <link></link>
+    </project>
+    <project>
+      <title>Fine-tuned Llama 3.2 3B</title>
+      <tag>Machine Learning</tag>
+      <description>LoRA fine-tuning on Vietnamese business data using Unsloth on Google Colab. Explored training parameters, optimizer theory, and LoRA mechanics in depth.</description>
+      <link></link>
+    </project>
+    <project>
+      <title>AI-Powered Analytics Dashboard</title>
+      <tag>Full Stack</tag>
+      <description>Automated analytics dashboard built from scratch using React and FastAPI, integrating LLM APIs for natural language querying and automated SQL generation.</description>
+      <link></link>
+    </project>
+  </projects>
+
+</profile>
