@@ -279,7 +279,7 @@ export default function App() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [resumeOpen, setResumeOpen] = useState(false);
   const [hasResume, setHasResume] = useState(false);
-  const [chatMessages, setChatMessages] = useState([{ role: "assistant", content: "Hi! Feel free to ask me anything." }]);
+  const [chatMessages, setChatMessages] = useState([{ role: "assistant", content: "Hey! Ask me anything about Tien 👋" }]);
   const [chatSessionId] = useState(generateSessionId);
 
   useEffect(() => {
