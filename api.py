@@ -48,6 +48,7 @@ class ProfileUpdate(BaseModel):
     gallery: Optional[List[str]] = None
     theme: Optional[Dict[str, Any]] = None
     fonts: Optional[Dict[str, str]] = None
+    openToWork: Optional[bool] = None
 
 # --- Build system prompt from profile ---
 def build_system_prompt(profile: dict) -> str:
@@ -235,7 +236,7 @@ async def admin_login(request: LoginRequest):
 @router.put("/api/admin/profile")
 async def admin_update_profile(data: ProfileUpdate, username: str = Depends(verify_token)):
     """Update profile fields - requires JWT token."""
-    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    updates = {k: v for k, v in data.model_dump().items() if v is not None or k == "openToWork"}
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
     await update_profile(updates)

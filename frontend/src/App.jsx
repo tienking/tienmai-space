@@ -356,7 +356,23 @@ export default function App() {
 
         {/* Hero */}
         <div className="hero-section" style={{ display: "flex", gap: 20, alignItems: "flex-start", marginBottom: 40, animation: "fadeUp 0.4s ease" }}>
-          <Avatar name={profile.name} avatar={profile.avatar} />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <Avatar name={profile.name} avatar={profile.avatar} />
+            {profile.openToWork && (
+              <div style={{
+                fontSize: 10, fontWeight: 600, letterSpacing: "0.04em",
+                color: t.openToWorkText || "#fff",
+                background: t.openToWorkBg || "#16a34a",
+                border: `1px solid ${t.openToWorkBorder || "rgba(255,255,255,0.2)"}`,
+                borderRadius: 20, padding: "3px 10px",
+                fontFamily: "var(--font-display)",
+                whiteSpace: "nowrap",
+                boxShadow: `0 0 12px ${t.openToWorkBg || "#16a34a"}55`,
+              }}>
+                ✦ Open to Work
+              </div>
+            )}
+          </div>
           <div style={{ flex: 1 }}>
             <h1 style={{ fontSize: "1.9rem", fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 4, color: t.headingName || "var(--text)", fontFamily: "var(--font-display)" }}>{profile.name}</h1>
             <p style={{ fontSize: 14, color: "var(--accent)", fontFamily: "var(--font-mono)", marginBottom: 8 }}>{profile.title}</p>

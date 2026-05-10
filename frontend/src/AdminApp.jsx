@@ -360,6 +360,14 @@ function ThemeTab({ theme, onSave, saving }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         {sectionContentColors.map(({ key, label }) => <ColorPicker key={key} label={label} value={t[key] || "#f0efe8"} onChange={v => set(key, v)} />)}
       </div>
+
+      <Divider />
+      <GroupLabel>Open to Work Badge</GroupLabel>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <ColorPicker label="Badge background" value={t.openToWorkBg || "#16a34a"} onChange={v => set("openToWorkBg", v)} />
+        <ColorPicker label="Badge text" value={t.openToWorkText || "#ffffff"} onChange={v => set("openToWorkText", v)} />
+        <ColorPicker label="Badge border" value={t.openToWorkBorder || "rgba(255,255,255,0.2)"} onChange={v => set("openToWorkBorder", v)} />
+      </div>
     </TabCard>
   );
 }
@@ -385,13 +393,33 @@ function ColorPicker({ label, value, onChange }) {
 // ─── Other Tabs ────────────────────────────────────────────────────────────────
 
 function BasicTab({ profile, onSave, saving }) {
-  const [form, setForm] = useState({ name: profile.name || "", title: profile.title || "", location: profile.location || "", email: profile.email || "", github: profile.github || "", gitlab: profile.gitlab || "", linkedin: profile.linkedin || "", avatar: profile.avatar || "" });
+  const [form, setForm] = useState({ name: profile.name || "", title: profile.title || "", location: profile.location || "", email: profile.email || "", github: profile.github || "", gitlab: profile.gitlab || "", linkedin: profile.linkedin || "", avatar: profile.avatar || "", openToWork: profile.openToWork || false });
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
   return (
     <TabCard title="Basic Info" onSave={() => onSave(form)} saving={saving}>
       {[["name", "Name"], ["title", "Title / Headline"], ["location", "Location"], ["email", "Email"], ["github", "GitHub URL"], ["gitlab", "GitLab URL"], ["linkedin", "LinkedIn URL"], ["avatar", "Avatar URL (Cloudinary)"]].map(([key, label]) => (
         <Field key={key} label={label}><input value={form[key]} onChange={e => set(key, e.target.value)} style={inputStyle} /></Field>
       ))}
+
+      {/* Open to Work toggle */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px", marginTop: 8 }}>
+        <div>
+          <p style={{ fontSize: 14, fontWeight: 500 }}>Open to Work</p>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>Show badge below your avatar</p>
+        </div>
+        <button onClick={() => set("openToWork", !form.openToWork)} style={{
+          width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+          background: form.openToWork ? "var(--accent)" : "var(--border)",
+          position: "relative", transition: "background 0.2s", flexShrink: 0,
+        }}>
+          <div style={{
+            width: 18, height: 18, borderRadius: "50%", background: "#fff",
+            position: "absolute", top: 3,
+            left: form.openToWork ? 23 : 3,
+            transition: "left 0.2s",
+          }} />
+        </button>
+      </div>
     </TabCard>
   );
 }
