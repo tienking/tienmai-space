@@ -8,8 +8,4 @@ deploy:
   only:
     - main
   script:
-    - sudo cd /root/tienmai-bot && sudo git pull origin main
-    - sudo bash -c "source /root/tienmai-bot/venv/bin/activate && pip install -r /root/tienmai-bot/requirements.txt --quiet"
-    - sudo bash -c "cd /root/tienmai-bot/frontend && npm install --quiet && npm run build"
-    - sudo systemctl restart tienmai-bot
-    - echo "Deploy successful!"
+    - sudo /usr/local/bin/deploy-tienmai.sh
