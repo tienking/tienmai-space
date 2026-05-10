@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const API = "";
 
@@ -141,6 +141,7 @@ function Dashboard({ token, onLogout }) {
 
   const tabs = [
     { id: "basic", label: "Basic Info" },
+    { id: "resume", label: "📄 Resume" },
     { id: "about", label: "About" },
     { id: "skills", label: "Skills" },
     { id: "experience", label: "Experience" },
@@ -182,6 +183,7 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "education" && <ListTab title="Education" field="educations" items={profile.educations || []} onSave={save} saving={saving} fields={["school", "degree", "period"]} />}
           {activeTab === "projects" && <ListTab title="Projects" field="projects" items={profile.projects || []} onSave={save} saving={saving} fields={["title", "tag", "description", "link"]} />}
           {activeTab === "gallery" && <GalleryTab gallery={profile.gallery || []} onSave={saveGallery} saving={saving} />}
+          {activeTab === "resume" && <ResumeTab token={token} />}
           {activeTab === "theme" && <ThemeTab theme={profile.theme || {}} onSave={save} saving={saving} />}
           {activeTab === "fonts" && <FontsTab fonts={profile.fonts || {}} onSave={save} saving={saving} />}
         </div>
@@ -387,7 +389,7 @@ function BasicTab({ profile, onSave, saving }) {
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
   return (
     <TabCard title="Basic Info" onSave={() => onSave(form)} saving={saving}>
-      {[["name","Name"],["title","Title / Headline"],["location","Location"],["email","Email"],["github","GitHub URL"],["linkedin","LinkedIn URL"],["avatar","Avatar URL (Cloudinary)"]].map(([key, label]) => (
+      {[["name", "Name"], ["title", "Title / Headline"], ["location", "Location"], ["email", "Email"], ["github", "GitHub URL"], ["linkedin", "LinkedIn URL"], ["avatar", "Avatar URL (Cloudinary)"]].map(([key, label]) => (
         <Field key={key} label={label}><input value={form[key]} onChange={e => set(key, e.target.value)} style={inputStyle} /></Field>
       ))}
     </TabCard>
@@ -418,8 +420,8 @@ function ListTab({ title, field, items, onSave, saving, fields }) {
   const add = () => setList(p => [...p, Object.fromEntries(fields.map(f => [f, ""]))]);
   const remove = i => setList(p => p.filter((_, idx) => idx !== i));
   const update = (i, k, v) => setList(p => p.map((item, idx) => idx === i ? { ...item, [k]: v } : item));
-  const moveUp = i => { if (i === 0) return; const l = [...list]; [l[i-1], l[i]] = [l[i], l[i-1]]; setList(l); };
-  const moveDown = i => { if (i === list.length - 1) return; const l = [...list]; [l[i], l[i+1]] = [l[i+1], l[i]]; setList(l); };
+  const moveUp = i => { if (i === 0) return; const l = [...list];[l[i - 1], l[i]] = [l[i], l[i - 1]]; setList(l); };
+  const moveDown = i => { if (i === list.length - 1) return; const l = [...list];[l[i], l[i + 1]] = [l[i + 1], l[i]]; setList(l); };
 
   return (
     <TabCard title={title} onSave={() => onSave({ [field]: list })} saving={saving}>
@@ -455,8 +457,8 @@ function GalleryTab({ gallery, onSave, saving }) {
   const [newUrl, setNewUrl] = useState("");
   const add = () => { if (!newUrl.trim()) return; setImages(p => [...p, newUrl.trim()]); setNewUrl(""); };
   const remove = i => setImages(p => p.filter((_, idx) => idx !== i));
-  const moveUp = i => { if (i === 0) return; const l = [...images]; [l[i-1], l[i]] = [l[i], l[i-1]]; setImages(l); };
-  const moveDown = i => { if (i === images.length - 1) return; const l = [...images]; [l[i], l[i+1]] = [l[i+1], l[i]]; setImages(l); };
+  const moveUp = i => { if (i === 0) return; const l = [...images];[l[i - 1], l[i]] = [l[i], l[i - 1]]; setImages(l); };
+  const moveDown = i => { if (i === images.length - 1) return; const l = [...images];[l[i], l[i + 1]] = [l[i + 1], l[i]]; setImages(l); };
 
   return (
     <TabCard title="Gallery" onSave={() => onSave(images)} saving={saving}>
@@ -522,6 +524,75 @@ const inputStyle = {
   fontSize: 13, fontFamily: "var(--font-display)", outline: "none",
   transition: "border-color 0.2s", boxSizing: "border-box",
 };
+
+// ─── Resume Tab ────────────────────────────────────────────────────────────────
+
+function ResumeTab({ token }) {
+  const [hasResume, setHasResume] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState("");
+  const fileRef = useRef(null);
+
+  useEffect(() => {
+    fetch("/api/resume/exists")
+      .then(r => r.json())
+      .then(data => setHasResume(data.exists));
+  }, []);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.name.endsWith(".pdf")) { setMessage("Only PDF files are allowed."); return; }
+    setUploading(true); setMessage("");
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch("/api/admin/resume", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (res.ok) { setHasResume(true); setMessage("Resume uploaded successfully!"); }
+      else { setMessage("Upload failed. Please try again."); }
+    } catch { setMessage("Upload failed. Please try again."); }
+    setUploading(false);
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete the resume?")) return;
+    await fetch("/api/admin/resume", { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    setHasResume(false);
+    setMessage("Resume deleted.");
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>Resume</h2>
+      </div>
+      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "20px", marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: hasResume ? "var(--accent-dim)" : "var(--bg-surface)", border: `1px solid ${hasResume ? "var(--accent-border)" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📄</div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 500 }}>{hasResume ? "Resume uploaded" : "No resume uploaded"}</p>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{hasResume ? "Tien_Mai_Resume.pdf — visible on profile" : "Upload a PDF to show on your profile"}</p>
+          </div>
+          {hasResume && <a href="/api/resume/file" target="_blank" style={{ marginLeft: "auto", fontSize: 12, color: "var(--accent)", textDecoration: "none", fontFamily: "var(--font-mono)" }}>Preview →</a>}
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ padding: "8px 18px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, fontWeight: 500, cursor: uploading ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: uploading ? 0.7 : 1 }}>
+            {uploading ? "Uploading..." : hasResume ? "Replace PDF" : "Upload PDF"}
+          </button>
+          {hasResume && (
+            <button onClick={handleDelete} style={{ padding: "8px 18px", borderRadius: 9, border: "1px solid var(--border)", background: "none", color: "#f87171", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>Delete</button>
+          )}
+        </div>
+        <input ref={fileRef} type="file" accept=".pdf" onChange={handleUpload} style={{ display: "none" }} />
+      </div>
+      {message && <p style={{ fontSize: 13, color: message.includes("success") ? "var(--accent)" : "#f87171" }}>{message}</p>}
+    </div>
+  );
+}
 
 export default function AdminApp() {
   const { token, login, logout } = useAuth();

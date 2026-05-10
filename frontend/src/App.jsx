@@ -44,24 +44,69 @@ function applyTheme(theme) {
 
 function applyFonts(fonts) {
   const root = document.documentElement;
-  // Load Google Fonts dynamically
   const displayFont = fonts.display || "Syne";
   const monoFont = fonts.mono || "DM Mono";
-  const googleFontsUrl = `https://fonts.googleapis.com/css2?family=${displayFont.replace(/ /g, "+")}:wght@400;500;700&family=${monoFont.replace(/ /g, "+")}:wght@400;500&display=swap`;
-
-  // Remove old font link if exists
   const oldLink = document.getElementById("google-fonts");
   if (oldLink) oldLink.remove();
-
   const link = document.createElement("link");
   link.id = "google-fonts";
   link.rel = "stylesheet";
-  link.href = googleFontsUrl;
+  link.href = `https://fonts.googleapis.com/css2?family=${displayFont.replace(/ /g, "+")}:wght@400;500;700&family=${monoFont.replace(/ /g, "+")}:wght@400;500&display=swap`;
   document.head.appendChild(link);
-
-  // Apply CSS variables
   root.style.setProperty("--font-display", `'${displayFont}', sans-serif`);
   root.style.setProperty("--font-mono", `'${monoFont}', monospace`);
+}
+
+// ─── Resume Popup ──────────────────────────────────────────────────────────────
+
+function ResumePopup({ onClose }) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  useEffect(() => {
+    const handleKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeUp 0.2s ease" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "min(860px, 92vw)", height: "88vh", background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 18, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 24px 80px rgba(0,0,0,0.8)" }}>
+        {/* Header */}
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-card)", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 500 }}>Resume</span>
+            <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>PDF</span>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
+        </div>
+
+        {/* PDF Viewer */}
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          <iframe
+            src="/api/resume/file"
+            style={{ width: "100%", height: "100%", border: "none" }}
+            title="Resume"
+          />
+        </div>
+
+        {/* Footer with Download button */}
+        <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "flex-end", background: "var(--bg-card)", flexShrink: 0 }}>
+          <a href="/api/resume/file" download="Tien_Mai_Resume.pdf" style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "8px 18px", borderRadius: 9,
+            background: "var(--accent)", color: "#0a0a0b",
+            textDecoration: "none", fontSize: 13, fontWeight: 500,
+            fontFamily: "var(--font-display)",
+          }}>
+            ↓ Download
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
@@ -222,6 +267,15 @@ export default function App() {
   const profile = useProfile();
   const [chatOpen, setChatOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [resumeOpen, setResumeOpen] = useState(false);
+  const [hasResume, setHasResume] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/resume/exists")
+      .then(r => r.json())
+      .then(data => setHasResume(data.exists))
+      .catch(() => setHasResume(false));
+  }, []);
 
   if (!profile) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -248,6 +302,11 @@ export default function App() {
               {profile.email && <a href={`mailto:${profile.email}`} style={linkStyle}>✉ Email</a>}
               {profile.github && <a href={profile.github} target="_blank" rel="noreferrer" style={linkStyle}>⌥ GitHub</a>}
               {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer" style={linkStyle}>in LinkedIn</a>}
+              {hasResume && (
+                <button onClick={() => setResumeOpen(true)} style={{ ...linkStyle, cursor: "pointer", border: "1px solid var(--accent-border)", color: "var(--accent)", background: "var(--accent-dim)" }}>
+                  ↓ Resume
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -339,6 +398,7 @@ export default function App() {
 
       </div>
 
+      {resumeOpen && <ResumePopup onClose={() => setResumeOpen(false)} />}
       {lightboxIndex !== null && <Lightbox images={profile.gallery} index={lightboxIndex} onClose={() => setLightboxIndex(null)} />}
       {chatOpen && <ChatPopup onClose={() => setChatOpen(false)} />}
       <FloatingButton onClick={() => setChatOpen(p => !p)} isOpen={chatOpen} />

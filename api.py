@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from google import genai
@@ -6,12 +7,17 @@ from google.genai import types
 from config import GEMINI_API_KEY, GEMINI_MODEL
 from database import save_message, get_chat_history, log_visitor, get_profile, update_profile
 from auth import create_access_token, authenticate_user, verify_token
+import os
+import shutil
 
 # --- Gemini Client ---
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 # --- Router ---
 router = APIRouter()
+
+# --- Resume path ---
+RESUME_PATH = "/root/tienmai-bot/uploads/resume.pdf"
 
 # --- Models ---
 class ChatRequest(BaseModel):
@@ -37,7 +43,7 @@ class ProfileUpdate(BaseModel):
     projects: Optional[List[dict]] = None
     gallery: Optional[List[str]] = None
     theme: Optional[Dict[str, Any]] = None
-    fonts: Optional[Dict[str, str]] = None  # {"display": "Inter", "mono": "JetBrains Mono"}
+    fonts: Optional[Dict[str, str]] = None
 
 # --- Public: Profile ---
 @router.get("/api/profile")
@@ -45,6 +51,24 @@ async def profile():
     """Return profile data from MongoDB."""
     data = await get_profile()
     return data
+
+# --- Public: Resume file ---
+@router.get("/api/resume/file")
+async def get_resume():
+    """Serve resume PDF file."""
+    if not os.path.exists(RESUME_PATH):
+        raise HTTPException(status_code=404, detail="Resume not found")
+    return FileResponse(
+        RESUME_PATH,
+        media_type="application/pdf",
+        filename="Tien_Mai_Resume.pdf"
+    )
+
+# --- Public: Check resume exists ---
+@router.get("/api/resume/exists")
+async def resume_exists():
+    """Check if resume file exists."""
+    return {"exists": os.path.exists(RESUME_PATH)}
 
 # --- Public: Chat ---
 @router.post("/api/chat")
@@ -98,3 +122,22 @@ async def admin_update_gallery(gallery: List[str], username: str = Depends(verif
     """Update gallery images and order - requires JWT token."""
     await update_profile({"gallery": gallery})
     return {"message": "Gallery updated successfully"}
+
+# --- Admin: Upload Resume ---
+@router.post("/api/admin/resume")
+async def upload_resume(file: UploadFile = File(...), username: str = Depends(verify_token)):
+    """Upload resume PDF - replaces existing file."""
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+    os.makedirs(os.path.dirname(RESUME_PATH), exist_ok=True)
+    with open(RESUME_PATH, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    return {"message": "Resume uploaded successfully"}
+
+# --- Admin: Delete Resume ---
+@router.delete("/api/admin/resume")
+async def delete_resume(username: str = Depends(verify_token)):
+    """Delete resume file."""
+    if os.path.exists(RESUME_PATH):
+        os.remove(RESUME_PATH)
+    return {"message": "Resume deleted successfully"}
