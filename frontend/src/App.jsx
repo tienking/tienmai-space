@@ -174,9 +174,7 @@ function ChatMessage({ msg }) {
   );
 }
 
-function ChatPopup({ onClose }) {
-  const [sessionId] = useState(generateSessionId);
-  const [messages, setMessages] = useState([{ role: "assistant", content: "Hi! Feel free to ask me anything." }]);
+function ChatPopup({ onClose, messages, setMessages, sessionId }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
@@ -281,6 +279,8 @@ export default function App() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [resumeOpen, setResumeOpen] = useState(false);
   const [hasResume, setHasResume] = useState(false);
+  const [chatMessages, setChatMessages] = useState([{ role: "assistant", content: "Hi! Feel free to ask me anything." }]);
+  const [chatSessionId] = useState(generateSessionId);
 
   useEffect(() => {
     fetch("/api/resume/exists")
@@ -423,7 +423,7 @@ export default function App() {
 
       {resumeOpen && <ResumePopup onClose={() => setResumeOpen(false)} />}
       {lightboxIndex !== null && <Lightbox images={profile.gallery} index={lightboxIndex} onClose={() => setLightboxIndex(null)} />}
-      {chatOpen && <ChatPopup onClose={() => setChatOpen(false)} />}
+      {chatOpen && <ChatPopup onClose={() => setChatOpen(false)} messages={chatMessages} setMessages={setChatMessages} sessionId={chatSessionId} />}
       <FloatingButton onClick={() => setChatOpen(p => !p)} isOpen={chatOpen} />
     </>
   );
