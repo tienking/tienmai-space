@@ -1,0 +1,20 @@
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  tags:
+    - tienmai-space-vps
+  only:
+    - main
+  script:
+    - cd /root/tienmai-bot
+    - git pull origin main
+    - source venv/bin/activate
+    - pip install -r requirements.txt --quiet
+    - cd frontend
+    - npm install --quiet
+    - npm run build
+    - cd ..
+    - systemctl restart tienmai-bot
+    - echo "Deploy successful!"
