@@ -460,6 +460,33 @@ export default function App() {
           </Section>
         )}
 
+        {/* Certifications */}
+        {profile.certifications?.length > 0 && (
+          <Section title="Licenses & Certifications" labelColor={t.labelCertifications} lineColor={t.lineColor}>
+            {profile.certifications.map((cert, i) => (
+              <Card key={i}>
+                <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                  {/* Icon */}
+                  <div style={{ width: 40, height: 40, borderRadius: 8, background: "var(--accent-dim)", border: "1px solid var(--accent-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                    🎓
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <p style={{ fontSize: 14, fontWeight: 500, color: t.sectionCertifications || "var(--text)" }}>{cert.name}</p>
+                        <p style={{ fontSize: 13, color: "var(--accent)", fontFamily: "var(--font-mono)", marginTop: 2 }}>{cert.issuer}</p>
+                      </div>
+                      {cert.date && <span style={{ fontSize: 11, color: t.textMuted || "var(--text-dim)", fontFamily: "var(--font-mono)", flexShrink: 0, marginLeft: 12 }}>{cert.date}</span>}
+                    </div>
+                    {cert.credentialId && <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>Credential ID: {cert.credentialId}</p>}
+                    {cert.link && <a href={cert.link} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: "var(--accent)", marginTop: 6, display: "inline-block" }}>Show credential →</a>}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </Section>
+        )}
+
         {/* Gallery */}
         {profile.gallery?.length > 0 && (
           <Section title="Gallery" labelColor={t.labelGallery} lineColor={t.lineColor}>

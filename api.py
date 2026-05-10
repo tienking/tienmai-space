@@ -45,6 +45,7 @@ class ProfileUpdate(BaseModel):
     experiences: Optional[List[dict]] = None
     educations: Optional[List[dict]] = None
     projects: Optional[List[dict]] = None
+    certifications: Optional[List[dict]] = None
     gallery: Optional[List[str]] = None
     theme: Optional[Dict[str, Any]] = None
     fonts: Optional[Dict[str, str]] = None

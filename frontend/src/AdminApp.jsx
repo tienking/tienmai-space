@@ -147,6 +147,7 @@ function Dashboard({ token, onLogout }) {
     { id: "experience", label: "Experience" },
     { id: "education", label: "Education" },
     { id: "projects", label: "Projects" },
+    { id: "certifications", label: "Certifications" },
     { id: "gallery", label: "Gallery" },
     { id: "theme", label: "🎨 Theme" },
     { id: "fonts", label: "✦ Fonts" },
@@ -182,6 +183,7 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "experience" && <ListTab title="Experience" field="experiences" items={profile.experiences || []} onSave={save} saving={saving} fields={["company", "role", "period", "description"]} />}
           {activeTab === "education" && <ListTab title="Education" field="educations" items={profile.educations || []} onSave={save} saving={saving} fields={["school", "degree", "period"]} />}
           {activeTab === "projects" && <ListTab title="Projects" field="projects" items={profile.projects || []} onSave={save} saving={saving} fields={["title", "tag", "description", "link"]} />}
+          {activeTab === "certifications" && <ListTab title="Certifications" field="certifications" items={profile.certifications || []} onSave={save} saving={saving} fields={["name", "issuer", "date", "credentialId", "link"]} />}
           {activeTab === "gallery" && <GalleryTab gallery={profile.gallery || []} onSave={saveGallery} saving={saving} />}
           {activeTab === "resume" && <ResumeTab token={token} />}
           {activeTab === "theme" && <ThemeTab theme={profile.theme || {}} onSave={save} saving={saving} />}
@@ -300,6 +302,7 @@ function ThemeTab({ theme, onSave, saving }) {
     { key: "labelExperience", label: "EXPERIENCE label" },
     { key: "labelEducation", label: "EDUCATION label" },
     { key: "labelProjects", label: "PROJECTS label" },
+    { key: "labelCertifications", label: "CERTIFICATIONS label" },
     { key: "labelGallery", label: "GALLERY label" },
   ];
   const sectionContentColors = [
@@ -308,6 +311,7 @@ function ThemeTab({ theme, onSave, saving }) {
     { key: "sectionExperience", label: "Experience content" },
     { key: "sectionEducation", label: "Education content" },
     { key: "sectionProjects", label: "Projects content" },
+    { key: "sectionCertifications", label: "Certifications content" },
     { key: "sectionGallery", label: "Gallery content" },
   ];
 
