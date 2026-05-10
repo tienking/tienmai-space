@@ -450,7 +450,7 @@ function SkillsTab({ profile, onSave, saving }) {
 function ExperienceTab({ items, onSave, saving }) {
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 46 }, (_, i) => currentYear + 5 - i);
+  const years = Array.from({ length: 40 }, (_, i) => currentYear - i);
 
   const parsePeriod = (period) => {
     if (!period) return { startMonth: "", startYear: "", endMonth: "", endYear: "", current: false };
@@ -557,7 +557,7 @@ function ExperienceTab({ items, onSave, saving }) {
 function CertificationTab({ items, onSave, saving }) {
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 40 }, (_, i) => currentYear - i);
+  const years = Array.from({ length: 46 }, (_, i) => currentYear + 5 - i);
 
   const parseCertDate = (dateStr) => {
     if (!dateStr) return { issueMonth: "", issueYear: "", expMonth: "", expYear: "", noExpiry: false };
