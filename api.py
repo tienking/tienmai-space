@@ -45,6 +45,56 @@ class ProfileUpdate(BaseModel):
     theme: Optional[Dict[str, Any]] = None
     fonts: Optional[Dict[str, str]] = None
 
+# --- Build system prompt from profile ---
+def build_system_prompt(profile: dict) -> str:
+    name = profile.get("name", "")
+    title = profile.get("title", "")
+    location = profile.get("location", "")
+    email = profile.get("email", "")
+    linkedin = profile.get("linkedin", "")
+    about = profile.get("about", "")
+    skills = ", ".join(profile.get("skills", []))
+
+    experiences = ""
+    for exp in profile.get("experiences", []):
+        experiences += f"\n- {exp.get('role')} at {exp.get('company')} ({exp.get('period')}): {exp.get('description', '')}"
+
+    educations = ""
+    for edu in profile.get("educations", []):
+        educations += f"\n- {edu.get('degree')} at {edu.get('school')} ({edu.get('period')})"
+
+    projects = ""
+    for proj in profile.get("projects", []):
+        projects += f"\n- {proj.get('title')} [{proj.get('tag')}]: {proj.get('description', '')}"
+
+    return f"""You are a personal AI assistant representing {name} on their portfolio website.
+Your role is to answer questions about {name} based on the information provided below.
+Always respond in the same language the user is writing in.
+Be friendly, professional, and concise. If asked something not in the profile, politely say you don't have that information.
+
+=== PROFILE INFORMATION ===
+
+Name: {name}
+Title: {title}
+Location: {location}
+Email: {email}
+LinkedIn: {linkedin}
+
+About:
+{about}
+
+Skills: {skills}
+
+Work Experience:{experiences}
+
+Education:{educations}
+
+Projects:{projects}
+
+=== END OF PROFILE ===
+
+Important: Only answer based on the profile information above. Do not make up or assume information not provided."""
+
 # --- Public: Profile ---
 @router.get("/api/profile")
 async def profile():
@@ -58,11 +108,7 @@ async def get_resume():
     """Serve resume PDF file."""
     if not os.path.exists(RESUME_PATH):
         raise HTTPException(status_code=404, detail="Resume not found")
-    return FileResponse(
-        RESUME_PATH,
-        media_type="application/pdf",
-        filename="Tien_Mai_Resume.pdf"
-    )
+    return FileResponse(RESUME_PATH, media_type="application/pdf", filename="Tien_Mai_Resume.pdf")
 
 # --- Public: Check resume exists ---
 @router.get("/api/resume/exists")
@@ -73,7 +119,7 @@ async def resume_exists():
 # --- Public: Chat ---
 @router.post("/api/chat")
 async def web_chat(request: ChatRequest):
-    """Web chatbot endpoint - saves history to MongoDB."""
+    """Web chatbot endpoint - RAG with profile data."""
     session_id = request.session_id
     user_text = request.message
 
@@ -81,13 +127,25 @@ async def web_chat(request: ChatRequest):
         await log_visitor(session_id)
         await save_message(session_id, "user", user_text, source="web")
 
+        # Get profile for system prompt
+        profile = await get_profile()
+        system_prompt = build_system_prompt(profile)
+
+        # Get chat history
         history = await get_chat_history(session_id, limit=20)
         contents = [
             types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])])
             for msg in history
         ]
 
-        response = client.models.generate_content(model=GEMINI_MODEL, contents=contents)
+        # Call Gemini with system prompt
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+            )
+        )
         reply = response.text
 
         await save_message(session_id, "model", reply, source="web")
