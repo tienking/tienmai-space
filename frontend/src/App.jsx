@@ -85,16 +85,22 @@ function ResumePopup({ onClose }) {
 
         {/* PDF Viewer */}
         <div style={{ flex: 1, overflow: "hidden" }}>
-          <iframe
-            src="/api/resume/file"
-            style={{ width: "100%", height: "100%", border: "none" }}
-            title="Resume"
-          />
+          <object
+            data="/api/resume/file"
+            type="application/pdf"
+            style={{ width: "100%", height: "100%" }}
+          >
+            <iframe
+              src={`https://docs.google.com/viewer?url=https://tienmai.space/api/resume/file&embedded=true`}
+              style={{ width: "100%", height: "100%", border: "none" }}
+              title="Resume"
+            />
+          </object>
         </div>
 
         {/* Footer with Download button */}
         <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "flex-end", background: "var(--bg-card)", flexShrink: 0 }}>
-          <a href="/api/resume/file" download="Tien_Mai_Resume.pdf" style={{
+          <a href="/api/resume/file" target="_blank" rel="noreferrer" style={{
             display: "flex", alignItems: "center", gap: 6,
             padding: "8px 18px", borderRadius: 9,
             background: "var(--accent)", color: "#0a0a0b",
