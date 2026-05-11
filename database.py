@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from config import MONGODB_URL
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # --- Connection ---
 client = AsyncIOMotorClient(MONGODB_URL)
@@ -51,3 +51,36 @@ async def log_visitor(session_id: str):
         },
         upsert=True
     )
+
+async def get_analytics_data():
+    """Aggregate analytics data for admin dashboard."""
+    total_visitors = await visitor_collection.count_documents({})
+    total_messages = await chat_collection.count_documents({"role": "user", "session_id": {"$exists": True}})
+
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    day_cursor = visitor_collection.aggregate([
+        {"$match": {"first_seen": {"$gte": seven_days_ago}}},
+        {"$group": {"_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$first_seen"}}, "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}}
+    ])
+    visitors_by_day_raw = await day_cursor.to_list(length=None)
+
+    q_cursor = chat_collection.find(
+        {"role": "user", "session_id": {"$exists": True}},
+        {"_id": 0, "content": 1, "created_at": 1, "source": 1}
+    ).sort([("created_at", -1)]).limit(20)
+    recent_questions = await q_cursor.to_list(length=20)
+
+    return {
+        "total_visitors": total_visitors,
+        "total_messages": total_messages,
+        "visitors_by_day": [{"date": d["_id"], "count": d["count"]} for d in visitors_by_day_raw],
+        "recent_questions": [
+            {
+                "content": q["content"],
+                "created_at": q["created_at"].isoformat() if q.get("created_at") else "",
+                "source": q.get("source", "web"),
+            }
+            for q in recent_questions
+        ],
+    }

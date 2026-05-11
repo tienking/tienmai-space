@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from google import genai
 from google.genai import types
 from config import GEMINI_API_KEY, GEMINI_MODEL
-from database import save_message, get_chat_history, log_visitor, get_profile, update_profile
+from database import save_message, get_chat_history, log_visitor, get_profile, update_profile, get_analytics_data
 from auth import create_access_token, authenticate_user, verify_token
 import os
 import shutil
@@ -264,6 +264,12 @@ async def upload_resume(file: UploadFile = File(...), username: str = Depends(ve
     with open(RESUME_PATH, "wb") as f:
         shutil.copyfileobj(file.file, f)
     return {"message": "Resume uploaded successfully"}
+
+# --- Admin: Analytics ---
+@router.get("/api/admin/analytics")
+async def get_analytics(username: str = Depends(verify_token)):
+    """Get analytics data - requires JWT token."""
+    return await get_analytics_data()
 
 # --- Admin: Delete Resume ---
 @router.delete("/api/admin/resume")
