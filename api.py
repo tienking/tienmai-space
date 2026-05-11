@@ -41,7 +41,7 @@ class ProfileUpdate(BaseModel):
     linkedin: Optional[str] = None
     about: Optional[str] = None
     avatar: Optional[str] = None
-    skills: Optional[List[str]] = None
+    skills: Optional[List[Any]] = None  # List[str] or List[dict] with {group, items}
     experiences: Optional[List[dict]] = None
     educations: Optional[List[dict]] = None
     projects: Optional[List[dict]] = None
@@ -59,7 +59,11 @@ def build_system_prompt(profile: dict) -> str:
     email = profile.get("email", "")
     linkedin = profile.get("linkedin", "")
     about = profile.get("about", "")
-    skills = ", ".join(profile.get("skills", []))
+    raw_skills = profile.get("skills", [])
+    if raw_skills and isinstance(raw_skills[0], dict):
+        skills = ", ".join(s for g in raw_skills for s in g.get("items", []))
+    else:
+        skills = ", ".join(raw_skills)
 
     experiences = ""
     for exp in profile.get("experiences", []):

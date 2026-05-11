@@ -462,11 +462,28 @@ export default function App() {
             {/* Skills */}
             {profile.skills?.length > 0 && (
               <Section title="Skills" labelColor={t.labelSkills} lineColor={t.lineColor}>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {profile.skills.map(s => (
-                    <span key={s} style={{ fontSize: 12, color: t.sectionSkills || "var(--text-muted)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", fontFamily: "var(--font-mono)" }}>{s}</span>
-                  ))}
-                </div>
+                {profile.skills[0]?.group !== undefined ? (
+                  // Grouped skills
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {profile.skills.map((group, gi) => (
+                      <div key={gi}>
+                        <p style={{ fontSize: 11, color: "var(--accent)", fontFamily: "var(--font-mono)", letterSpacing: "0.08em", marginBottom: 8, textTransform: "uppercase" }}>{group.group}</p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {(group.items || []).map((s, si) => (
+                            <span key={si} style={{ fontSize: 12, color: t.sectionSkills || "var(--text-muted)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", fontFamily: "var(--font-mono)" }}>{s}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  // Flat skills (backward compatible)
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {profile.skills.map((s, i) => (
+                      <span key={i} style={{ fontSize: 12, color: t.sectionSkills || "var(--text-muted)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", fontFamily: "var(--font-mono)" }}>{s}</span>
+                    ))}
+                  </div>
+                )}
               </Section>
             )}
 

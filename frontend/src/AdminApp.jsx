@@ -438,11 +438,53 @@ function AboutTab({ profile, onSave, saving }) {
 }
 
 function SkillsTab({ profile, onSave, saving }) {
-  const [skills, setSkills] = useState((profile.skills || []).join(", "));
+  const rawSkills = profile.skills || [];
+  const isGrouped = rawSkills.length > 0 && typeof rawSkills[0] === "object";
+
+  const initGroups = () => {
+    if (isGrouped) return rawSkills.map(g => ({ group: g.group || "", items: (g.items || []).join(", ") }));
+    return rawSkills.length > 0 ? [{ group: "General", items: rawSkills.join(", ") }] : [{ group: "", items: "" }];
+  };
+
+  const [groups, setGroups] = useState(initGroups);
+
+  const addGroup = () => setGroups(p => [...p, { group: "", items: "" }]);
+  const removeGroup = i => setGroups(p => p.filter((_, idx) => idx !== i));
+  const updateGroup = (i, k, v) => setGroups(p => p.map((g, idx) => idx === i ? { ...g, [k]: v } : g));
+  const moveUp = i => { if (i === 0) return; const l = [...groups]; [l[i-1], l[i]] = [l[i], l[i-1]]; setGroups(l); };
+  const moveDown = i => { if (i === groups.length - 1) return; const l = [...groups]; [l[i], l[i+1]] = [l[i+1], l[i]]; setGroups(l); };
+
+  const handleSave = () => {
+    const skills = groups.map(g => ({
+      group: g.group.trim(),
+      items: g.items.split(",").map(s => s.trim()).filter(Boolean),
+    })).filter(g => g.items.length > 0);
+    onSave({ skills });
+  };
+
   return (
-    <TabCard title="Skills" onSave={() => onSave({ skills: skills.split(",").map(s => s.trim()).filter(Boolean) })} saving={saving}>
-      <Field label="Skills (comma separated)"><textarea value={skills} onChange={e => setSkills(e.target.value)} rows={4} style={{ ...inputStyle, resize: "vertical" }} /></Field>
-      <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}>Example: Python, SQL, Power BI, React</p>
+    <TabCard title="Skills" onSave={handleSave} saving={saving}>
+      {groups.map((g, i) => (
+        <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+            <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>Group #{i + 1}</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              <SmallBtn onClick={() => moveUp(i)} disabled={i === 0}>↑</SmallBtn>
+              <SmallBtn onClick={() => moveDown(i)} disabled={i === groups.length - 1}>↓</SmallBtn>
+              <SmallBtn onClick={() => removeGroup(i)} danger>✕</SmallBtn>
+            </div>
+          </div>
+          <Field label="Group Name (e.g. Languages, Frameworks, Tools)">
+            <input value={g.group} onChange={e => updateGroup(i, "group", e.target.value)} placeholder="e.g. Languages" style={inputStyle} />
+          </Field>
+          <Field label="Skills (comma separated)">
+            <textarea value={g.items} onChange={e => updateGroup(i, "items", e.target.value)} rows={2} placeholder="e.g. Python, SQL, JavaScript" style={{ ...inputStyle, resize: "vertical" }} />
+          </Field>
+        </div>
+      ))}
+      <button onClick={addGroup} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>
+        + Add Group
+      </button>
     </TabCard>
   );
 }
