@@ -290,7 +290,9 @@ function ResumePopup({ onClose }) {
 function Avatar({ name, avatar }) {
   const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div style={{ width: 88, height: 88, borderRadius: "50%", background: "var(--accent-dim)", border: "2px solid var(--accent-border)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 700, color: "var(--accent)", fontFamily: "var(--font-display)" }}>
+    <div style={{
+      width: 176, height: 176, borderRadius: "50%", fontSize: 52, fontWeight: 700, borderRadius: "50%", background: "var(--accent-dim)", border: "2px solid var(--accent-border)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 700, color: "var(--accent)", fontFamily: "var(--font-display)"
+    }}>
       {avatar ? <img src={avatar} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
     </div>
   );
@@ -326,7 +328,7 @@ function CertificationsSection({ certifications, t }) {
   const sorted = [...certifications].sort((a, b) => {
     const getYear = s => parseInt((s || "").match(/\d{4}/)?.[0] || "0");
     const getMonth = s => {
-      const months = { Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12 };
+      const months = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
       return months[(s || "").match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/)?.[0]] || 0;
     };
     const yearDiff = getYear(b.date) - getYear(a.date);
