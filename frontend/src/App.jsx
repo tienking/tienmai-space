@@ -402,9 +402,9 @@ export default function App() {
         onMouseEnter={e => { e.target.style.color = "var(--accent)"; e.target.style.borderColor = "var(--accent-border)"; }}
         onMouseLeave={e => { e.target.style.color = "var(--text-dim)"; e.target.style.borderColor = "var(--border)"; }}
       >⚙</a>
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 24px 120px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 24px 120px" }}>
 
-        {/* Hero */}
+        {/* Hero - full width */}
         <div className="hero-section" style={{ display: "flex", gap: 20, alignItems: "flex-start", marginBottom: 40, animation: "fadeUp 0.4s ease" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 }}>
             <Avatar name={profile.name} avatar={profile.avatar} />
@@ -441,96 +441,110 @@ export default function App() {
           </div>
         </div>
 
-        {/* About */}
-        {profile.about && (
-          <Section title="About" labelColor={t.labelAbout} lineColor={t.lineColor}>
-            <p style={{ fontSize: 14, color: t.sectionAbout || "var(--text-muted)", lineHeight: 1.8 }}>{profile.about}</p>
-          </Section>
-        )}
+        {/* Two column layout on desktop */}
+        <style>{`
+          .two-col { display: grid; grid-template-columns: 1fr; gap: 0; }
+          @media (min-width: 768px) { .two-col { grid-template-columns: 1fr 1fr; gap: 0 40px; } }
+        `}</style>
+        <div className="two-col">
 
-        {/* Skills */}
-        {profile.skills?.length > 0 && (
-          <Section title="Skills" labelColor={t.labelSkills} lineColor={t.lineColor}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {profile.skills.map(s => (
-                <span key={s} style={{ fontSize: 12, color: t.sectionSkills || "var(--text-muted)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", fontFamily: "var(--font-mono)" }}>{s}</span>
-              ))}
-            </div>
-          </Section>
-        )}
+          {/* Left column: About, Skills, Experience */}
+          <div>
+            {/* About */}
+            {profile.about && (
+              <Section title="About" labelColor={t.labelAbout} lineColor={t.lineColor}>
+                <p style={{ fontSize: 14, color: t.sectionAbout || "var(--text-muted)", lineHeight: 1.8 }}>{profile.about}</p>
+              </Section>
+            )}
 
-        {/* Experience */}
-        {profile.experiences?.length > 0 && (
-          <Section title="Experience" labelColor={t.labelExperience} lineColor={t.lineColor}>
-            {profile.experiences.map((exp, i) => (
-              <Card key={i}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
-                  <div>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: t.sectionExperience || "var(--text)" }}>{exp.role}</p>
-                    <p style={{ fontSize: 13, color: "var(--accent)", fontFamily: "var(--font-mono)", marginTop: 2 }}>{exp.company}</p>
-                  </div>
-                  <span style={{ fontSize: 11, color: t.textMuted || "var(--text-dim)", fontFamily: "var(--font-mono)", flexShrink: 0, marginLeft: 12 }}>{exp.period}</span>
+            {/* Skills */}
+            {profile.skills?.length > 0 && (
+              <Section title="Skills" labelColor={t.labelSkills} lineColor={t.lineColor}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {profile.skills.map(s => (
+                    <span key={s} style={{ fontSize: 12, color: t.sectionSkills || "var(--text-muted)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", fontFamily: "var(--font-mono)" }}>{s}</span>
+                  ))}
                 </div>
-                {exp.description && <p style={{ fontSize: 13, color: t.sectionExperience || "var(--text-muted)", lineHeight: 1.65, marginTop: 8 }}>{exp.description}</p>}
-              </Card>
-            ))}
-          </Section>
-        )}
+              </Section>
+            )}
 
-        {/* Education */}
-        {profile.educations?.length > 0 && (
-          <Section title="Education" labelColor={t.labelEducation} lineColor={t.lineColor}>
-            {profile.educations.map((edu, i) => (
-              <Card key={i}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: t.sectionEducation || "var(--text)" }}>{edu.school}</p>
-                    <p style={{ fontSize: 13, color: t.sectionEducation || "var(--text-muted)", marginTop: 2 }}>{edu.degree}</p>
-                  </div>
-                  <span style={{ fontSize: 11, color: t.textMuted || "var(--text-dim)", fontFamily: "var(--font-mono)", flexShrink: 0, marginLeft: 12 }}>{edu.period}</span>
+            {/* Experience */}
+            {profile.experiences?.length > 0 && (
+              <Section title="Experience" labelColor={t.labelExperience} lineColor={t.lineColor}>
+                {profile.experiences.map((exp, i) => (
+                  <Card key={i}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+                      <div>
+                        <p style={{ fontSize: 14, fontWeight: 500, color: t.sectionExperience || "var(--text)" }}>{exp.role}</p>
+                        <p style={{ fontSize: 13, color: "var(--accent)", fontFamily: "var(--font-mono)", marginTop: 2 }}>{exp.company}</p>
+                      </div>
+                      <span style={{ fontSize: 11, color: t.textMuted || "var(--text-dim)", fontFamily: "var(--font-mono)", flexShrink: 0, marginLeft: 12 }}>{exp.period}</span>
+                    </div>
+                    {exp.description && <p style={{ fontSize: 13, color: t.sectionExperience || "var(--text-muted)", lineHeight: 1.65, marginTop: 8 }}>{exp.description}</p>}
+                  </Card>
+                ))}
+              </Section>
+            )}
+          </div>
+
+          {/* Right column: Education, Projects, Certifications, Gallery */}
+          <div>
+            {/* Education */}
+            {profile.educations?.length > 0 && (
+              <Section title="Education" labelColor={t.labelEducation} lineColor={t.lineColor}>
+                {profile.educations.map((edu, i) => (
+                  <Card key={i}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <p style={{ fontSize: 14, fontWeight: 500, color: t.sectionEducation || "var(--text)" }}>{edu.school}</p>
+                        <p style={{ fontSize: 13, color: t.sectionEducation || "var(--text-muted)", marginTop: 2 }}>{edu.degree}</p>
+                      </div>
+                      <span style={{ fontSize: 11, color: t.textMuted || "var(--text-dim)", fontFamily: "var(--font-mono)", flexShrink: 0, marginLeft: 12 }}>{edu.period}</span>
+                    </div>
+                  </Card>
+                ))}
+              </Section>
+            )}
+
+            {/* Projects */}
+            {profile.projects?.length > 0 && (
+              <Section title="Projects" labelColor={t.labelProjects} lineColor={t.lineColor}>
+                {profile.projects.map((p, i) => (
+                  <Card key={i}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: t.sectionProjects || "var(--text)" }}>{p.title}</p>
+                      {p.tag && <span style={{ fontSize: 10, color: "var(--accent)", fontFamily: "var(--font-mono)", background: "var(--accent-dim)", border: "1px solid var(--accent-border)", borderRadius: 6, padding: "3px 8px", flexShrink: 0, marginLeft: 12 }}>{p.tag}</span>}
+                    </div>
+                    <p style={{ fontSize: 13, color: t.sectionProjects || "var(--text-muted)", lineHeight: 1.65 }}>{p.description}</p>
+                    {p.link && <a href={p.link} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: "var(--accent)", marginTop: 8, display: "inline-block" }}>View project →</a>}
+                  </Card>
+                ))}
+              </Section>
+            )}
+
+            {/* Certifications */}
+            {profile.certifications?.length > 0 && (
+              <CertificationsSection certifications={profile.certifications} t={t} />
+            )}
+
+            {/* Gallery */}
+            {profile.gallery?.length > 0 && (
+              <Section title="Gallery" labelColor={t.labelGallery} lineColor={t.lineColor}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                  {profile.gallery.map((url, i) => (
+                    <div key={i} onClick={() => setLightboxIndex(i)} style={{ aspectRatio: "1", borderRadius: 10, overflow: "hidden", cursor: "pointer", border: "1px solid var(--border)", transition: "border-color 0.2s, transform 0.2s" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "scale(1)"; }}
+                    >
+                      <img src={url} alt={`Gallery ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  ))}
                 </div>
-              </Card>
-            ))}
-          </Section>
-        )}
+              </Section>
+            )}
+          </div>
 
-        {/* Projects */}
-        {profile.projects?.length > 0 && (
-          <Section title="Projects" labelColor={t.labelProjects} lineColor={t.lineColor}>
-            {profile.projects.map((p, i) => (
-              <Card key={i}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                  <p style={{ fontSize: 14, fontWeight: 500, color: t.sectionProjects || "var(--text)" }}>{p.title}</p>
-                  {p.tag && <span style={{ fontSize: 10, color: "var(--accent)", fontFamily: "var(--font-mono)", background: "var(--accent-dim)", border: "1px solid var(--accent-border)", borderRadius: 6, padding: "3px 8px", flexShrink: 0, marginLeft: 12 }}>{p.tag}</span>}
-                </div>
-                <p style={{ fontSize: 13, color: t.sectionProjects || "var(--text-muted)", lineHeight: 1.65 }}>{p.description}</p>
-                {p.link && <a href={p.link} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: "var(--accent)", marginTop: 8, display: "inline-block" }}>View project →</a>}
-              </Card>
-            ))}
-          </Section>
-        )}
-
-        {/* Certifications */}
-        {profile.certifications?.length > 0 && (
-          <CertificationsSection certifications={profile.certifications} t={t} />
-        )}
-
-        {/* Gallery */}
-        {profile.gallery?.length > 0 && (
-          <Section title="Gallery" labelColor={t.labelGallery} lineColor={t.lineColor}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-              {profile.gallery.map((url, i) => (
-                <div key={i} onClick={() => setLightboxIndex(i)} style={{ aspectRatio: "1", borderRadius: 10, overflow: "hidden", cursor: "pointer", border: "1px solid var(--border)", transition: "border-color 0.2s, transform 0.2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.transform = "scale(1.03)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "scale(1)"; }}
-                >
-                  <img src={url} alt={`Gallery ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </div>
-              ))}
-            </div>
-          </Section>
-        )}
-
+        </div>
       </div>
 
       {resumeOpen && <ResumePopup onClose={() => setResumeOpen(false)} />}
