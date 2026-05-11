@@ -448,22 +448,20 @@ function SkillsTab({ profile, onSave, saving }) {
 
   const [groups, setGroups] = useState(initGroups);
 
-  useEffect(() => {
-    setGroups(initGroups());
-  }, [profile.skills]);
-
   const addGroup = () => setGroups(p => [...p, { group: "", items: "" }]);
   const removeGroup = i => setGroups(p => p.filter((_, idx) => idx !== i));
   const updateGroup = (i, k, v) => setGroups(p => p.map((g, idx) => idx === i ? { ...g, [k]: v } : g));
   const moveUp = i => { if (i === 0) return; const l = [...groups]; [l[i-1], l[i]] = [l[i], l[i-1]]; setGroups(l); };
   const moveDown = i => { if (i === groups.length - 1) return; const l = [...groups]; [l[i], l[i+1]] = [l[i+1], l[i]]; setGroups(l); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const skills = groups.map(g => ({
       group: g.group.trim(),
       items: g.items.split(",").map(s => s.trim()).filter(Boolean),
     })).filter(g => g.items.length > 0);
-    onSave({ skills });
+    await onSave({ skills });
+    // Sync local state after save
+    setGroups(skills.map(g => ({ group: g.group, items: g.items.join(", ") })));
   };
 
   return (
