@@ -242,6 +242,9 @@ async def admin_login(request: LoginRequest):
 async def admin_update_profile(data: ProfileUpdate, username: str = Depends(verify_token)):
     """Update profile fields - requires JWT token."""
     updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    print(f"DEBUG updates keys: {list(updates.keys())}")
+    if "skills" in updates:
+        print(f"DEBUG skills: {updates['skills']}")
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
     await update_profile(updates)
