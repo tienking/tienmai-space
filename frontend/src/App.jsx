@@ -104,6 +104,10 @@ function Lightbox({ images, index, onClose }) {
 
 // ─── Chat ──────────────────────────────────────────────────────────────────────
 
+const STORAGE_SESSION = "tienmai_session_id";
+const STORAGE_MESSAGES = "tienmai_chat_messages";
+const SUGGESTED_QUESTIONS = ["Work experience?", "Skills & tools?", "Certifications?", "Open to work?"];
+
 function TypingDots() {
   return (
     <div style={{ display: "flex", gap: 4, padding: "12px 14px", alignItems: "center" }}>
@@ -123,8 +127,20 @@ function ChatMessage({ msg }) {
 }
 
 function ChatPopup({ onClose }) {
-  const [sessionId] = useState(generateSessionId);
-  const [messages, setMessages] = useState([{ role: "assistant", content: "Hey! Ask me anything about Tien 👋" }]);
+  const [sessionId] = useState(() => {
+    const s = localStorage.getItem(STORAGE_SESSION);
+    if (s) return s;
+    const id = generateSessionId();
+    localStorage.setItem(STORAGE_SESSION, id);
+    return id;
+  });
+  const [messages, setMessages] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_MESSAGES);
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return [{ role: "assistant", content: "Hey! Ask me anything about Tien 👋" }];
+  });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -132,12 +148,13 @@ function ChatPopup({ onClose }) {
   const fileRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+  useEffect(() => { localStorage.setItem(STORAGE_MESSAGES, JSON.stringify(messages.slice(-30))); }, [messages]);
 
-  const handleSend = async () => {
-    const text = input.trim();
+  const handleSend = async (textOverride) => {
+    const text = textOverride !== undefined ? textOverride.trim() : input.trim();
     if ((!text && !selectedFile) || loading) return;
 
-    setInput("");
+    if (textOverride === undefined) setInput("");
     setLoading(true);
 
     if (selectedFile) {
@@ -188,6 +205,17 @@ function ChatPopup({ onClose }) {
 
       <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
         {messages.map((msg, i) => <ChatMessage key={i} msg={msg} />)}
+        {messages.length === 1 && !loading && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 33 }}>
+            {SUGGESTED_QUESTIONS.map(q => (
+              <button key={q} onClick={() => handleSend(q)}
+                style={{ fontSize: 12, padding: "5px 11px", borderRadius: 20, border: "1px solid var(--accent-border)", background: "var(--accent-dim)", color: "var(--accent)", cursor: "pointer", fontFamily: "var(--font-display)", transition: "all 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#0a0a0b"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-dim)"; e.currentTarget.style.color = "var(--accent)"; }}
+              >{q}</button>
+            ))}
+          </div>
+        )}
         {loading && (
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "var(--accent-dim)", border: "1px solid var(--accent-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--accent)", marginRight: 7, fontFamily: "var(--font-mono)" }}>AI</div>
