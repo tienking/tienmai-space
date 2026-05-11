@@ -25,6 +25,11 @@ function useProfile() {
         setProfile(data);
         if (data.theme) applyTheme(data.theme);
         if (data.fonts) applyFonts(data.fonts);
+        if (data.name && data.title) {
+          document.title = `${data.name} – ${data.title}`;
+          const metaDesc = document.querySelector('meta[name="description"]');
+          if (metaDesc) metaDesc.setAttribute("content", `Personal portfolio of ${data.name} — ${data.title}. ${data.about?.slice(0, 120) ?? ""}`);
+        }
       })
       .catch(err => console.error("Failed to load profile:", err));
   }, []);
