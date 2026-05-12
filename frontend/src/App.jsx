@@ -115,6 +115,10 @@ function JDMatchBanner() {
     if (!file) return;
     const name = file.name.toLowerCase();
     if (!name.endsWith(".pdf") && !name.endsWith(".docx") && !name.endsWith(".txt")) return;
+    if (file.size > 8 * 1024 * 1024) {
+      setResult({ error: true, message: "File too large (max 8MB). Try converting to .txt or .docx." });
+      return;
+    }
     setLoading(true);
     setResult(null);
     setExpanded(true);
@@ -123,10 +127,16 @@ function JDMatchBanner() {
     formData.append("file", file);
     try {
       const res = await fetch("/api/jd-match", { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setResult({ error: true, message: err.detail || `Server error (${res.status})` });
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
       setResult(data);
     } catch {
-      setResult({ error: true });
+      setResult({ error: true, message: "Network error. Please try again." });
     }
     setLoading(false);
   };
@@ -175,7 +185,7 @@ function JDMatchBanner() {
       )}
 
       {/* Error */}
-      {result?.error && <p style={{ fontSize: 13, color: "#f87171", padding: "8px 0" }}>Something went wrong. Please try again.</p>}
+      {result?.error && <p style={{ fontSize: 13, color: "#f87171", padding: "8px 0" }}>{result.message || "Something went wrong. Please try again."}</p>}
 
       {/* Result */}
       {result && !result.error && (
