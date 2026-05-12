@@ -140,18 +140,18 @@ function Dashboard({ token, onLogout }) {
   );
 
   const tabs = [
-    { id: "basic", label: "Basic Info" },
-    { id: "resume", label: "📄 Resume" },
-    { id: "about", label: "About" },
-    { id: "skills", label: "Skills" },
-    { id: "experience", label: "Experience" },
-    { id: "education", label: "Education" },
-    { id: "projects", label: "Projects" },
-    { id: "certifications", label: "Certifications" },
-    { id: "gallery", label: "Gallery" },
-    { id: "theme", label: "🎨 Theme" },
-    { id: "fonts", label: "✦ Fonts" },
-    { id: "analytics", label: "📊 Analytics" },
+    { id: "basic",         icon: "👤", label: "Basic Info" },
+    { id: "about",         icon: "📝", label: "About" },
+    { id: "skills",        icon: "⚡", label: "Skills" },
+    { id: "experience",    icon: "💼", label: "Experience" },
+    { id: "education",     icon: "🎓", label: "Education" },
+    { id: "projects",      icon: "🗂️", label: "Projects" },
+    { id: "certifications",icon: "🏅", label: "Certifications" },
+    { id: "gallery",       icon: "🖼️", label: "Gallery" },
+    { id: "resume",        icon: "📄", label: "Resume" },
+    { id: "theme",         icon: "🎨", label: "Theme" },
+    { id: "fonts",         icon: "✍️", label: "Fonts" },
+    { id: "analytics",     icon: "📊", label: "Analytics" },
   ];
 
   return (
@@ -173,7 +173,10 @@ function Dashboard({ token, onLogout }) {
       <div style={{ display: "flex", maxWidth: 1000, margin: "0 auto", padding: "24px" }}>
         <div style={{ width: 160, flexShrink: 0, marginRight: 24 }}>
           {tabs.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 10, border: "none", background: activeTab === tab.id ? "var(--accent-dim)" : "none", color: activeTab === tab.id ? "var(--accent)" : "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", marginBottom: 4, transition: "all 0.15s" }}>{tab.label}</button>
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 10, border: "none", background: activeTab === tab.id ? "var(--accent-dim)" : "none", color: activeTab === tab.id ? "var(--accent)" : "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", marginBottom: 4, transition: "all 0.15s" }}>
+              <span style={{ width: 18, flexShrink: 0, textAlign: "center", fontSize: 14 }}>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
           ))}
         </div>
 
