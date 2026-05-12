@@ -12,6 +12,8 @@ import shutil
 import base64
 import docx
 import io
+import json
+import re
 
 # --- Gemini Client ---
 client = genai.Client(api_key=GEMINI_API_KEY)
@@ -271,12 +273,10 @@ async def jd_match(file: UploadFile = File(...)):
             config=types.GenerateContentConfig(system_instruction=system_prompt)
         )
 
-        import json, re
         raw = response.text.strip()
-        match = re.search(r'\{.*\}', raw, re.DOTALL)
-        if not match:
-            raise ValueError("No JSON in response")
-        return json.loads(match.group())
+        raw = re.sub(r"^```(?:json)?\s*", "", raw).rstrip("` \n")
+        result = json.loads(raw)
+        return result
 
     except Exception as e:
         print(f"JD match error: {e}")
