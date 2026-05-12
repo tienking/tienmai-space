@@ -615,11 +615,11 @@ export default function App() {
             <Avatar name={profile.name} avatar={profile.avatar} />
             {profile.openToWork && (
               <div style={{
-                fontSize: 10, fontWeight: 600, letterSpacing: "0.04em",
+                fontSize: 20, fontWeight: 600, letterSpacing: "0.04em",
                 color: t.openToWorkText || "#fff",
                 background: t.openToWorkBg || "#16a34a",
                 border: `1px solid ${t.openToWorkBorder || "rgba(255,255,255,0.2)"}`,
-                borderRadius: 20, padding: "3px 10px",
+                borderRadius: 20, padding: "6px 20px",
                 fontFamily: "var(--font-display)",
                 whiteSpace: "nowrap",
                 boxShadow: `0 0 12px ${t.openToWorkBg || "#16a34a"}55`,
@@ -629,8 +629,8 @@ export default function App() {
             )}
           </div>
           <div style={{ flex: 1 }}>
-            <h1 style={{ fontSize: "1.9rem", fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 4, color: t.headingName || "var(--text)", fontFamily: "var(--font-display)" }}>{profile.name}</h1>
-            <p style={{ fontSize: 14, color: "var(--accent)", fontFamily: "var(--font-mono)", marginBottom: 8 }}>{profile.title}</p>
+            <h1 style={{ fontSize: "2.85rem", fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 4, color: t.headingName || "var(--text)", fontFamily: "var(--font-display)" }}>{profile.name}</h1>
+            <p style={{ fontSize: 21, color: "var(--accent)", fontFamily: "var(--font-mono)", marginBottom: 8 }}>{profile.title}</p>
             <p style={{ fontSize: 13, color: t.textMuted || "var(--text-muted)", marginBottom: 14 }}>📍 {profile.location}</p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {profile.email && <a href={`mailto:${profile.email}`} style={linkStyle}>✉ Email</a>}
