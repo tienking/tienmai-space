@@ -309,7 +309,7 @@ function ChatPopup({ onClose }) {
       const stored = localStorage.getItem(STORAGE_MESSAGES);
       if (stored) return JSON.parse(stored);
     } catch {}
-    return [{ role: "assistant", content: "Hey! Ask me anything about Tien 👋" }];
+    return [{ role: "assistant", content: "Hey! I'm Tien — feel free to ask me anything 👋" }];
   });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
