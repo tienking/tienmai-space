@@ -615,11 +615,12 @@ export default function App() {
             <Avatar name={profile.name} avatar={profile.avatar} />
             {profile.openToWork && (
               <div style={{
-                fontSize: 40, fontWeight: 600, letterSpacing: "0.04em",
+                fontSize: 15, fontWeight: 600, letterSpacing: "0.04em",
                 color: t.openToWorkText || "#fff",
                 background: t.openToWorkBg || "#16a34a",
                 border: `1px solid ${t.openToWorkBorder || "rgba(255,255,255,0.2)"}`,
-                borderRadius: 40, padding: "12px 40px",
+                borderRadius: 20, padding: "6px 0",
+                width: 176, textAlign: "center",
                 fontFamily: "var(--font-display)",
                 whiteSpace: "nowrap",
                 boxShadow: `0 0 12px ${t.openToWorkBg || "#16a34a"}55`,
