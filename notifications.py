@@ -35,12 +35,15 @@ async def notify_jd_upload(file_bytes: bytes, filename: str, result: dict):
         )
 
         pct = result.get("match_percent", 0)
+        job_title = result.get("job_title", "")
         match_emoji = "🟢" if pct >= 50 else "🔴"
         matching = ", ".join(result.get("match_skills") or []) or "—"
         missing = ", ".join(result.get("missing_skills") or []) or "None"
         assessment = result.get("assessment", "")
 
+        title_line = f"📌 *{job_title}*\n" if job_title else ""
         text = (
+            f"{title_line}"
             f"{match_emoji} *JD Match: {pct}%*\n\n"
             f"✅ *Matching:* {matching}\n\n"
             f"❌ *Missing:* {missing}\n\n"

@@ -212,7 +212,7 @@ function JDMatchBanner({ theme = {} }) {
       {result && !result.error && (
         <div style={{ animation: "fadeUp 0.3s ease" }}>
           {/* Match percent */}
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: result.job_title ? 8 : 16 }}>
             <span style={{ fontSize: 52, fontWeight: 700, color: matchColor, lineHeight: 1, fontFamily: "var(--font-display)" }}>{result.match_percent}%</span>
             <div>
               <p style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)", letterSpacing: "0.08em" }}>OVERALL MATCH</p>
@@ -221,6 +221,11 @@ function JDMatchBanner({ theme = {} }) {
               </p>
             </div>
           </div>
+          {result.job_title && (
+            <p style={{ fontSize: 12, color: bannerText, fontFamily: "var(--font-mono)", marginBottom: 16, opacity: 0.8 }}>
+              📌 {result.job_title}
+            </p>
+          )}
 
           {/* Expandable detail */}
           {expanded && (

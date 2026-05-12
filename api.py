@@ -242,6 +242,7 @@ async def web_chat_file(
 JD_MATCH_PROMPT = """Analyze this job description against my profile.
 Respond ONLY with valid JSON in exactly this format, no other text outside the JSON:
 {
+  "job_title": "<concise job title extracted from the JD, e.g. 'Senior Python Developer at Acme Corp'>",
   "match_percent": <integer 0-100>,
   "match_skills": ["skill1", "skill2"],
   "missing_skills": ["skill1", "skill2"],
