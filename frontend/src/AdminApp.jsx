@@ -206,7 +206,7 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "projects" && <ListTab title="Projects" field="projects" items={profile.projects || []} onSave={save} saving={saving} fields={["title", "tag", "description", "link"]} />}
           {activeTab === "certifications" && <CertificationTab items={profile.certifications || []} onSave={save} saving={saving} />}
           {activeTab === "gallery" && <GalleryTab gallery={profile.gallery || []} onSave={saveGallery} saving={saving} />}
-          {activeTab === "resume" && <ResumeTab token={token} />}
+          {activeTab === "resume" && <ResumeTab token={token} resumeVisible={profile.resumeVisible !== false} onSave={save} saving={saving} />}
           {activeTab === "theme" && <ThemeTab theme={profile.theme || {}} onSave={save} saving={saving} />}
           {activeTab === "fonts" && <FontsTab fonts={profile.fonts || {}} onSave={save} saving={saving} />}
           {activeTab === "analytics" && <AnalyticsTab token={token} />}
@@ -930,10 +930,11 @@ const inputStyle = {
 
 // ─── Resume Tab ────────────────────────────────────────────────────────────────
 
-function ResumeTab({ token }) {
+function ResumeTab({ token, resumeVisible, onSave, saving }) {
   const [hasResume, setHasResume] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [visible, setVisible] = useState(resumeVisible);
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -973,6 +974,20 @@ function ResumeTab({ token }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>Resume</h2>
       </div>
+
+      {/* Visibility toggle */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-card)", border: `1px solid ${visible ? "var(--accent-border)" : "var(--border)"}`, borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
+        <div>
+          <p style={{ fontSize: 14, fontWeight: 500 }}>Show resume on profile</p>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+            {visible ? "Visible to visitors" : "Hidden from visitors — file still saved"}
+          </p>
+        </div>
+        <button onClick={() => { const v = !visible; setVisible(v); onSave({ resumeVisible: v }); }} disabled={saving} style={{ width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", background: visible ? "var(--accent)" : "var(--border)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+          <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: visible ? 23 : 3, transition: "left 0.2s" }} />
+        </button>
+      </div>
+
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "20px", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <div style={{ width: 40, height: 40, borderRadius: 10, background: hasResume ? "var(--accent-dim)" : "var(--bg-surface)", border: `1px solid ${hasResume ? "var(--accent-border)" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📄</div>
