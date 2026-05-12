@@ -104,44 +104,134 @@ function Lightbox({ images, index, onClose }) {
 
 // ─── JD Match Banner ──────────────────────────────────────────────────────────
 
-function JDMatchBanner({ onFileSelect }) {
+function JDMatchBanner() {
   const fileRef = useRef(null);
   const [dragging, setDragging] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [expanded, setExpanded] = useState(true);
 
-  const handleFile = (file) => {
+  const handleFile = async (file) => {
     if (!file) return;
     const name = file.name.toLowerCase();
     if (!name.endsWith(".pdf") && !name.endsWith(".docx") && !name.endsWith(".txt")) return;
-    onFileSelect(file);
+    setLoading(true);
+    setResult(null);
+    setExpanded(true);
+    setDragging(false);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch("/api/jd-match", { method: "POST", body: formData });
+      const data = await res.json();
+      setResult(data);
+    } catch {
+      setResult({ error: true });
+    }
+    setLoading(false);
   };
+
+  const matchColor = result && !result.error
+    ? result.match_percent >= 70 ? "#4ade80" : result.match_percent >= 45 ? "#fbbf24" : "#f87171"
+    : "var(--accent)";
 
   return (
     <div
       style={{
-        borderRadius: 16, padding: "20px 24px", marginBottom: 36, cursor: "pointer",
+        borderRadius: 16, padding: "20px 24px", marginBottom: 36,
         border: `1px solid ${dragging ? "var(--accent)" : "var(--accent-border)"}`,
         background: dragging ? "var(--accent-dim)" : "var(--bg-card)",
-        transition: "all 0.2s",
+        transition: "border-color 0.2s, background 0.2s",
+        cursor: !result && !loading ? "pointer" : "default",
       }}
-      onClick={() => fileRef.current?.click()}
+      onClick={() => { if (!result && !loading) fileRef.current?.click(); }}
       onDragOver={e => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
-      onDrop={e => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
+      onDrop={e => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); }}
     >
-      <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent)", letterSpacing: "0.12em", marginBottom: 8 }}>FOR RECRUITERS</p>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: result || loading ? 20 : 0 }}>
         <div>
-          <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>Check if I'm a fit for your role</p>
-          <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>Drop a job description here — I'll analyze match %, skills alignment and gaps instantly.</p>
+          <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent)", letterSpacing: "0.12em", marginBottom: 6 }}>FOR RECRUITERS</p>
+          <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", marginBottom: result || loading ? 0 : 4 }}>Check if I'm a fit for your role</p>
+          {!result && !loading && <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5, marginTop: 4 }}>Drop a job description here — I'll analyze match %, skills alignment and gaps instantly.</p>}
         </div>
         <button
           onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}
-          style={{ padding: "9px 18px", borderRadius: 10, flexShrink: 0, border: "1px solid var(--accent-border)", background: "var(--accent-dim)", color: "var(--accent)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", whiteSpace: "nowrap", transition: "all 0.15s" }}
-          onMouseEnter={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#0a0a0b"; }}
+          disabled={loading}
+          style={{ padding: "8px 16px", borderRadius: 10, flexShrink: 0, border: "1px solid var(--accent-border)", background: "var(--accent-dim)", color: "var(--accent)", fontSize: 12, cursor: loading ? "default" : "pointer", fontFamily: "var(--font-display)", whiteSpace: "nowrap", transition: "all 0.15s", opacity: loading ? 0.6 : 1 }}
+          onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#0a0a0b"; } }}
           onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-dim)"; e.currentTarget.style.color = "var(--accent)"; }}
-        >Upload JD ↑</button>
+        >{loading ? "Analyzing..." : result ? "↑ New JD" : "↑ Upload JD"}</button>
+        <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={e => { handleFile(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
       </div>
-      <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={e => { handleFile(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
+
+      {/* Loading */}
+      {loading && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0" }}>
+          <div style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid var(--accent-border)", borderTopColor: "var(--accent)", animation: "spin 0.8s linear infinite", flexShrink: 0 }} />
+          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Reading your JD and comparing with my profile...</p>
+        </div>
+      )}
+
+      {/* Error */}
+      {result?.error && <p style={{ fontSize: 13, color: "#f87171", padding: "8px 0" }}>Something went wrong. Please try again.</p>}
+
+      {/* Result */}
+      {result && !result.error && (
+        <div style={{ animation: "fadeUp 0.3s ease" }}>
+          {/* Match percent */}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 16 }}>
+            <span style={{ fontSize: 52, fontWeight: 700, color: matchColor, lineHeight: 1, fontFamily: "var(--font-display)" }}>{result.match_percent}%</span>
+            <div>
+              <p style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)", letterSpacing: "0.08em" }}>OVERALL MATCH</p>
+              <p style={{ fontSize: 12, color: matchColor, marginTop: 2 }}>
+                {result.match_percent >= 70 ? "Strong fit" : result.match_percent >= 45 ? "Partial fit" : "Low fit"}
+              </p>
+            </div>
+          </div>
+
+          {/* Expandable detail */}
+          {expanded && (
+            <div style={{ animation: "fadeUp 0.2s ease" }}>
+              {/* Skills grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px" }}>
+                  <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "#4ade80", letterSpacing: "0.08em", marginBottom: 10 }}>✓ MATCHING SKILLS</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {result.match_skills?.map((s, i) => (
+                      <span key={i} style={{ fontSize: 11, color: "#4ade80", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 6, padding: "3px 9px", fontFamily: "var(--font-mono)" }}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px" }}>
+                  <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "#f87171", letterSpacing: "0.08em", marginBottom: 10 }}>✕ MISSING SKILLS</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {result.missing_skills?.length > 0
+                      ? result.missing_skills.map((s, i) => (
+                        <span key={i} style={{ fontSize: 11, color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 6, padding: "3px 9px", fontFamily: "var(--font-mono)" }}>{s}</span>
+                      ))
+                      : <span style={{ fontSize: 12, color: "var(--text-muted)" }}>None identified</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              {/* Assessment */}
+              <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px" }}>
+                <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-muted)", letterSpacing: "0.08em", marginBottom: 8 }}>MY TAKE</p>
+                <p style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.7, fontStyle: "italic" }}>{result.assessment}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Show less/more */}
+          <button onClick={() => setExpanded(p => !p)} style={{ width: "100%", padding: "9px", borderRadius: 10, border: "1px solid var(--border)", background: "none", color: "var(--accent)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", transition: "border-color 0.2s", marginTop: 12 }}
+            onMouseEnter={e => e.target.style.borderColor = "var(--accent-border)"}
+            onMouseLeave={e => e.target.style.borderColor = "var(--border)"}
+          >{expanded ? "↑ Show less" : "↓ Show full analysis"}</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -170,7 +260,7 @@ function ChatMessage({ msg }) {
   );
 }
 
-function ChatPopup({ onClose, initialFile = null }) {
+function ChatPopup({ onClose }) {
   const [sessionId] = useState(() => {
     const s = localStorage.getItem(STORAGE_SESSION);
     if (s) return s;
@@ -187,7 +277,7 @@ function ChatPopup({ onClose, initialFile = null }) {
   });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(initialFile);
+  const [selectedFile, setSelectedFile] = useState(null);
   const bottomRef = useRef(null);
   const fileRef = useRef(null);
 
@@ -236,15 +326,6 @@ function ChatPopup({ onClose, initialFile = null }) {
     if (file) setSelectedFile(file);
     e.target.value = "";
   };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (!initialFile) return;
-    const timer = setTimeout(() => {
-      handleSend("Please analyze this job description. Tell me how well I fit the role — include match percentage, matching skills, any gaps, and overall recommendation.");
-    }, 400);
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <div className="chat-popup" style={{ position: "fixed", bottom: 84, right: 24, zIndex: 999, width: 340, height: 460, background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 18, boxShadow: "0 20px 60px rgba(0,0,0,0.7)", display: "flex", flexDirection: "column", overflow: "hidden", animation: "fadeUp 0.25s ease" }}>
@@ -462,13 +543,9 @@ function CertificationsSection({ certifications, t }) {
 export default function App() {
   const profile = useProfile();
   const [chatOpen, setChatOpen] = useState(false);
-  const [jdFile, setJdFile] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [resumeOpen, setResumeOpen] = useState(false);
   const [hasResume, setHasResume] = useState(false);
-
-  const handleJDSelect = (file) => { setJdFile(file); setChatOpen(true); };
-  const handleChatClose = () => { setChatOpen(false); setJdFile(null); };
 
   useEffect(() => {
     fetch("/api/resume/exists")
@@ -533,7 +610,7 @@ export default function App() {
           </div>
         </div>
 
-        <JDMatchBanner onFileSelect={handleJDSelect} />
+        <JDMatchBanner />
 
         {/* Two column layout on desktop */}
         <style>{`
@@ -660,8 +737,8 @@ export default function App() {
 
       {resumeOpen && <ResumePopup onClose={() => setResumeOpen(false)} />}
       {lightboxIndex !== null && <Lightbox images={profile.gallery} index={lightboxIndex} onClose={() => setLightboxIndex(null)} />}
-      {chatOpen && <ChatPopup onClose={handleChatClose} initialFile={jdFile} />}
-      <FloatingButton onClick={() => { if (chatOpen) setJdFile(null); setChatOpen(p => !p); }} isOpen={chatOpen} />
+      {chatOpen && <ChatPopup onClose={() => setChatOpen(false)} />}
+      <FloatingButton onClick={() => setChatOpen(p => !p)} isOpen={chatOpen} />
     </>
   );
 }

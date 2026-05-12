@@ -232,6 +232,56 @@ async def web_chat_file(
         print(f"File chat error: {e}")
         return {"reply": "Sorry, I'm having trouble processing that file right now."}
 
+# --- Public: JD Match ---
+JD_MATCH_PROMPT = """Analyze this job description against my profile.
+Respond ONLY with valid JSON in exactly this format, no other text outside the JSON:
+{
+  "match_percent": <integer 0-100>,
+  "match_skills": ["skill1", "skill2"],
+  "missing_skills": ["skill1", "skill2"],
+  "assessment": "<2-3 sentences: your honest take on this role — speak in first person as the candidate>"
+}"""
+
+@router.post("/api/jd-match")
+async def jd_match(file: UploadFile = File(...)):
+    """Analyze a JD against profile and return structured match result."""
+    try:
+        file_bytes = await file.read()
+        filename = file.filename.lower()
+        profile = await get_profile()
+        system_prompt = build_system_prompt(profile)
+
+        if filename.endswith(".pdf"):
+            parts = [
+                types.Part(inline_data=types.Blob(mime_type="application/pdf", data=base64.b64encode(file_bytes).decode())),
+                types.Part(text=JD_MATCH_PROMPT)
+            ]
+        elif filename.endswith(".docx"):
+            extracted_text = extract_docx_text(file_bytes)
+            parts = [types.Part(text=f"Job Description:\n\n{extracted_text}\n\n{JD_MATCH_PROMPT}")]
+        elif filename.endswith(".txt"):
+            text_content = file_bytes.decode("utf-8", errors="ignore")
+            parts = [types.Part(text=f"Job Description:\n\n{text_content}\n\n{JD_MATCH_PROMPT}")]
+        else:
+            raise HTTPException(status_code=400, detail="Only PDF, Word (.docx), and Text (.txt) files are supported")
+
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=[types.Content(role="user", parts=parts)],
+            config=types.GenerateContentConfig(system_instruction=system_prompt)
+        )
+
+        import json, re
+        raw = response.text.strip()
+        match = re.search(r'\{.*\}', raw, re.DOTALL)
+        if not match:
+            raise ValueError("No JSON in response")
+        return json.loads(match.group())
+
+    except Exception as e:
+        print(f"JD match error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to analyze job description")
+
 # --- Admin: Login ---
 @router.post("/api/admin/login")
 async def admin_login(request: LoginRequest):
