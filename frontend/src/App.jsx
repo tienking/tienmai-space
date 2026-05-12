@@ -662,7 +662,7 @@ export default function App() {
             {/* About */}
             {profile.about && (
               <Section title="About" labelColor={t.labelAbout} lineColor={t.lineColor}>
-                <p style={{ fontSize: 14, color: t.sectionAbout || "var(--text-muted)", lineHeight: 1.8 }}>{profile.about}</p>
+                <p style={{ fontSize: 14, color: t.sectionAbout || "var(--text-muted)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{profile.about}</p>
               </Section>
             )}
 
