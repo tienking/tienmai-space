@@ -7,7 +7,7 @@ from config import ADMIN_USERNAME, ADMIN_PASSWORD, JWT_SECRET
 
 # --- Config ---
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = 24
+ACCESS_TOKEN_EXPIRE_HOURS = 24 * 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()

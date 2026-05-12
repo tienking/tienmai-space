@@ -35,8 +35,24 @@ const PRESETS = [
   { name: "Rose Light", dark: false, theme: { bg: "#fff1f2", bgSurface: "#ffe4e6", bgCard: "#fecdd3", accent: "#e11d48", text: "#4c0519", textMuted: "#8a4a55", headingName: "#4c0519", labelAbout: "#fda4af", labelSkills: "#fda4af", labelExperience: "#fda4af", labelEducation: "#fda4af", labelProjects: "#fda4af", labelGallery: "#fda4af", lineColor: "rgba(225,29,72,0.2)", sectionAbout: "#8a4a55", sectionSkills: "#4c0519", sectionExperience: "#4c0519", sectionEducation: "#4c0519", sectionProjects: "#4c0519", sectionGallery: "#4c0519" } },
 ];
 
+function getTokenExpiry(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp * 1000;
+  } catch { return null; }
+}
+
 function useAuth() {
-  const [token, setToken] = useState(localStorage.getItem("admin_token"));
+  const [token, setToken] = useState(() => {
+    const t = localStorage.getItem("admin_token");
+    if (!t) return null;
+    const exp = getTokenExpiry(t);
+    if (exp && Date.now() > exp) {
+      localStorage.removeItem("admin_token");
+      return null;
+    }
+    return t;
+  });
   const login = async (username, password) => {
     const res = await fetch(`${API}/api/admin/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
     if (!res.ok) throw new Error("Invalid credentials");
