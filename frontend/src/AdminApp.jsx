@@ -387,8 +387,8 @@ function ThemeTab({ theme, onSave, saving }) {
         <ColorPicker label="Title color" value={t.bannerTitle || t.text || "#f0efe8"} onChange={v => set("bannerTitle", v)} />
         <ColorPicker label="Body text color" value={t.bannerText || t.textMuted || "#6b6a65"} onChange={v => set("bannerText", v)} />
         <ColorPicker label="Button text color" value={t.bannerBtnText || t.accent || "#5dcaa5"} onChange={v => set("bannerBtnText", v)} />
-        <ColorPicker label="Matching skills color" value={t.bannerMatchColor || "#16a34a"} onChange={v => set("bannerMatchColor", v)} />
-        <ColorPicker label="Missing skills color" value={t.bannerMissingColor || "#dc2626"} onChange={v => set("bannerMissingColor", v)} />
+        <ColorPicker label="Match color ≥50% (% & skills)" value={t.bannerMatchColor || "#16a34a"} onChange={v => set("bannerMatchColor", v)} />
+        <ColorPicker label="Low match color <50% (% & skills)" value={t.bannerMissingColor || "#dc2626"} onChange={v => set("bannerMissingColor", v)} />
       </div>
     </TabCard>
   );

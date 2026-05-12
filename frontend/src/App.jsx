@@ -150,7 +150,7 @@ function JDMatchBanner({ theme = {} }) {
   };
 
   const matchColor = result && !result.error
-    ? result.match_percent >= 70 ? "#4ade80" : result.match_percent >= 45 ? "#fbbf24" : "#f87171"
+    ? result.match_percent >= 50 ? skillMatchColor : skillMissingColor
     : "var(--accent)";
 
   return (
@@ -204,7 +204,7 @@ function JDMatchBanner({ theme = {} }) {
             <div>
               <p style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--text-muted)", letterSpacing: "0.08em" }}>OVERALL MATCH</p>
               <p style={{ fontSize: 12, color: matchColor, marginTop: 2 }}>
-                {result.match_percent >= 70 ? "Strong fit" : result.match_percent >= 45 ? "Partial fit" : "Low fit"}
+                {result.match_percent >= 70 ? "Strong fit" : result.match_percent >= 50 ? "Good fit" : "Low fit"}
               </p>
             </div>
           </div>
