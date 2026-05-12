@@ -630,8 +630,8 @@ export default function App() {
             )}
           </div>
           <div style={{ flex: 1 }}>
-            <h1 style={{ fontSize: "2.85rem", fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 4, color: t.headingName || "var(--text)", fontFamily: "var(--font-display)" }}>{profile.name}</h1>
-            <p style={{ fontSize: 21, color: "var(--accent)", fontFamily: "var(--font-mono)", marginBottom: 8 }}>{profile.title}</p>
+            <h1 style={{ fontSize: "2rem", fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 4, color: t.headingName || "var(--text)", fontFamily: "var(--font-display)" }}>{profile.name}</h1>
+            <p style={{ fontSize: 15, color: "var(--accent)", fontFamily: "var(--font-mono)", marginBottom: 8 }}>{profile.title}</p>
             <p style={{ fontSize: 13, color: t.textMuted || "var(--text-muted)", marginBottom: 14 }}>📍 {profile.location}</p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {profile.email && <a href={`mailto:${profile.email}`} style={linkStyle}>✉ Email</a>}
