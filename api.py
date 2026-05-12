@@ -39,6 +39,7 @@ class ProfileUpdate(BaseModel):
     title: Optional[str] = None
     location: Optional[str] = None
     email: Optional[str] = None
+    phone: Optional[str] = None
     github: Optional[str] = None
     gitlab: Optional[str] = None
     linkedin: Optional[str] = None
@@ -60,6 +61,7 @@ def build_system_prompt(profile: dict) -> str:
     title = profile.get("title", "")
     location = profile.get("location", "")
     email = profile.get("email", "")
+    phone = profile.get("phone", "")
     linkedin = profile.get("linkedin", "")
     about = profile.get("about", "")
     raw_skills = profile.get("skills", [])
@@ -96,6 +98,7 @@ Name: {name}
 Title: {title}
 Location: {location}
 Email: {email}
+Phone: {phone}
 LinkedIn: {linkedin}
 
 About me:

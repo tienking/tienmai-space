@@ -634,6 +634,7 @@ export default function App() {
             <p style={{ fontSize: 12, color: "var(--accent)", fontFamily: "var(--font-mono)", marginBottom: 8 }}>{profile.title}</p>
             <p style={{ fontSize: 13, color: t.textMuted || "var(--text-muted)", marginBottom: 14 }}>📍 {profile.location}</p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {profile.phone && <a href={`tel:${profile.phone}`} style={linkStyle}>📞 {profile.phone}</a>}
               {profile.email && <a href={`mailto:${profile.email}`} style={linkStyle}>✉ Email</a>}
               {profile.github && <a href={profile.github} target="_blank" rel="noreferrer" style={linkStyle}>⌥ GitHub</a>}
               {profile.gitlab && <a href={profile.gitlab} target="_blank" rel="noreferrer" style={linkStyle}>⌦ GitLab</a>}
