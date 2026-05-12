@@ -113,6 +113,8 @@ function JDMatchBanner({ theme = {} }) {
   const bannerTitle = theme.bannerTitle || "var(--text)";
   const bannerText = theme.bannerText || "var(--text-muted)";
   const bannerBtnText = theme.bannerBtnText || "var(--accent)";
+  const skillMatchColor = theme.bannerMatchColor || "#16a34a";
+  const skillMissingColor = theme.bannerMissingColor || "#dc2626";
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [expanded, setExpanded] = useState(true);
@@ -213,19 +215,19 @@ function JDMatchBanner({ theme = {} }) {
               {/* Skills grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                 <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px" }}>
-                  <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "#4ade80", letterSpacing: "0.08em", marginBottom: 10 }}>✓ MATCHING SKILLS</p>
+                  <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: skillMatchColor, letterSpacing: "0.08em", marginBottom: 10 }}>✓ MATCHING SKILLS</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {result.match_skills?.map((s, i) => (
-                      <span key={i} style={{ fontSize: 11, color: "#4ade80", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 6, padding: "3px 9px", fontFamily: "var(--font-mono)" }}>{s}</span>
+                      <span key={i} style={{ fontSize: 11, color: skillMatchColor, background: skillMatchColor + "22", border: `1px solid ${skillMatchColor}55`, borderRadius: 6, padding: "3px 9px", fontFamily: "var(--font-mono)" }}>{s}</span>
                     ))}
                   </div>
                 </div>
                 <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px" }}>
-                  <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "#f87171", letterSpacing: "0.08em", marginBottom: 10 }}>✕ MISSING SKILLS</p>
+                  <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: skillMissingColor, letterSpacing: "0.08em", marginBottom: 10 }}>✕ MISSING SKILLS</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {result.missing_skills?.length > 0
                       ? result.missing_skills.map((s, i) => (
-                        <span key={i} style={{ fontSize: 11, color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 6, padding: "3px 9px", fontFamily: "var(--font-mono)" }}>{s}</span>
+                        <span key={i} style={{ fontSize: 11, color: skillMissingColor, background: skillMissingColor + "22", border: `1px solid ${skillMissingColor}55`, borderRadius: 6, padding: "3px 9px", fontFamily: "var(--font-mono)" }}>{s}</span>
                       ))
                       : <span style={{ fontSize: 12, color: "var(--text-muted)" }}>None identified</span>
                     }
