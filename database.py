@@ -32,6 +32,11 @@ async def save_message(session_id: str, role: str, content: str, source: str = "
         "created_at": datetime.utcnow()
     })
 
+async def is_first_web_message(session_id: str) -> bool:
+    """Return True if this session has no prior web messages."""
+    count = await chat_collection.count_documents({"session_id": session_id, "source": "web"})
+    return count == 0
+
 async def get_chat_history(session_id: str, limit: int = 20):
     """Retrieve chat history for a given session."""
     cursor = chat_collection.find(

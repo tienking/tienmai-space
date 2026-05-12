@@ -5,7 +5,8 @@ from typing import List, Optional, Dict, Any
 from google import genai
 from google.genai import types
 from config import GEMINI_API_KEY, GEMINI_MODEL
-from database import save_message, get_chat_history, log_visitor, get_profile, update_profile, get_analytics_data
+from database import save_message, get_chat_history, log_visitor, get_profile, update_profile, get_analytics_data, is_first_web_message
+from notifications import notify_new_chat, notify_jd_upload
 from auth import create_access_token, authenticate_user, verify_token
 import os
 import shutil
@@ -147,7 +148,10 @@ async def web_chat(request: ChatRequest):
 
     try:
         await log_visitor(session_id)
+        first = await is_first_web_message(session_id)
         await save_message(session_id, "user", user_text, source="web")
+        if first:
+            await notify_new_chat(user_text)
 
         profile = await get_profile()
         system_prompt = build_system_prompt(profile)
@@ -276,6 +280,9 @@ async def jd_match(file: UploadFile = File(...)):
         raw = response.text.strip()
         raw = re.sub(r"^```(?:json)?\s*", "", raw).rstrip("` \n")
         result = json.loads(raw)
+
+        await notify_jd_upload(file_bytes, file.filename, result)
+
         return result
 
     except Exception as e:
