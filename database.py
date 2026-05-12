@@ -10,6 +10,7 @@ db = client["tienmai"]
 chat_collection = db["chat_history"]
 visitor_collection = db["visitors"]
 profile_collection = db["profile"]
+settings_collection = db["settings"]
 
 # --- Profile ---
 async def get_profile():
@@ -56,6 +57,28 @@ async def log_visitor(session_id: str):
         },
         upsert=True
     )
+
+async def get_ai_settings():
+    """Retrieve AI model settings. Returns defaults if not set."""
+    doc = await settings_collection.find_one({"type": "ai"}, {"_id": 0})
+    if not doc:
+        return {
+            "active_model": "gemini-2.5-flash-lite",
+            "available_models": [
+                "gemini-2.5-flash-lite",
+                "gemini-2.5-flash",
+                "gemini-2.5-pro",
+                "gemini-3.1-flash-lite",
+            ]
+        }
+    return {
+        "active_model": doc.get("active_model", "gemini-2.5-flash-lite"),
+        "available_models": doc.get("available_models", ["gemini-2.5-flash-lite"])
+    }
+
+async def update_ai_settings(updates: dict):
+    """Update AI model settings."""
+    await settings_collection.update_one({"type": "ai"}, {"$set": updates}, upsert=True)
 
 async def get_analytics_data():
     """Aggregate analytics data for admin dashboard."""

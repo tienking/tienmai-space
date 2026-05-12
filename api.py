@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from google import genai
 from google.genai import types
 from config import GEMINI_API_KEY, GEMINI_MODEL
-from database import save_message, get_chat_history, log_visitor, get_profile, update_profile, get_analytics_data, is_first_web_message
+from database import save_message, get_chat_history, log_visitor, get_profile, update_profile, get_analytics_data, is_first_web_message, get_ai_settings, update_ai_settings
 from notifications import notify_new_chat, notify_jd_upload
 from auth import create_access_token, authenticate_user, verify_token
 import os
@@ -155,6 +155,8 @@ async def web_chat(request: ChatRequest):
 
         profile = await get_profile()
         system_prompt = build_system_prompt(profile)
+        ai_settings = await get_ai_settings()
+        model = ai_settings.get("active_model", GEMINI_MODEL)
 
         history = await get_chat_history(session_id, limit=20)
         contents = [
@@ -163,7 +165,7 @@ async def web_chat(request: ChatRequest):
         ]
 
         response = client.models.generate_content(
-            model=GEMINI_MODEL,
+            model=model,
             contents=contents,
             config=types.GenerateContentConfig(system_instruction=system_prompt)
         )
@@ -191,6 +193,8 @@ async def web_chat_file(
         filename = file.filename.lower()
         profile = await get_profile()
         system_prompt = build_system_prompt(profile)
+        ai_settings = await get_ai_settings()
+        model = ai_settings.get("active_model", GEMINI_MODEL)
 
         # Build message label for history
         user_label = f"[Uploaded file: {file.filename}] {message}"
@@ -225,7 +229,7 @@ async def web_chat_file(
         all_contents = history_contents + [current_content]
 
         response = client.models.generate_content(
-            model=GEMINI_MODEL,
+            model=model,
             contents=all_contents,
             config=types.GenerateContentConfig(system_instruction=system_prompt)
         )
@@ -257,6 +261,8 @@ async def jd_match(file: UploadFile = File(...)):
         filename = file.filename.lower()
         profile = await get_profile()
         system_prompt = build_system_prompt(profile)
+        ai_settings = await get_ai_settings()
+        model = ai_settings.get("active_model", GEMINI_MODEL)
 
         if filename.endswith(".pdf"):
             parts = [
@@ -273,7 +279,7 @@ async def jd_match(file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="Only PDF, Word (.docx), and Text (.txt) files are supported")
 
         response = client.models.generate_content(
-            model=GEMINI_MODEL,
+            model=model,
             contents=[types.Content(role="user", parts=parts)],
             config=types.GenerateContentConfig(system_instruction=system_prompt)
         )
@@ -340,3 +346,22 @@ async def delete_resume(username: str = Depends(verify_token)):
     if os.path.exists(RESUME_PATH):
         os.remove(RESUME_PATH)
     return {"message": "Resume deleted successfully"}
+
+# --- Admin: AI Settings ---
+class AISettingsUpdate(BaseModel):
+    active_model: Optional[str] = None
+    available_models: Optional[List[str]] = None
+
+@router.get("/api/admin/ai-settings")
+async def get_ai_settings_endpoint(username: str = Depends(verify_token)):
+    """Get AI model settings."""
+    return await get_ai_settings()
+
+@router.put("/api/admin/ai-settings")
+async def update_ai_settings_endpoint(data: AISettingsUpdate, username: str = Depends(verify_token)):
+    """Update AI model settings."""
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    await update_ai_settings(updates)
+    return {"message": "AI settings updated"}
