@@ -104,9 +104,15 @@ function Lightbox({ images, index, onClose }) {
 
 // ─── JD Match Banner ──────────────────────────────────────────────────────────
 
-function JDMatchBanner() {
+function JDMatchBanner({ theme = {} }) {
   const fileRef = useRef(null);
   const [dragging, setDragging] = useState(false);
+  const bannerBg = theme.bannerBg || "var(--bg-card)";
+  const bannerBorder = theme.bannerBorder || "var(--accent-border)";
+  const bannerLabel = theme.bannerLabel || "var(--accent)";
+  const bannerTitle = theme.bannerTitle || "var(--text)";
+  const bannerText = theme.bannerText || "var(--text-muted)";
+  const bannerBtnText = theme.bannerBtnText || "var(--accent)";
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [expanded, setExpanded] = useState(true);
@@ -149,8 +155,8 @@ function JDMatchBanner() {
     <div
       style={{
         borderRadius: 16, padding: "20px 24px", marginBottom: 36,
-        border: `1px solid ${dragging ? "var(--accent)" : "var(--accent-border)"}`,
-        background: dragging ? "var(--accent-dim)" : "var(--bg-card)",
+        border: `1px solid ${dragging ? bannerLabel : bannerBorder}`,
+        background: dragging ? bannerLabel + "18" : bannerBg,
         transition: "border-color 0.2s, background 0.2s",
         cursor: !result && !loading ? "pointer" : "default",
       }}
@@ -162,16 +168,16 @@ function JDMatchBanner() {
       {/* Header row */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: result || loading ? 20 : 0 }}>
         <div>
-          <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent)", letterSpacing: "0.12em", marginBottom: 6 }}>FOR RECRUITERS</p>
-          <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", marginBottom: result || loading ? 0 : 4 }}>Check if I'm a fit for your role</p>
-          {!result && !loading && <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5, marginTop: 4 }}>Drop a job description here — I'll analyze match %, skills alignment and gaps instantly.</p>}
+          <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: bannerLabel, letterSpacing: "0.12em", marginBottom: 6 }}>FOR RECRUITERS</p>
+          <p style={{ fontSize: 15, fontWeight: 600, color: bannerTitle, marginBottom: result || loading ? 0 : 4 }}>Check if I'm a fit for your role</p>
+          {!result && !loading && <p style={{ fontSize: 13, color: bannerText, lineHeight: 1.5, marginTop: 4 }}>Drop a job description here — I'll analyze match %, skills alignment and gaps instantly.</p>}
         </div>
         <button
           onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}
           disabled={loading}
-          style={{ padding: "8px 16px", borderRadius: 10, flexShrink: 0, border: "1px solid var(--accent-border)", background: "var(--accent-dim)", color: "var(--accent)", fontSize: 12, cursor: loading ? "default" : "pointer", fontFamily: "var(--font-display)", whiteSpace: "nowrap", transition: "all 0.15s", opacity: loading ? 0.6 : 1 }}
-          onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#0a0a0b"; } }}
-          onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-dim)"; e.currentTarget.style.color = "var(--accent)"; }}
+          style={{ padding: "8px 16px", borderRadius: 10, flexShrink: 0, border: `1px solid ${bannerBorder}`, background: bannerBtnText + "18", color: bannerBtnText, fontSize: 12, cursor: loading ? "default" : "pointer", fontFamily: "var(--font-display)", whiteSpace: "nowrap", transition: "all 0.15s", opacity: loading ? 0.6 : 1 }}
+          onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = bannerBtnText; e.currentTarget.style.color = "#0a0a0b"; } }}
+          onMouseLeave={e => { e.currentTarget.style.background = bannerBtnText + "18"; e.currentTarget.style.color = bannerBtnText; }}
         >{loading ? "Analyzing..." : result ? "↑ New JD" : "↑ Upload JD"}</button>
         <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={e => { handleFile(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
       </div>
@@ -620,7 +626,7 @@ export default function App() {
           </div>
         </div>
 
-        <JDMatchBanner />
+        <JDMatchBanner theme={t} />
 
         {/* Two column layout on desktop */}
         <style>{`

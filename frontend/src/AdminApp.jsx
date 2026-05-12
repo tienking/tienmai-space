@@ -377,6 +377,17 @@ function ThemeTab({ theme, onSave, saving }) {
         <ColorPicker label="Badge text" value={t.openToWorkText || "#ffffff"} onChange={v => set("openToWorkText", v)} />
         <ColorPicker label="Badge border" value={t.openToWorkBorder || "rgba(255,255,255,0.2)"} onChange={v => set("openToWorkBorder", v)} />
       </div>
+
+      <Divider />
+      <GroupLabel>JD Match Banner (For Recruiters)</GroupLabel>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <ColorPicker label="Banner background" value={t.bannerBg || t.bgCard || "#16161a"} onChange={v => set("bannerBg", v)} />
+        <ColorPicker label="Banner border" value={t.bannerBorder || t.accent + "4d" || "#5dcaa54d"} onChange={v => set("bannerBorder", v)} />
+        <ColorPicker label='"FOR RECRUITERS" label' value={t.bannerLabel || t.accent || "#5dcaa5"} onChange={v => set("bannerLabel", v)} />
+        <ColorPicker label="Title color" value={t.bannerTitle || t.text || "#f0efe8"} onChange={v => set("bannerTitle", v)} />
+        <ColorPicker label="Body text color" value={t.bannerText || t.textMuted || "#6b6a65"} onChange={v => set("bannerText", v)} />
+        <ColorPicker label="Button text color" value={t.bannerBtnText || t.accent || "#5dcaa5"} onChange={v => set("bannerBtnText", v)} />
+      </div>
     </TabCard>
   );
 }
