@@ -102,6 +102,50 @@ function Lightbox({ images, index, onClose }) {
   );
 }
 
+// ─── JD Match Banner ──────────────────────────────────────────────────────────
+
+function JDMatchBanner({ onFileSelect }) {
+  const fileRef = useRef(null);
+  const [dragging, setDragging] = useState(false);
+
+  const handleFile = (file) => {
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    if (!name.endsWith(".pdf") && !name.endsWith(".docx") && !name.endsWith(".txt")) return;
+    onFileSelect(file);
+  };
+
+  return (
+    <div
+      style={{
+        borderRadius: 16, padding: "20px 24px", marginBottom: 36, cursor: "pointer",
+        border: `1px solid ${dragging ? "var(--accent)" : "var(--accent-border)"}`,
+        background: dragging ? "var(--accent-dim)" : "var(--bg-card)",
+        transition: "all 0.2s",
+      }}
+      onClick={() => fileRef.current?.click()}
+      onDragOver={e => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={e => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
+    >
+      <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent)", letterSpacing: "0.12em", marginBottom: 8 }}>FOR RECRUITERS</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div>
+          <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>Check if I'm a fit for your role</p>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>Drop a job description here — I'll analyze match %, skills alignment and gaps instantly.</p>
+        </div>
+        <button
+          onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}
+          style={{ padding: "9px 18px", borderRadius: 10, flexShrink: 0, border: "1px solid var(--accent-border)", background: "var(--accent-dim)", color: "var(--accent)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", whiteSpace: "nowrap", transition: "all 0.15s" }}
+          onMouseEnter={e => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#0a0a0b"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-dim)"; e.currentTarget.style.color = "var(--accent)"; }}
+        >Upload JD ↑</button>
+      </div>
+      <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={e => { handleFile(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
+    </div>
+  );
+}
+
 // ─── Chat ──────────────────────────────────────────────────────────────────────
 
 const STORAGE_SESSION = "tienmai_session_id";
@@ -126,7 +170,7 @@ function ChatMessage({ msg }) {
   );
 }
 
-function ChatPopup({ onClose }) {
+function ChatPopup({ onClose, initialFile = null }) {
   const [sessionId] = useState(() => {
     const s = localStorage.getItem(STORAGE_SESSION);
     if (s) return s;
@@ -143,7 +187,7 @@ function ChatPopup({ onClose }) {
   });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(initialFile);
   const bottomRef = useRef(null);
   const fileRef = useRef(null);
 
@@ -192,6 +236,15 @@ function ChatPopup({ onClose }) {
     if (file) setSelectedFile(file);
     e.target.value = "";
   };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!initialFile) return;
+    const timer = setTimeout(() => {
+      handleSend("Please analyze this job description. Tell me how well I fit the role — include match percentage, matching skills, any gaps, and overall recommendation.");
+    }, 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="chat-popup" style={{ position: "fixed", bottom: 84, right: 24, zIndex: 999, width: 340, height: 460, background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 18, boxShadow: "0 20px 60px rgba(0,0,0,0.7)", display: "flex", flexDirection: "column", overflow: "hidden", animation: "fadeUp 0.25s ease" }}>
@@ -409,9 +462,13 @@ function CertificationsSection({ certifications, t }) {
 export default function App() {
   const profile = useProfile();
   const [chatOpen, setChatOpen] = useState(false);
+  const [jdFile, setJdFile] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [resumeOpen, setResumeOpen] = useState(false);
   const [hasResume, setHasResume] = useState(false);
+
+  const handleJDSelect = (file) => { setJdFile(file); setChatOpen(true); };
+  const handleChatClose = () => { setChatOpen(false); setJdFile(null); };
 
   useEffect(() => {
     fetch("/api/resume/exists")
@@ -475,6 +532,8 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        <JDMatchBanner onFileSelect={handleJDSelect} />
 
         {/* Two column layout on desktop */}
         <style>{`
@@ -601,8 +660,8 @@ export default function App() {
 
       {resumeOpen && <ResumePopup onClose={() => setResumeOpen(false)} />}
       {lightboxIndex !== null && <Lightbox images={profile.gallery} index={lightboxIndex} onClose={() => setLightboxIndex(null)} />}
-      {chatOpen && <ChatPopup onClose={() => setChatOpen(false)} />}
-      <FloatingButton onClick={() => setChatOpen(p => !p)} isOpen={chatOpen} />
+      {chatOpen && <ChatPopup onClose={handleChatClose} initialFile={jdFile} />}
+      <FloatingButton onClick={() => { if (chatOpen) setJdFile(null); setChatOpen(p => !p); }} isOpen={chatOpen} />
     </>
   );
 }
