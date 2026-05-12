@@ -10,10 +10,11 @@ Personal portfolio website with AI-powered chatbot, built and self-hosted on a V
 
 A full-stack personal profile website featuring:
 
-- **Profile page** — About, Skills, Experience, Education, Projects, Gallery, Resume
-- **AI Chatbot** — RAG-powered assistant that answers questions about Tien based on profile data, supports file upload (PDF, Word, TXT) for JD analysis
-- **Telegram Bot** — Same AI assistant available on Telegram
-- **Admin Dashboard** — Full CMS to manage profile content, theme, fonts, gallery, and resume
+- **Profile page** — About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume
+- **JD Match Banner** — Recruiters can upload a job description and get instant AI analysis: match %, matching skills, missing skills, and a first-person assessment
+- **AI Chatbot** — RAG-powered assistant that speaks as Tien Mai in first person, answers questions about background and experience, supports file upload (PDF, Word, TXT)
+- **Telegram Bot** — Same AI assistant available on Telegram, with owner notifications on new chats and JD uploads
+- **Admin Dashboard** — Full CMS to manage all profile content, theme, fonts, gallery, resume, and analytics
 - **CI/CD Pipeline** — Auto-deploy on push via GitLab Runner
 
 ---
@@ -38,7 +39,7 @@ A full-stack personal profile website featuring:
 ### Frontend
 | Tool | Purpose |
 |---|---|
-| React 18 | UI framework |
+| React 19 | UI framework |
 | Vite | Build tool |
 | Google Fonts | Typography (Syne, DM Mono, and more) |
 
@@ -56,9 +57,9 @@ A full-stack personal profile website featuring:
 ### AI
 | Tool | Purpose |
 |---|---|
-| Gemini API | LLM for chatbot responses |
-| RAG (system prompt injection) | Profile-aware chatbot context |
-| File parsing (PDF, DOCX, TXT) | JD analysis via file upload |
+| Gemini API (`gemini-2.5-flash-lite`) | LLM for chatbot and JD analysis |
+| RAG (system prompt injection) | Profile-aware, first-person chatbot context |
+| File parsing (PDF, DOCX, TXT) | JD match analysis + chatbot file upload |
 
 ### Domain
 | Tool | Purpose |
@@ -76,10 +77,11 @@ tienmai-space/
 ├── .gitignore
 ├── requirements.txt            # Python dependencies
 ├── main.py                     # FastAPI app + Telegram bot
-├── api.py                      # API routes (chat, profile, resume, admin)
+├── api.py                      # API routes (chat, profile, resume, admin, jd-match)
 ├── auth.py                     # JWT authentication
-├── config.py                   # Config from .env
+├── config.py                   # Config (secrets from .env + app constants)
 ├── database.py                 # MongoDB operations
+├── notifications.py            # Telegram push notifications (new chat, JD upload)
 ├── uploads/
 │   └── resume.pdf              # Resume file (not committed)
 └── frontend/
@@ -101,34 +103,48 @@ tienmai-space/
 ## Features
 
 ### Profile Page (`tienmai.space`)
-- Responsive dark/light theme
-- Avatar, name, title, location, social links
+- Responsive dark/light theme with full customization
+- Avatar, name, title, location, social links, Open to Work badge
 - Resume button → PDF popup viewer + download
-- Sections: About, Skills, Experience, Education, Projects, Gallery
-- Gallery with 4-column grid + lightbox viewer
-- AI chatbot popup (bottom right)
+- Sections: About, Skills (grouped), Experience, Education, Projects, Certifications, Gallery
+- Certifications: sorted by date, show/hide with expand toggle
+- Gallery: 4-column grid + lightbox viewer
+- AI chatbot popup (bottom right) with suggested questions, session persistence via localStorage
 - Admin shortcut button (top right)
+- SEO: meta tags, Open Graph, Twitter Card, sitemap.xml, robots.txt
+
+### JD Match Banner (FOR RECRUITERS)
+- Prominent section on profile page for recruiters
+- Upload a JD (PDF, DOCX, TXT) via click or drag-and-drop
+- AI returns structured analysis: match %, matching skills, missing skills, first-person assessment
+- Color-coded result: green ≥50%, red <50%
+- Show less / Show full analysis toggle
+- Result persists across page refreshes (localStorage)
+- All colors configurable from Admin → Theme tab
 
 ### AI Chatbot
-- Powered by Gemini API
+- Powered by Gemini API (`gemini-2.5-flash-lite`)
+- Speaks in first person as Tien Mai — not as a third-party assistant
 - RAG via system prompt injection with full profile context
 - Responds in the user's language automatically
 - Supports file upload: PDF, Word (.docx), Text (.txt)
-- JD analysis: evaluates job descriptions against profile
-- Chat history persists within session
+- Chat history persists in session (localStorage, max 30 messages)
+- Suggested quick questions on first open
 
 ### Telegram Bot
-- Same Gemini AI backend
+- Same Gemini AI backend as web chatbot
 - Chat history stored in MongoDB per user
 - Webhook-based (not polling)
+- Owner notifications: new web visitor starts chatting, JD uploaded (file + analysis result sent to owner)
 
 ### Admin Dashboard (`tienmai.space/admin`)
 - JWT login (username + password)
-- Tabs: Basic Info, About, Skills, Experience, Education, Projects, Gallery, Resume, Theme, Fonts
-- Theme editor: 10 presets (5 dark + 5 light), full color picker for backgrounds, text, section labels
+- Tabs: Basic Info, About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume, Theme, Fonts, Analytics
+- Theme editor: 10 presets (5 dark + 5 light), full color picker for all sections including JD Match Banner
 - Font selector: 8 display fonts + 6 mono fonts with live preview
 - Gallery manager: add/remove/reorder images via Cloudinary URLs
 - Resume uploader: upload/replace/delete PDF
+- Analytics: total visitors, total questions, visitors chart (last 7 days), recent questions list
 
 ### CI/CD
 - Push to `main` branch → GitLab pipeline triggers
@@ -140,14 +156,15 @@ tienmai-space/
 
 ```env
 TELEGRAM_TOKEN=
+TELEGRAM_CHAT_ID=        # Your personal Telegram user ID (for notifications)
 GEMINI_API_KEY=
-WEBHOOK_URL=https://tienmai.space/webhook
-GEMINI_MODEL=gemini-3.1-flash-lite-preview
 MONGODB_URL=
 ADMIN_USERNAME=
 ADMIN_PASSWORD=
 JWT_SECRET=
 ```
+
+> `WEBHOOK_URL` and `GEMINI_MODEL` are hardcoded in `config.py` (safe to commit, not secrets).
 
 ---
 
