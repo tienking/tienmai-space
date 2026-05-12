@@ -116,8 +116,21 @@ function JDMatchBanner({ theme = {} }) {
   const skillMatchColor = theme.bannerMatchColor || "#16a34a";
   const skillMissingColor = theme.bannerMissingColor || "#dc2626";
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [expanded, setExpanded] = useState(true);
+  const [result, setResult] = useState(() => {
+    try { const s = localStorage.getItem("tienmai_jd_result"); return s ? JSON.parse(s) : null; } catch { return null; }
+  });
+  const [expanded, setExpanded] = useState(() => {
+    return localStorage.getItem("tienmai_jd_expanded") !== "false";
+  });
+
+  useEffect(() => {
+    if (result && !result.error) localStorage.setItem("tienmai_jd_result", JSON.stringify(result));
+    else localStorage.removeItem("tienmai_jd_result");
+  }, [result]);
+
+  useEffect(() => {
+    localStorage.setItem("tienmai_jd_expanded", expanded);
+  }, [expanded]);
 
   const handleFile = async (file) => {
     if (!file) return;
