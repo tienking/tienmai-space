@@ -6,16 +6,14 @@ Usage:
     python seed_admin.py
 """
 import asyncio
-from passlib.context import CryptContext
+import bcrypt
 from database import set_admin_credentials
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 USERNAME = input("Admin username: ")
 PASSWORD = input("Admin password: ")
 
 async def main():
-    hashed = pwd_context.hash(PASSWORD)
+    hashed = bcrypt.hashpw(PASSWORD.encode(), bcrypt.gensalt()).decode()
     await set_admin_credentials(USERNAME, hashed)
     print("Done — credentials saved to MongoDB.")
 
