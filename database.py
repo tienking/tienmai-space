@@ -59,21 +59,13 @@ async def log_visitor(session_id: str):
     )
 
 async def get_ai_settings():
-    """Retrieve AI model settings. Returns defaults if not set."""
+    """Retrieve AI model settings from DB."""
     doc = await settings_collection.find_one({"type": "ai"}, {"_id": 0})
     if not doc:
-        return {
-            "active_model": "gemini-2.5-flash-lite",
-            "available_models": [
-                "gemini-2.5-flash-lite",
-                "gemini-2.5-flash",
-                "gemini-2.5-pro",
-                "gemini-3.1-flash-lite",
-            ]
-        }
+        return {"active_model": None, "available_models": []}
     return {
-        "active_model": doc.get("active_model", "gemini-2.5-flash-lite"),
-        "available_models": doc.get("available_models", ["gemini-2.5-flash-lite"])
+        "active_model": doc.get("active_model"),
+        "available_models": doc.get("available_models", [])
     }
 
 async def update_ai_settings(updates: dict):

@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from google import genai
 from google.genai import types
-from config import GEMINI_API_KEY, GEMINI_MODEL
+from config import GEMINI_API_KEY
 from database import save_message, get_chat_history, log_visitor, get_profile, update_profile, get_analytics_data, is_first_web_message, get_ai_settings, update_ai_settings, set_admin_credentials
 from notifications import notify_new_chat, notify_jd_upload
 from auth import create_access_token, authenticate_user, verify_token, hash_password
@@ -160,7 +160,7 @@ async def web_chat(request: ChatRequest):
         profile = await get_profile()
         system_prompt = build_system_prompt(profile)
         ai_settings = await get_ai_settings()
-        model = ai_settings.get("active_model", GEMINI_MODEL)
+        model = ai_settings.get("active_model")
 
         history = await get_chat_history(session_id, limit=20)
         contents = [
@@ -198,7 +198,7 @@ async def web_chat_file(
         profile = await get_profile()
         system_prompt = build_system_prompt(profile)
         ai_settings = await get_ai_settings()
-        model = ai_settings.get("active_model", GEMINI_MODEL)
+        model = ai_settings.get("active_model")
 
         # Build message label for history
         user_label = f"[Uploaded file: {file.filename}] {message}"
@@ -266,7 +266,7 @@ async def jd_match(file: UploadFile = File(...)):
         profile = await get_profile()
         system_prompt = build_system_prompt(profile)
         ai_settings = await get_ai_settings()
-        model = ai_settings.get("active_model", GEMINI_MODEL)
+        model = ai_settings.get("active_model")
 
         if filename.endswith(".pdf"):
             parts = [

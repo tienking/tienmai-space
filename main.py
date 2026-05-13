@@ -3,8 +3,8 @@ from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 from google import genai
 from google.genai import types
-from config import TELEGRAM_TOKEN, GEMINI_API_KEY, WEBHOOK_URL, GEMINI_MODEL
-from database import save_message, get_chat_history
+from config import TELEGRAM_TOKEN, GEMINI_API_KEY, WEBHOOK_URL
+from database import save_message, get_chat_history, get_ai_settings
 from api import router
 
 # --- Gemini Client ---
@@ -36,8 +36,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
 
         # Call Gemini
+        ai_settings = await get_ai_settings()
+        model = ai_settings.get("active_model")
         response = client.models.generate_content(
-            model=GEMINI_MODEL,
+            model=model,
             contents=contents
         )
         reply = response.text

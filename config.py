@@ -12,4 +12,3 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 
 # --- App config (edit here, safe to commit) ---
 WEBHOOK_URL = "https://tienmai.space/webhook"
-GEMINI_MODEL = "gemini-2.5-flash-lite"
