@@ -513,13 +513,26 @@ function Section({ title, children, labelColor, lineColor }) {
   );
 }
 
-function Card({ children }) {
+function Card({ children, expired }) {
+  const baseBorder = expired ? "#ef4444" : "var(--border)";
+  const hoverBorder = expired ? "#ef4444" : "var(--border-hover)";
   return (
-    <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "16px 18px", marginBottom: 10, transition: "border-color 0.2s" }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = "var(--border-hover)"}
-      onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
+    <div style={{ background: "var(--bg-card)", border: `1px solid ${baseBorder}`, borderRadius: 14, padding: "16px 18px", marginBottom: 10, transition: "border-color 0.2s" }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = hoverBorder}
+      onMouseLeave={e => e.currentTarget.style.borderColor = baseBorder}
     >{children}</div>
   );
+}
+
+function isCertExpired(dateStr) {
+  if (!dateStr) return false;
+  const match = dateStr.match(/Expires?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/i);
+  if (!match) return false;
+  const months = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+  const expMonth = months[match[1]];
+  const expYear = parseInt(match[2]);
+  const now = new Date();
+  return expYear < now.getFullYear() || (expYear === now.getFullYear() && expMonth < now.getMonth());
 }
 
 const linkStyle = { fontSize: 12, color: "var(--text-muted)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", textDecoration: "none", fontFamily: "var(--font-mono)" };
@@ -542,7 +555,7 @@ function CertificationsSection({ certifications, t }) {
   return (
     <Section title="Licenses & Certifications" labelColor={t.labelCertifications} lineColor={t.lineColor}>
       {visible.map((cert, i) => (
-        <Card key={i}>
+        <Card key={i} expired={isCertExpired(cert.date)}>
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
             <div style={{ width: 40, height: 40, borderRadius: 8, background: "var(--accent-dim)", border: "1px solid var(--accent-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🎓</div>
             <div style={{ flex: 1 }}>
