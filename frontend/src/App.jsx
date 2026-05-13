@@ -514,8 +514,8 @@ function Section({ title, children, labelColor, lineColor }) {
 }
 
 function Card({ children, expired }) {
-  const baseBorder = expired ? "#ef4444" : "var(--border)";
-  const hoverBorder = expired ? "#ef4444" : "var(--border-hover)";
+  const baseBorder = expired ? "#b91c1c" : "var(--border)";
+  const hoverBorder = expired ? "#b91c1c" : "var(--border-hover)";
   return (
     <div style={{ background: "var(--bg-card)", border: `1px solid ${baseBorder}`, borderRadius: 14, padding: "16px 18px", marginBottom: 10, transition: "border-color 0.2s" }}
       onMouseEnter={e => e.currentTarget.style.borderColor = hoverBorder}
