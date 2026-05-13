@@ -5,9 +5,9 @@ from typing import List, Optional, Dict, Any
 from google import genai
 from google.genai import types
 from config import GEMINI_API_KEY, GEMINI_MODEL
-from database import save_message, get_chat_history, log_visitor, get_profile, update_profile, get_analytics_data, is_first_web_message, get_ai_settings, update_ai_settings
+from database import save_message, get_chat_history, log_visitor, get_profile, update_profile, get_analytics_data, is_first_web_message, get_ai_settings, update_ai_settings, set_admin_credentials
 from notifications import notify_new_chat, notify_jd_upload
-from auth import create_access_token, authenticate_user, verify_token
+from auth import create_access_token, authenticate_user, verify_token, hash_password
 import os
 import shutil
 import base64
@@ -304,10 +304,22 @@ async def jd_match(file: UploadFile = File(...)):
 @router.post("/api/admin/login")
 async def admin_login(request: LoginRequest):
     """Admin login - returns JWT token."""
-    if not authenticate_user(request.username, request.password):
+    if not await authenticate_user(request.username, request.password):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     token = create_access_token({"sub": request.username})
     return {"access_token": token, "token_type": "bearer"}
+
+# --- Admin: Change Password ---
+class ChangePasswordRequest(BaseModel):
+    new_username: Optional[str] = None
+    new_password: str
+
+@router.put("/api/admin/password")
+async def change_password(data: ChangePasswordRequest, username: str = Depends(verify_token)):
+    """Change admin username and/or password."""
+    new_username = data.new_username or username
+    await set_admin_credentials(new_username, hash_password(data.new_password))
+    return {"message": "Credentials updated successfully"}
 
 # --- Admin: Update Profile ---
 @router.put("/api/admin/profile")

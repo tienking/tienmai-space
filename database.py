@@ -80,6 +80,20 @@ async def update_ai_settings(updates: dict):
     """Update AI model settings."""
     await settings_collection.update_one({"type": "ai"}, {"$set": updates}, upsert=True)
 
+# --- Admin Credentials ---
+async def get_admin_credentials():
+    """Return stored admin username and hashed password."""
+    doc = await settings_collection.find_one({"type": "admin"}, {"_id": 0})
+    return doc
+
+async def set_admin_credentials(username: str, hashed_password: str):
+    """Upsert admin credentials (username + bcrypt hash)."""
+    await settings_collection.update_one(
+        {"type": "admin"},
+        {"$set": {"username": username, "hashed_password": hashed_password}},
+        upsert=True
+    )
+
 async def get_analytics_data():
     """Aggregate analytics data for admin dashboard."""
     total_visitors = await visitor_collection.count_documents({})

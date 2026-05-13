@@ -3,7 +3,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from config import ADMIN_USERNAME, ADMIN_PASSWORD, JWT_SECRET
+from config import JWT_SECRET
 
 # --- Config ---
 ALGORITHM = "HS256"
@@ -14,14 +14,12 @@ security = HTTPBearer()
 
 # --- Token ---
 def create_access_token(data: dict):
-    """Create a JWT access token."""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
-    """Verify JWT token from request header."""
     try:
         payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[ALGORITHM])
         username = payload.get("sub")
@@ -31,9 +29,15 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
+def hash_password(plain: str) -> str:
+    return pwd_context.hash(plain)
+
 # --- Login ---
-def authenticate_user(username: str, password: str):
-    """Verify admin username and password."""
-    if username != ADMIN_USERNAME or password != ADMIN_PASSWORD:
+async def authenticate_user(username: str, password: str) -> bool:
+    from database import get_admin_credentials
+    creds = await get_admin_credentials()
+    if not creds:
         return False
-    return True
+    if username != creds.get("username"):
+        return False
+    return pwd_context.verify(password, creds.get("hashed_password", ""))
