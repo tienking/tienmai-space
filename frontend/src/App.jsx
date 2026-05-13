@@ -513,13 +513,11 @@ function Section({ title, children, labelColor, lineColor }) {
   );
 }
 
-function Card({ children, expired }) {
-  const baseBorder = expired ? "#b91c1c" : "var(--border)";
-  const hoverBorder = expired ? "#b91c1c" : "var(--border-hover)";
+function Card({ children, bg }) {
   return (
-    <div style={{ background: "var(--bg-card)", border: `1px solid ${baseBorder}`, borderRadius: 14, padding: "16px 18px", marginBottom: 10, transition: "border-color 0.2s" }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = hoverBorder}
-      onMouseLeave={e => e.currentTarget.style.borderColor = baseBorder}
+    <div style={{ background: bg || "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "16px 18px", marginBottom: 10, transition: "border-color 0.2s" }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = "var(--border-hover)"}
+      onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
     >{children}</div>
   );
 }
@@ -555,7 +553,7 @@ function CertificationsSection({ certifications, t }) {
   return (
     <Section title="Licenses & Certifications" labelColor={t.labelCertifications} lineColor={t.lineColor}>
       {visible.map((cert, i) => (
-        <Card key={i} expired={isCertExpired(cert.date)}>
+        <Card key={i} bg={isCertExpired(cert.date) ? (t.expiredCertBg || "#2d1515") : undefined}>
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
             <div style={{ width: 40, height: 40, borderRadius: 8, background: "var(--accent-dim)", border: "1px solid var(--accent-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🎓</div>
             <div style={{ flex: 1 }}>

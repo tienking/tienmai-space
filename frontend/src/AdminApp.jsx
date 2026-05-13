@@ -397,6 +397,10 @@ function ThemeTab({ theme, onSave, saving }) {
       </div>
 
       <Divider />
+      <GroupLabel>Expired Certifications</GroupLabel>
+      <ColorPicker label="Expired cert background" value={t.expiredCertBg || "#2d1515"} onChange={v => set("expiredCertBg", v)} />
+
+      <Divider />
       <GroupLabel>JD Match Banner (For Recruiters)</GroupLabel>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <ColorPicker label="Banner background" value={t.bannerBg || t.bgCard || "#16161a"} onChange={v => set("bannerBg", v)} />
