@@ -65,10 +65,10 @@ function badge(status) {
 }
 
 // ── Job Modal (Add / Edit) ─────────────────────────────────────────────────────
-const EMPTY = { title: "", url: "", company: "", loc: "HCM", mode: "On-site", month: new Date().getMonth() + 1, year: new Date().getFullYear(), status: "applied" };
+const emptyJob = () => ({ title: "", url: "", company: "", loc: "HCM", mode: "On-site", month: new Date().getMonth() + 1, year: new Date().getFullYear(), status: "applied" });
 
 function JobModal({ initial, onSave, onClose }) {
-  const [form, setForm] = useState(initial || EMPTY);
+  const [form, setForm] = useState(initial || emptyJob());
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const inp = { fontSize: 13, padding: "7px 10px", borderRadius: 6, border: "0.5px solid #ccc", width: "100%", boxSizing: "border-box", fontFamily: "inherit", outline: "none" };
