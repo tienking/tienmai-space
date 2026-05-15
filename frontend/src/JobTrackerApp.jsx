@@ -217,20 +217,13 @@ function TrackerPage({ username, token }) {
       <div style={{ padding: "24px 24px 0", flexShrink: 0 }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 500 }}>LinkedIn Job Tracker</h1>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {saving && <span style={{ fontSize: 12, color: "#888" }}>Đang lưu...</span>}
-            <button onClick={() => setModal({ mode: "add" })}
-              style={{ fontSize: 12, padding: "5px 14px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
-              + Thêm
-            </button>
-            <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
-              style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
-              Sign out
-            </button>
-          </div>
+          <h1 style={{ fontSize: 20, fontWeight: 500 }}>Job Tracker</h1>
+          <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
+            style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+            Sign out
+          </button>
         </div>
-        <p style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>{username} · {jobs.length} jobs tổng cộng</p>
+        <p style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>{username} · {counts.a} vị trí đã apply</p>
 
         {/* Stats */}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
@@ -265,7 +258,14 @@ function TrackerPage({ username, token }) {
             <option value="">Tất cả tháng/năm</option>
             {months.map(ym => { const [y, m] = ym.split("-"); return <option key={ym} value={ym}>{m}/{y}</option>; })}
           </select>
-          <span style={{ fontSize: 12, color: "#888", marginLeft: "auto" }}>{filtered.length} vị trí</span>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+            {saving && <span style={{ fontSize: 12, color: "#888" }}>Đang lưu...</span>}
+            <button onClick={() => setModal({ mode: "add" })}
+              style={{ fontSize: 12, padding: "5px 14px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+              + Thêm
+            </button>
+            <span style={{ fontSize: 12, color: "#888" }}>{filtered.length} vị trí</span>
+          </div>
         </div>
       </div>
 
