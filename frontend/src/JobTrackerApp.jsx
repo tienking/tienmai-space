@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
@@ -191,6 +191,21 @@ function JobModal({ initial, onSave, onClose }) {
   );
 }
 
+// ── Resume View Modal ──────────────────────────────────────────────────────────
+function ResumeViewModal({ url, onClose }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, display: "flex", flexDirection: "column" }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ margin: "24px auto", width: "92%", maxWidth: 860, flex: 1, minHeight: 0, display: "flex", flexDirection: "column", background: "#fff", borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.25)" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 12px", borderBottom: "0.5px solid #e0e0dc", flexShrink: 0 }}>
+          <button onClick={onClose} style={{ fontSize: 12, padding: "4px 14px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Đóng</button>
+        </div>
+        <iframe src={url} style={{ flex: 1, border: "none", width: "100%" }} title="Resume" />
+      </div>
+    </div>
+  );
+}
+
 // ── Tracker Page ───────────────────────────────────────────────────────────────
 function TrackerPage({ username, token }) {
   const isMobile = useIsMobile();
@@ -204,8 +219,38 @@ function TrackerPage({ username, token }) {
   const [fStatus, setFStatus] = useState("");
   const [fMonth, setFMonth] = useState("");
   const [fYear, setFYear] = useState("");
-  const [modal, setModal] = useState(null); // null | { mode: "add" } | { mode: "edit", index: number }
-  const [viewJd, setViewJd] = useState(null); // null | { title, jd }
+  const [modal, setModal] = useState(null);
+  const [viewJd, setViewJd] = useState(null);
+  const [resumeExists, setResumeExists] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    fetch(`/api/jobtracker/resume/${username}/check`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(d => setResumeExists(d.exists)).catch(() => {});
+  }, [username, token]);
+
+  const handleViewResume = async () => {
+    const res = await fetch(`/api/jobtracker/resume/${username}`, { headers: { Authorization: `Bearer ${token}` } });
+    const blob = await res.blob();
+    setResumeUrl(URL.createObjectURL(blob));
+  };
+
+  const handleCloseResume = () => { URL.revokeObjectURL(resumeUrl); setResumeUrl(null); };
+
+  const handleUploadResume = async (e) => {
+    const file = e.target.files[0]; e.target.value = "";
+    if (!file) return;
+    const form = new FormData(); form.append("file", file);
+    await fetch(`/api/jobtracker/resume/${username}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
+    setResumeExists(true);
+  };
+
+  const handleDeleteResume = async () => {
+    if (!confirm("Xóa Resume hiện tại?")) return;
+    await fetch(`/api/jobtracker/resume/${username}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    setResumeExists(false);
+  };
 
   useEffect(() => {
     fetch(`/api/jobtracker/jobs/${username}`, { headers: { Authorization: `Bearer ${token}` } })
@@ -291,7 +336,18 @@ function TrackerPage({ username, token }) {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
           <h1 style={{ fontSize: 20, fontWeight: 500 }}>Job Tracker</h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            {resumeExists && <>
+              <button onClick={handleViewResume}
+                style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Xem</button>
+              <button onClick={handleDeleteResume}
+                style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>Xóa</button>
+            </>}
+            <button onClick={() => fileInputRef.current?.click()}
+              style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+              {resumeExists ? "New Resume" : "Upload Resume"}
+            </button>
+            <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleUploadResume} style={{ display: "none" }} />
             <span style={{ fontSize: 12, color: "#888" }}>{username}</span>
             <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
               style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
@@ -470,6 +526,7 @@ function TrackerPage({ username, token }) {
         {modal?.mode === "add" && <JobModal onSave={handleAdd} onClose={() => setModal(null)} />}
         {modal?.mode === "edit" && <JobModal initial={jobs[modal.index]} onSave={handleEdit} onClose={() => setModal(null)} />}
         {viewJd && <JdViewModal title={viewJd.title} jd={viewJd.jd} onClose={() => setViewJd(null)} />}
+        {resumeUrl && <ResumeViewModal url={resumeUrl} onClose={handleCloseResume} />}
       </div>
     </div>
   );

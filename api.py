@@ -462,3 +462,42 @@ async def admin_set_jt_jobs(jt_username: str, jobs: List[Dict[str, Any]], userna
         raise HTTPException(status_code=404, detail="User not found")
     await set_jobtracker_jobs(jt_username, jobs)
     return {"message": f"Jobs updated for {jt_username}"}
+
+# ── Jobtracker Resume ──────────────────────────────────────────────────────────
+JT_RESUME_DIR = "/root/tienmai-bot/resumes"
+os.makedirs(JT_RESUME_DIR, exist_ok=True)
+
+@router.get("/api/jobtracker/resume/{jt_username}/check")
+async def jt_resume_check(jt_username: str, token_user: str = Depends(verify_jobtracker_token)):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403)
+    return {"exists": os.path.exists(os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf"))}
+
+@router.post("/api/jobtracker/resume/{jt_username}")
+async def jt_resume_upload(jt_username: str, file: UploadFile = File(...), token_user: str = Depends(verify_jobtracker_token)):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403)
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+    content = await file.read()
+    with open(os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf"), "wb") as f:
+        f.write(content)
+    return {"ok": True}
+
+@router.get("/api/jobtracker/resume/{jt_username}")
+async def jt_resume_get(jt_username: str, token_user: str = Depends(verify_jobtracker_token)):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403)
+    path = os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404)
+    return FileResponse(path, media_type="application/pdf")
+
+@router.delete("/api/jobtracker/resume/{jt_username}")
+async def jt_resume_delete(jt_username: str, token_user: str = Depends(verify_jobtracker_token)):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403)
+    path = os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf")
+    if os.path.exists(path):
+        os.remove(path)
+    return {"ok": True}
