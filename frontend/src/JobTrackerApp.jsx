@@ -88,7 +88,7 @@ function JobModal({ initial, onSave, onClose }) {
         <label style={lbl}>Vị trí <span style={{ color: "#c00" }}>*</span></label>
         <input value={form.title} onChange={e => set("title", e.target.value)} style={inp} placeholder="Software Engineer" />
 
-        <label style={lbl}>URL (LinkedIn link)</label>
+        <label style={lbl}>URL</label>
         <input value={form.url} onChange={e => set("url", e.target.value)} style={inp} placeholder="https://linkedin.com/jobs/..." />
 
         <label style={lbl}>Công ty <span style={{ color: "#c00" }}>*</span></label>
@@ -277,8 +277,8 @@ function TrackerPage({ username, token }) {
       </div>
 
       {/* Scrollable table */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 24px 24px" }}>
-      <div style={{ overflowX: "auto", background: "#fff", borderRadius: 10, border: "0.5px solid #e0e0dc" }}>
+      <div style={{ flex: 1, overflow: "auto", padding: "0 24px 24px" }}>
+      <div style={{ background: "#fff", borderRadius: 10, border: "0.5px solid #e0e0dc" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
           <colgroup>
             <col style={{ width: "3%" }} /><col style={{ width: "25%" }} /><col style={{ width: "18%" }} />
