@@ -418,6 +418,14 @@ async def jobtracker_get_jobs(jt_username: str, token_user: str = Depends(verify
         raise HTTPException(status_code=403, detail="Access denied")
     return {"jobs": await get_jobtracker_jobs(jt_username)}
 
+# Public: update jobs (jobtracker JWT required, own data only)
+@router.put("/api/jobtracker/jobs/{jt_username}")
+async def jobtracker_update_jobs(jt_username: str, jobs: List[Dict[str, Any]], token_user: str = Depends(verify_jobtracker_token)):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403, detail="Access denied")
+    await set_jobtracker_jobs(jt_username, jobs)
+    return {"message": "Jobs updated"}
+
 # Admin: list users
 @router.get("/api/admin/jobtracker/users")
 async def admin_list_jt_users(username: str = Depends(verify_token)):

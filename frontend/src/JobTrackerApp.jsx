@@ -6,20 +6,13 @@ function getTokenData() {
   if (!token) return null;
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    if (payload.exp * 1000 < Date.now()) {
-      localStorage.removeItem("jt_token");
-      return null;
-    }
+    if (payload.exp * 1000 < Date.now()) { localStorage.removeItem("jt_token"); return null; }
     return { token, username: payload.sub };
-  } catch {
-    localStorage.removeItem("jt_token");
-    return null;
-  }
+  } catch { localStorage.removeItem("jt_token"); return null; }
 }
 
 function getUrlUsername() {
   const parts = window.location.pathname.split("/").filter(Boolean);
-  // ["jobtracker"] or ["jobtracker", "nhanvo"]
   return parts.length >= 2 ? parts[1] : null;
 }
 
@@ -31,27 +24,17 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const inp = { fontSize: 13, padding: "8px 10px", borderRadius: 6, border: "0.5px solid #ccc", width: "100%", boxSizing: "border-box", outline: "none", fontFamily: "inherit" };
-  const lbl = { fontSize: 12, color: "#555", display: "block", marginBottom: 4 };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+    e.preventDefault(); setError(""); setLoading(true);
     try {
-      const res = await fetch("/api/jobtracker/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      const res = await fetch("/api/jobtracker/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
       if (!res.ok) { setError("Sai username hoặc password."); return; }
       const data = await res.json();
       localStorage.setItem("jt_token", data.access_token);
       window.location.href = `/jobtracker/${data.username}`;
-    } catch {
-      setError("Không thể kết nối server.");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Không thể kết nối server."); }
+    finally { setLoading(false); }
   };
 
   return (
@@ -60,9 +43,9 @@ function LoginPage() {
         <h1 style={{ fontSize: 18, fontWeight: 500, marginBottom: 4, color: "#1a1a18" }}>Job Tracker</h1>
         <p style={{ fontSize: 12, color: "#888", marginBottom: 24 }}>Đăng nhập để xem danh sách job của bạn.</p>
         <form onSubmit={handleSubmit}>
-          <label style={lbl}>Username</label>
+          <label style={{ fontSize: 12, color: "#555", display: "block", marginBottom: 4 }}>Username</label>
           <input value={username} onChange={e => setUsername(e.target.value)} required autoFocus style={{ ...inp, marginBottom: 12 }} />
-          <label style={lbl}>Password</label>
+          <label style={{ fontSize: 12, color: "#555", display: "block", marginBottom: 4 }}>Password</label>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={{ ...inp, marginBottom: error ? 10 : 16 }} />
           {error && <p style={{ fontSize: 12, color: "#c00", marginBottom: 12 }}>{error}</p>}
           <button type="submit" disabled={loading} style={{ width: "100%", padding: 9, borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", fontSize: 13, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, fontFamily: "inherit" }}>
@@ -74,52 +57,133 @@ function LoginPage() {
   );
 }
 
-// ── Tracker Page ───────────────────────────────────────────────────────────────
+// ── Badge ──────────────────────────────────────────────────────────────────────
 function badge(status) {
-  if (status === "viewed")      return { text: "Đã xem CV",  bg: "#E6F1FB", color: "#0C447C" };
-  if (status === "downloaded")  return { text: "Đã tải CV",  bg: "#EAF3DE", color: "#27500A" };
-  return                               { text: "Applied only", bg: "#F1EFE8", color: "#5F5E5A" };
+  if (status === "viewed")     return { text: "Đã xem CV", bg: "#E6F1FB", color: "#0C447C" };
+  if (status === "downloaded") return { text: "Đã tải CV", bg: "#EAF3DE", color: "#27500A" };
+  return                              { text: "Đã apply",  bg: "#F1EFE8", color: "#5F5E5A" };
 }
 
+// ── Job Modal (Add / Edit) ─────────────────────────────────────────────────────
+const EMPTY = { title: "", url: "", company: "", loc: "HCM", mode: "On-site", month: new Date().getMonth() + 1, year: new Date().getFullYear(), status: "applied" };
+
+function JobModal({ initial, onSave, onClose }) {
+  const [form, setForm] = useState(initial || EMPTY);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const inp = { fontSize: 13, padding: "7px 10px", borderRadius: 6, border: "0.5px solid #ccc", width: "100%", boxSizing: "border-box", fontFamily: "inherit", outline: "none" };
+  const lbl = { fontSize: 12, color: "#555", display: "block", marginBottom: 4, marginTop: 12 };
+
+  const handleSave = () => {
+    if (!form.title.trim() || !form.company.trim()) return;
+    onSave({ ...form, month: parseInt(form.month), year: parseInt(form.year) });
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: "#fff", borderRadius: 12, padding: "28px 28px 24px", width: 480, maxWidth: "94vw", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{initial ? "Sửa job" : "Thêm job mới"}</h2>
+
+        <label style={lbl}>Vị trí <span style={{ color: "#c00" }}>*</span></label>
+        <input value={form.title} onChange={e => set("title", e.target.value)} style={inp} placeholder="Software Engineer" />
+
+        <label style={lbl}>URL (LinkedIn link)</label>
+        <input value={form.url} onChange={e => set("url", e.target.value)} style={inp} placeholder="https://linkedin.com/jobs/..." />
+
+        <label style={lbl}>Công ty <span style={{ color: "#c00" }}>*</span></label>
+        <input value={form.company} onChange={e => set("company", e.target.value)} style={inp} placeholder="Google" />
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div>
+            <label style={lbl}>Địa điểm</label>
+            <input value={form.loc} onChange={e => set("loc", e.target.value)} style={inp} placeholder="HCM" />
+          </div>
+          <div>
+            <label style={lbl}>Hình thức</label>
+            <select value={form.mode} onChange={e => set("mode", e.target.value)} style={{ ...inp, cursor: "pointer" }}>
+              <option>On-site</option><option>Hybrid</option><option>Remote</option>
+            </select>
+          </div>
+          <div>
+            <label style={lbl}>Tháng apply</label>
+            <input type="number" min={1} max={12} value={form.month} onChange={e => set("month", e.target.value)} style={inp} />
+          </div>
+          <div>
+            <label style={lbl}>Năm apply</label>
+            <input type="number" min={2020} max={2099} value={form.year} onChange={e => set("year", e.target.value)} style={inp} />
+          </div>
+        </div>
+
+        <label style={lbl}>Trạng thái</label>
+        <select value={form.status} onChange={e => set("status", e.target.value)} style={{ ...inp, cursor: "pointer" }}>
+          <option value="applied">Đã apply</option>
+          <option value="viewed">Đã xem CV</option>
+          <option value="downloaded">Đã tải CV</option>
+        </select>
+
+        <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{ padding: "8px 18px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Huỷ</button>
+          <button onClick={handleSave} style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Lưu</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Tracker Page ───────────────────────────────────────────────────────────────
 function TrackerPage({ username, token }) {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [sortCol, setSortCol] = useState(null);
   const [sortAsc, setSortAsc] = useState(true);
   const [search, setSearch] = useState("");
   const [fMode, setFMode] = useState("");
   const [fStatus, setFStatus] = useState("");
   const [fMonth, setFMonth] = useState("");
+  const [modal, setModal] = useState(null); // null | { mode: "add" } | { mode: "edit", index: number }
 
   useEffect(() => {
     fetch(`/api/jobtracker/jobs/${username}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => {
-        if (r.status === 401 || r.status === 403) {
-          localStorage.removeItem("jt_token");
-          window.location.href = "/jobtracker";
-          return null;
-        }
-        return r.json();
-      })
+      .then(r => { if (r.status === 401 || r.status === 403) { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; return null; } return r.json(); })
       .then(data => { if (data) setJobs(data.jobs || []); setLoading(false); })
       .catch(() => setLoading(false));
   }, [username, token]);
 
-  const handleSort = (col) => {
-    if (sortCol === col) setSortAsc(a => !a);
-    else { setSortCol(col); setSortAsc(true); }
+  const saveToServer = async (updatedJobs) => {
+    setSaving(true);
+    await fetch(`/api/jobtracker/jobs/${username}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(updatedJobs) });
+    setSaving(false);
   };
 
-  const months = [...new Set(jobs.map(j => `${j.year}-${String(j.month).padStart(2, "0")}`))]
-    .sort();
+  const handleAdd = async (job) => {
+    const updated = [...jobs, job];
+    setJobs(updated); setModal(null);
+    await saveToServer(updated);
+  };
 
-  let filtered = jobs.filter(j => {
+  const handleEdit = async (job) => {
+    const updated = jobs.map((j, i) => i === modal.index ? job : j);
+    setJobs(updated); setModal(null);
+    await saveToServer(updated);
+  };
+
+  const handleDelete = async (index) => {
+    if (!confirm("Xoá job này?")) return;
+    const updated = jobs.filter((_, i) => i !== index);
+    setJobs(updated);
+    await saveToServer(updated);
+  };
+
+  const handleSort = (col) => { if (sortCol === col) setSortAsc(a => !a); else { setSortCol(col); setSortAsc(true); } };
+
+  const months = [...new Set(jobs.map(j => `${j.year}-${String(j.month).padStart(2, "0")}`))]  .sort();
+
+  let filtered = jobs.map((j, i) => ({ ...j, _idx: i })).filter(j => {
     if (fMode && j.mode !== fMode) return false;
     if (fStatus && j.status !== fStatus) return false;
-    if (fMonth) {
-      const [fy, fm] = fMonth.split("-");
-      if (j.year !== parseInt(fy) || j.month !== parseInt(fm)) return false;
-    }
+    if (fMonth) { const [fy, fm] = fMonth.split("-"); if (j.year !== parseInt(fy) || j.month !== parseInt(fm)) return false; }
     const q = search.toLowerCase();
     if (q && !j.title.toLowerCase().includes(q) && !j.company.toLowerCase().includes(q)) return false;
     return true;
@@ -134,7 +198,10 @@ function TrackerPage({ username, token }) {
   }
 
   const sel = { fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", color: "#333", fontFamily: "inherit" };
-  const th = { background: "#f5f5f3", color: "#666", fontWeight: 500, fontSize: 11, padding: "8px 10px", textAlign: "left", borderBottom: "0.5px solid #e0e0dc", cursor: "pointer", userSelect: "none", whiteSpace: "nowrap", position: "sticky", top: 0, zIndex: 1 };
+  const thBase = { background: "#f5f5f3", color: "#666", fontWeight: 500, fontSize: 11, padding: "8px 10px", borderBottom: "0.5px solid #e0e0dc", userSelect: "none", whiteSpace: "nowrap", position: "sticky", top: 0, zIndex: 1 };
+  const thL = { ...thBase, textAlign: "left", cursor: "pointer" };
+  const thC = { ...thBase, textAlign: "center", cursor: "pointer" };
+  const thNC = { ...thBase, textAlign: "center" };
 
   const counts = { v: jobs.filter(j => j.status === "viewed").length, d: jobs.filter(j => j.status === "downloaded").length, a: jobs.filter(j => j.status === "applied").length };
 
@@ -146,12 +213,20 @@ function TrackerPage({ username, token }) {
 
   return (
     <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", fontSize: 13, background: "#f5f5f3", color: "#1a1a18", padding: 24, minHeight: "100vh", boxSizing: "border-box" }}>
+      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
         <h1 style={{ fontSize: 20, fontWeight: 500 }}>LinkedIn Job Tracker</h1>
-        <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
-          style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
-          Sign out
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {saving && <span style={{ fontSize: 12, color: "#888" }}>Đang lưu...</span>}
+          <button onClick={() => setModal({ mode: "add" })}
+            style={{ fontSize: 12, padding: "5px 14px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+            + Thêm
+          </button>
+          <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
+            style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+            Sign out
+          </button>
+        </div>
       </div>
       <p style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>{username} · {jobs.length} jobs tổng cộng</p>
 
@@ -159,9 +234,9 @@ function TrackerPage({ username, token }) {
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
         {[
           { num: jobs.length,     label: "Tổng jobs" },
-          { num: counts.v,        label: "Đã xem CV",    color: "#0C447C" },
-          { num: counts.d,        label: "Đã tải CV",    color: "#27500A" },
-          { num: counts.a,        label: "Applied only", color: "#5F5E5A" },
+          { num: counts.v,        label: "Đã xem CV",  color: "#0C447C" },
+          { num: counts.d,        label: "Đã tải CV",  color: "#27500A" },
+          { num: counts.a,        label: "Đã apply",   color: "#5F5E5A" },
           { num: filtered.length, label: "Đang hiển thị" },
         ].map(({ num, label, color }) => (
           <div key={label} style={{ background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 8, padding: "10px 16px", minWidth: 100 }}>
@@ -173,17 +248,16 @@ function TrackerPage({ username, token }) {
 
       {/* Filters */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Tìm theo tên job / công ty..."
-          style={{ ...sel, width: 220 }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Tìm theo tên job / công ty..." style={{ ...sel, width: 220 }} />
         <select value={fMode} onChange={e => setFMode(e.target.value)} style={sel}>
           <option value="">Tất cả hình thức</option>
           <option>On-site</option><option>Hybrid</option><option>Remote</option>
         </select>
         <select value={fStatus} onChange={e => setFStatus(e.target.value)} style={sel}>
           <option value="">Tất cả trạng thái</option>
+          <option value="applied">Đã apply</option>
           <option value="viewed">Đã xem CV</option>
           <option value="downloaded">Đã tải CV</option>
-          <option value="applied">Applied only</option>
         </select>
         <select value={fMonth} onChange={e => setFMonth(e.target.value)} style={sel}>
           <option value="">Tất cả tháng/năm</option>
@@ -196,26 +270,30 @@ function TrackerPage({ username, token }) {
       <div style={{ overflowX: "auto", background: "#fff", borderRadius: 10, border: "0.5px solid #e0e0dc" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
           <colgroup>
-            <col style={{ width: "4%" }} /><col style={{ width: "30%" }} /><col style={{ width: "21%" }} />
-            <col style={{ width: "9%" }} /><col style={{ width: "9%" }} /><col style={{ width: "10%" }} />
-            <col style={{ width: "8%" }} /><col style={{ width: "12%" }} />
+            <col style={{ width: "3%" }} /><col style={{ width: "25%" }} /><col style={{ width: "18%" }} />
+            <col style={{ width: "8%" }} /><col style={{ width: "9%" }} /><col style={{ width: "7%" }} />
+            <col style={{ width: "6%" }} /><col style={{ width: "11%" }} /><col style={{ width: "13%" }} />
           </colgroup>
           <thead>
             <tr>
-              {[["#", null], ["Vị trí", "title"], ["Công ty", "company"], ["Địa điểm", null], ["Hình thức", null], ["Tháng", "month"], ["Năm", "year"], ["Trạng thái", "status"]].map(([label, col]) => (
-                <th key={label} style={th} onClick={col ? () => handleSort(col) : undefined}>
-                  {label}{col ? (sortCol === col ? (sortAsc ? " ↑" : " ↓") : " ↕") : ""}
-                </th>
-              ))}
+              <th style={thNC}>#</th>
+              <th style={thL} onClick={() => handleSort("title")}>Vị trí{sortCol === "title" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
+              <th style={thL} onClick={() => handleSort("company")}>Công ty{sortCol === "company" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
+              <th style={thC}>Địa điểm</th>
+              <th style={thC}>Hình thức</th>
+              <th style={thC} onClick={() => handleSort("month")}>Tháng{sortCol === "month" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
+              <th style={thC} onClick={() => handleSort("year")}>Năm{sortCol === "year" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
+              <th style={thL} onClick={() => handleSort("status")}>Trạng thái{sortCol === "status" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
+              <th style={thNC}></th>
             </tr>
           </thead>
           <tbody>
             {!filtered.length
-              ? <tr><td colSpan={8} style={{ padding: 32, textAlign: "center", color: "#888" }}>Không tìm thấy kết quả.</td></tr>
+              ? <tr><td colSpan={9} style={{ padding: 32, textAlign: "center", color: "#888" }}>Không tìm thấy kết quả.</td></tr>
               : filtered.map((j, i) => {
                 const b = badge(j.status);
                 return (
-                  <tr key={i} style={{ borderBottom: "0.5px solid #f0f0ec" }}
+                  <tr key={j._idx} style={{ borderBottom: "0.5px solid #f0f0ec" }}
                     onMouseEnter={e => e.currentTarget.style.background = "#fafaf8"}
                     onMouseLeave={e => e.currentTarget.style.background = ""}>
                     <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{i + 1}</td>
@@ -232,12 +310,26 @@ function TrackerPage({ username, token }) {
                     <td style={{ padding: "6px 10px" }}>
                       <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color }}>{b.text}</span>
                     </td>
+                    <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
+                      <button onClick={() => setModal({ mode: "edit", index: j._idx })}
+                        style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", marginRight: 4, fontFamily: "inherit" }}>
+                        Sửa
+                      </button>
+                      <button onClick={() => handleDelete(j._idx)}
+                        style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>
+                        Xoá
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
           </tbody>
         </table>
       </div>
+
+      {/* Modal */}
+      {modal?.mode === "add" && <JobModal onSave={handleAdd} onClose={() => setModal(null)} />}
+      {modal?.mode === "edit" && <JobModal initial={jobs[modal.index]} onSave={handleEdit} onClose={() => setModal(null)} />}
     </div>
   );
 }
@@ -251,14 +343,7 @@ export default function JobTrackerApp() {
     if (auth) { window.location.href = `/jobtracker/${auth.username}`; return null; }
     return <LoginPage />;
   }
-
   if (!auth) { window.location.href = "/jobtracker"; return null; }
-
-  if (auth.username !== urlUsername) {
-    localStorage.removeItem("jt_token");
-    window.location.href = "/jobtracker";
-    return null;
-  }
-
+  if (auth.username !== urlUsername) { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; return null; }
   return <TrackerPage username={urlUsername} token={auth.token} />;
 }
