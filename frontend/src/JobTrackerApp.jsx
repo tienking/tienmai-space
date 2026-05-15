@@ -296,7 +296,11 @@ function TrackerPage({ username, token }) {
             Sign out
           </button>
         </div>
-        <p style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>{username} · {counts.a} vị trí đã apply</p>
+        <p style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>
+          {username} · <span style={{ color: "#5F5E5A", fontWeight: 500 }}>{counts.a}</span> vị trí đã apply
+          {" · "}<span style={{ color: "#0C447C", fontWeight: 500 }}>{counts.v}</span> đã xem CV
+          {", "}<span style={{ color: "#27500A", fontWeight: 500 }}>{counts.d}</span> đã tải CV
+        </p>
 
         {/* Stats */}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
