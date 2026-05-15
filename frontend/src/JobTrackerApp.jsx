@@ -192,13 +192,14 @@ function TrackerPage({ username, token }) {
     return true;
   });
 
-  if (sortCol) {
-    filtered = [...filtered].sort((a, b) => {
+  filtered = [...filtered].sort((a, b) => {
+    if (sortCol) {
       let va = a[sortCol], vb = b[sortCol];
       if (typeof va === "string") { va = va.toLowerCase(); vb = vb.toLowerCase(); }
       return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
-    });
-  }
+    }
+    return b.year - a.year || b.month - a.month;
+  });
 
   const sel = { fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", color: "#333", fontFamily: "inherit" };
   const thBase = { background: "#f5f5f3", color: "#666", fontWeight: 500, fontSize: 11, padding: "8px 10px", borderBottom: "0.5px solid #e0e0dc", userSelect: "none", whiteSpace: "nowrap", position: "sticky", top: 0, zIndex: 1 };
