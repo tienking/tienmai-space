@@ -1,5 +1,15 @@
 import { useState, useEffect } from "react";
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
+  return isMobile;
+}
+
 // ── Token helpers ──────────────────────────────────────────────────────────────
 function getTokenData() {
   const token = localStorage.getItem("jt_token");
@@ -133,6 +143,7 @@ function JobModal({ initial, onSave, onClose }) {
 
 // ── Tracker Page ───────────────────────────────────────────────────────────────
 function TrackerPage({ username, token }) {
+  const isMobile = useIsMobile();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -224,7 +235,7 @@ function TrackerPage({ username, token }) {
   return (
     <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", fontSize: 13, background: "#f5f5f3", color: "#1a1a18", height: "100vh", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
       {/* Sticky top section */}
-      <div style={{ padding: "24px 24px 0", flexShrink: 0 }}>
+      <div style={{ padding: isMobile ? "16px 16px 0" : "24px 24px 0", flexShrink: 0 }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
           <h1 style={{ fontSize: 20, fontWeight: 500 }}>Job Tracker</h1>
@@ -253,7 +264,7 @@ function TrackerPage({ username, token }) {
 
         {/* Filters */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Tìm theo tên job / công ty..." style={{ ...sel, width: 220 }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Tìm theo tên job / công ty..." style={{ ...sel, width: isMobile ? "100%" : 220 }} />
           <select value={fMode} onChange={e => setFMode(e.target.value)} style={sel}>
             <option value="">Tất cả hình thức</option>
             <option>On-site</option><option>Hybrid</option><option>Remote</option>
@@ -283,76 +294,117 @@ function TrackerPage({ username, token }) {
         </div>
       </div>
 
-      {/* Scrollable table */}
-      <div style={{ flex: 1, overflow: "auto", padding: "0 24px 24px" }}>
-      <div style={{ background: "#fff", borderRadius: 10, border: "0.5px solid #e0e0dc" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
-          <colgroup>
-            <col style={{ width: "3%" }} /><col style={{ width: "25%" }} /><col style={{ width: "18%" }} />
-            <col style={{ width: "8%" }} /><col style={{ width: "9%" }} /><col style={{ width: "7%" }} />
-            <col style={{ width: "6%" }} /><col style={{ width: "11%" }} /><col style={{ width: "13%" }} />
-          </colgroup>
-          <thead>
-            <tr>
-              <th style={thNC}>#</th>
-              <th style={thL} onClick={() => handleSort("title")}>Vị trí{sortCol === "title" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
-              <th style={thL} onClick={() => handleSort("company")}>Công ty{sortCol === "company" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
-              <th style={thC}>Địa điểm</th>
-              <th style={thC}>Hình thức</th>
-              <th style={thC} onClick={() => handleSort("month")}>Tháng{sortCol === "month" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
-              <th style={thC} onClick={() => handleSort("year")}>Năm{sortCol === "year" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
-              <th style={thL} onClick={() => handleSort("status")}>Trạng thái{sortCol === "status" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
-              <th style={thNC}></th>
-            </tr>
-          </thead>
-          <tbody>
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflow: "auto", padding: isMobile ? "0 16px 24px" : "0 24px 24px" }}>
+
+        {/* Mobile: card list */}
+        {isMobile ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {!filtered.length
-              ? <tr><td colSpan={9} style={{ padding: 32, textAlign: "center", color: "#888" }}>Không tìm thấy kết quả.</td></tr>
+              ? <p style={{ textAlign: "center", color: "#888", padding: 32 }}>Không tìm thấy kết quả.</p>
               : filtered.map((j, i) => {
                 const b = badge(j.status);
                 return (
-                  <tr key={j._idx} style={{ borderBottom: "0.5px solid #f0f0ec" }}
-                    onMouseEnter={e => e.currentTarget.style.background = "#fafaf8"}
-                    onMouseLeave={e => e.currentTarget.style.background = ""}>
-                    <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{i + 1}</td>
-                    <td style={{ padding: "6px 10px" }}>
-                      {j.url ? <a href={j.url} target="_blank" rel="noreferrer" style={{ color: "#185FA5", textDecoration: "none" }}>{j.title}</a> : j.title}
-                    </td>
-                    <td style={{ padding: "6px 10px", color: "#888" }}>{j.company}</td>
-                    <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{j.loc}</td>
-                    <td style={{ padding: "6px 10px", textAlign: "center" }}>
-                      <span style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, border: "0.5px solid #ddd", color: "#666" }}>{j.mode}</span>
-                    </td>
-                    <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{String(j.month).padStart(2, "0")}</td>
-                    <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{j.year}</td>
-                    <td style={{ padding: "4px 10px" }}>
+                  <div key={j._idx} style={{ background: "#fff", borderRadius: 10, border: "0.5px solid #e0e0dc", padding: "12px 14px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, color: "#aaa", marginBottom: 2 }}>{i + 1}</div>
+                        {j.url
+                          ? <a href={j.url} target="_blank" rel="noreferrer" style={{ color: "#185FA5", textDecoration: "none", fontSize: 13, fontWeight: 500, lineHeight: 1.4 }}>{j.title}</a>
+                          : <span style={{ fontSize: 13, fontWeight: 500 }}>{j.title}</span>}
+                        <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{j.company}</div>
+                      </div>
                       <select value={j.status} onChange={e => handleStatusChange(j._idx, e.target.value)}
-                        style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "inherit", outline: "none" }}>
+                        style={{ padding: "3px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "inherit", outline: "none", flexShrink: 0 }}>
                         <option value="applied">Đã apply</option>
                         <option value="viewed">Đã xem CV</option>
                         <option value="downloaded">Đã tải CV</option>
                       </select>
-                    </td>
-                    <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
-                      <button onClick={() => setModal({ mode: "edit", index: j._idx })}
-                        style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", marginRight: 4, fontFamily: "inherit" }}>
-                        Sửa
-                      </button>
-                      <button onClick={() => handleDelete(j._idx)}
-                        style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>
-                        Xoá
-                      </button>
-                    </td>
-                  </tr>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: 11, color: "#aaa" }}>{j.loc} · {j.mode} · {String(j.month).padStart(2, "0")}/{j.year}</span>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button onClick={() => setModal({ mode: "edit", index: j._idx })}
+                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Sửa</button>
+                        <button onClick={() => handleDelete(j._idx)}
+                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>Xoá</button>
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        ) : (
+          /* Desktop: table */
+          <div style={{ background: "#fff", borderRadius: 10, border: "0.5px solid #e0e0dc" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+              <colgroup>
+                <col style={{ width: "3%" }} /><col style={{ width: "25%" }} /><col style={{ width: "18%" }} />
+                <col style={{ width: "8%" }} /><col style={{ width: "9%" }} /><col style={{ width: "7%" }} />
+                <col style={{ width: "6%" }} /><col style={{ width: "11%" }} /><col style={{ width: "13%" }} />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th style={thNC}>#</th>
+                  <th style={thL} onClick={() => handleSort("title")}>Vị trí{sortCol === "title" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
+                  <th style={thL} onClick={() => handleSort("company")}>Công ty{sortCol === "company" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
+                  <th style={thC}>Địa điểm</th>
+                  <th style={thC}>Hình thức</th>
+                  <th style={thC} onClick={() => handleSort("month")}>Tháng{sortCol === "month" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
+                  <th style={thC} onClick={() => handleSort("year")}>Năm{sortCol === "year" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
+                  <th style={thL} onClick={() => handleSort("status")}>Trạng thái{sortCol === "status" ? (sortAsc ? " ↑" : " ↓") : " ↕"}</th>
+                  <th style={thNC}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {!filtered.length
+                  ? <tr><td colSpan={9} style={{ padding: 32, textAlign: "center", color: "#888" }}>Không tìm thấy kết quả.</td></tr>
+                  : filtered.map((j, i) => {
+                    const b = badge(j.status);
+                    return (
+                      <tr key={j._idx} style={{ borderBottom: "0.5px solid #f0f0ec" }}
+                        onMouseEnter={e => e.currentTarget.style.background = "#fafaf8"}
+                        onMouseLeave={e => e.currentTarget.style.background = ""}>
+                        <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{i + 1}</td>
+                        <td style={{ padding: "6px 10px" }}>
+                          {j.url ? <a href={j.url} target="_blank" rel="noreferrer" style={{ color: "#185FA5", textDecoration: "none" }}>{j.title}</a> : j.title}
+                        </td>
+                        <td style={{ padding: "6px 10px", color: "#888" }}>{j.company}</td>
+                        <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{j.loc}</td>
+                        <td style={{ padding: "6px 10px", textAlign: "center" }}>
+                          <span style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, border: "0.5px solid #ddd", color: "#666" }}>{j.mode}</span>
+                        </td>
+                        <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{String(j.month).padStart(2, "0")}</td>
+                        <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{j.year}</td>
+                        <td style={{ padding: "4px 10px" }}>
+                          <select value={j.status} onChange={e => handleStatusChange(j._idx, e.target.value)}
+                            style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "inherit", outline: "none" }}>
+                            <option value="applied">Đã apply</option>
+                            <option value="viewed">Đã xem CV</option>
+                            <option value="downloaded">Đã tải CV</option>
+                          </select>
+                        </td>
+                        <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
+                          <button onClick={() => setModal({ mode: "edit", index: j._idx })}
+                            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", marginRight: 4, fontFamily: "inherit" }}>
+                            Sửa
+                          </button>
+                          <button onClick={() => handleDelete(j._idx)}
+                            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>
+                            Xoá
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      {/* Modal */}
-      {modal?.mode === "add" && <JobModal onSave={handleAdd} onClose={() => setModal(null)} />}
-      {modal?.mode === "edit" && <JobModal initial={jobs[modal.index]} onSave={handleEdit} onClose={() => setModal(null)} />}
+        {/* Modal */}
+        {modal?.mode === "add" && <JobModal onSave={handleAdd} onClose={() => setModal(null)} />}
+        {modal?.mode === "edit" && <JobModal initial={jobs[modal.index]} onSave={handleEdit} onClose={() => setModal(null)} />}
       </div>
     </div>
   );
