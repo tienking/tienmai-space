@@ -142,6 +142,7 @@ function TrackerPage({ username, token }) {
   const [fMode, setFMode] = useState("");
   const [fStatus, setFStatus] = useState("");
   const [fMonth, setFMonth] = useState("");
+  const [fYear, setFYear] = useState("");
   const [modal, setModal] = useState(null); // null | { mode: "add" } | { mode: "edit", index: number }
 
   useEffect(() => {
@@ -178,12 +179,14 @@ function TrackerPage({ username, token }) {
 
   const handleSort = (col) => { if (sortCol === col) setSortAsc(a => !a); else { setSortCol(col); setSortAsc(true); } };
 
-  const months = [...new Set(jobs.map(j => `${j.year}-${String(j.month).padStart(2, "0")}`))]  .sort();
+  const uniqueMonths = [...new Set(jobs.map(j => j.month))].sort((a, b) => a - b);
+  const uniqueYears = [...new Set(jobs.map(j => j.year))].sort((a, b) => b - a);
 
   let filtered = jobs.map((j, i) => ({ ...j, _idx: i })).filter(j => {
     if (fMode && j.mode !== fMode) return false;
     if (fStatus && j.status !== fStatus) return false;
-    if (fMonth) { const [fy, fm] = fMonth.split("-"); if (j.year !== parseInt(fy) || j.month !== parseInt(fm)) return false; }
+    if (fMonth && j.month !== parseInt(fMonth)) return false;
+    if (fYear && j.year !== parseInt(fYear)) return false;
     const q = search.toLowerCase();
     if (q && !j.title.toLowerCase().includes(q) && !j.company.toLowerCase().includes(q)) return false;
     return true;
@@ -255,8 +258,12 @@ function TrackerPage({ username, token }) {
             <option value="downloaded">Đã tải CV</option>
           </select>
           <select value={fMonth} onChange={e => setFMonth(e.target.value)} style={sel}>
-            <option value="">Tất cả tháng/năm</option>
-            {months.map(ym => { const [y, m] = ym.split("-"); return <option key={ym} value={ym}>{m}/{y}</option>; })}
+            <option value="">Tất cả tháng</option>
+            {uniqueMonths.map(m => <option key={m} value={m}>Tháng {m}</option>)}
+          </select>
+          <select value={fYear} onChange={e => setFYear(e.target.value)} style={sel}>
+            <option value="">Tất cả năm</option>
+            {uniqueYears.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
             {saving && <span style={{ fontSize: 12, color: "#888" }}>Đang lưu...</span>}
