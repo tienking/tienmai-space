@@ -94,6 +94,13 @@ function JobModal({ initial, onSave, onClose }) {
         <label style={lbl}>Công ty <span style={{ color: "#c00" }}>*</span></label>
         <input value={form.company} onChange={e => set("company", e.target.value)} style={inp} placeholder="Google" />
 
+        <label style={lbl}>Trạng thái</label>
+        <select value={form.status} onChange={e => set("status", e.target.value)} style={{ ...inp, cursor: "pointer" }}>
+          <option value="applied">Đã apply</option>
+          <option value="viewed">Đã xem CV</option>
+          <option value="downloaded">Đã tải CV</option>
+        </select>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
             <label style={lbl}>Địa điểm</label>
@@ -114,13 +121,6 @@ function JobModal({ initial, onSave, onClose }) {
             <input type="number" min={2020} max={2099} value={form.year} onChange={e => set("year", e.target.value)} style={inp} />
           </div>
         </div>
-
-        <label style={lbl}>Trạng thái</label>
-        <select value={form.status} onChange={e => set("status", e.target.value)} style={{ ...inp, cursor: "pointer" }}>
-          <option value="applied">Đã apply</option>
-          <option value="viewed">Đã xem CV</option>
-          <option value="downloaded">Đã tải CV</option>
-        </select>
 
         <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{ padding: "8px 18px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Huỷ</button>
