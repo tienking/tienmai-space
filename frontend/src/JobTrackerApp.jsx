@@ -212,61 +212,65 @@ function TrackerPage({ username, token }) {
   );
 
   return (
-    <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", fontSize: 13, background: "#f5f5f3", color: "#1a1a18", padding: 24, minHeight: "100vh", boxSizing: "border-box" }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 500 }}>LinkedIn Job Tracker</h1>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {saving && <span style={{ fontSize: 12, color: "#888" }}>Đang lưu...</span>}
-          <button onClick={() => setModal({ mode: "add" })}
-            style={{ fontSize: 12, padding: "5px 14px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
-            + Thêm
-          </button>
-          <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
-            style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
-            Sign out
-          </button>
+    <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", fontSize: 13, background: "#f5f5f3", color: "#1a1a18", height: "100vh", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
+      {/* Sticky top section */}
+      <div style={{ padding: "24px 24px 0", flexShrink: 0 }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 500 }}>LinkedIn Job Tracker</h1>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {saving && <span style={{ fontSize: 12, color: "#888" }}>Đang lưu...</span>}
+            <button onClick={() => setModal({ mode: "add" })}
+              style={{ fontSize: 12, padding: "5px 14px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+              + Thêm
+            </button>
+            <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
+              style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+              Sign out
+            </button>
+          </div>
+        </div>
+        <p style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>{username} · {jobs.length} jobs tổng cộng</p>
+
+        {/* Stats */}
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+          {[
+            { num: jobs.length,     label: "Tổng jobs" },
+            { num: counts.v,        label: "Đã xem CV",  color: "#0C447C" },
+            { num: counts.d,        label: "Đã tải CV",  color: "#27500A" },
+            { num: counts.a,        label: "Đã apply",   color: "#5F5E5A" },
+            { num: filtered.length, label: "Đang hiển thị" },
+          ].map(({ num, label, color }) => (
+            <div key={label} style={{ background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 8, padding: "10px 16px", minWidth: 100 }}>
+              <div style={{ fontSize: 22, fontWeight: 500, color: color || "#1a1a18" }}>{num}</div>
+              <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Filters */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Tìm theo tên job / công ty..." style={{ ...sel, width: 220 }} />
+          <select value={fMode} onChange={e => setFMode(e.target.value)} style={sel}>
+            <option value="">Tất cả hình thức</option>
+            <option>On-site</option><option>Hybrid</option><option>Remote</option>
+          </select>
+          <select value={fStatus} onChange={e => setFStatus(e.target.value)} style={sel}>
+            <option value="">Tất cả trạng thái</option>
+            <option value="applied">Đã apply</option>
+            <option value="viewed">Đã xem CV</option>
+            <option value="downloaded">Đã tải CV</option>
+          </select>
+          <select value={fMonth} onChange={e => setFMonth(e.target.value)} style={sel}>
+            <option value="">Tất cả tháng/năm</option>
+            {months.map(ym => { const [y, m] = ym.split("-"); return <option key={ym} value={ym}>{m}/{y}</option>; })}
+          </select>
+          <span style={{ fontSize: 12, color: "#888", marginLeft: "auto" }}>{filtered.length} vị trí</span>
         </div>
       </div>
-      <p style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>{username} · {jobs.length} jobs tổng cộng</p>
 
-      {/* Stats */}
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
-        {[
-          { num: jobs.length,     label: "Tổng jobs" },
-          { num: counts.v,        label: "Đã xem CV",  color: "#0C447C" },
-          { num: counts.d,        label: "Đã tải CV",  color: "#27500A" },
-          { num: counts.a,        label: "Đã apply",   color: "#5F5E5A" },
-          { num: filtered.length, label: "Đang hiển thị" },
-        ].map(({ num, label, color }) => (
-          <div key={label} style={{ background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 8, padding: "10px 16px", minWidth: 100 }}>
-            <div style={{ fontSize: 22, fontWeight: 500, color: color || "#1a1a18" }}>{num}</div>
-            <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Tìm theo tên job / công ty..." style={{ ...sel, width: 220 }} />
-        <select value={fMode} onChange={e => setFMode(e.target.value)} style={sel}>
-          <option value="">Tất cả hình thức</option>
-          <option>On-site</option><option>Hybrid</option><option>Remote</option>
-        </select>
-        <select value={fStatus} onChange={e => setFStatus(e.target.value)} style={sel}>
-          <option value="">Tất cả trạng thái</option>
-          <option value="applied">Đã apply</option>
-          <option value="viewed">Đã xem CV</option>
-          <option value="downloaded">Đã tải CV</option>
-        </select>
-        <select value={fMonth} onChange={e => setFMonth(e.target.value)} style={sel}>
-          <option value="">Tất cả tháng/năm</option>
-          {months.map(ym => { const [y, m] = ym.split("-"); return <option key={ym} value={ym}>{m}/{y}</option>; })}
-        </select>
-        <span style={{ fontSize: 12, color: "#888", marginLeft: "auto" }}>{filtered.length} vị trí</span>
-      </div>
-
-      {/* Table */}
+      {/* Scrollable table */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 24px 24px" }}>
       <div style={{ overflowX: "auto", background: "#fff", borderRadius: 10, border: "0.5px solid #e0e0dc" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
           <colgroup>
@@ -330,6 +334,7 @@ function TrackerPage({ username, token }) {
       {/* Modal */}
       {modal?.mode === "add" && <JobModal onSave={handleAdd} onClose={() => setModal(null)} />}
       {modal?.mode === "edit" && <JobModal initial={jobs[modal.index]} onSave={handleEdit} onClose={() => setModal(null)} />}
+      </div>
     </div>
   );
 }
