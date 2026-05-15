@@ -297,9 +297,9 @@ function TrackerPage({ username, token }) {
           </button>
         </div>
         <p style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>
-          {username} · <span style={{ color: "#5F5E5A", fontWeight: 500 }}>{counts.a}</span> vị trí đã apply
-          {" · "}<span style={{ color: "#0C447C", fontWeight: 500 }}>{counts.v}</span> đã xem CV
-          {", "}<span style={{ color: "#27500A", fontWeight: 500 }}>{counts.d}</span> đã tải CV
+          {username} · <span style={{ color: "#5F5E5A", fontWeight: 500 }}>{counts.a}</span> {counts.a === 1 ? "job" : "jobs"} đã apply
+          {" · "}<span style={{ color: "#0C447C", fontWeight: 500 }}>{counts.v}</span> {counts.v === 1 ? "job" : "jobs"} đã xem CV
+          {", "}<span style={{ color: "#27500A", fontWeight: 500 }}>{counts.d}</span> {counts.d === 1 ? "job" : "jobs"} đã tải CV
         </p>
 
         {/* Stats */}
@@ -345,7 +345,7 @@ function TrackerPage({ username, token }) {
               style={{ fontSize: 12, padding: "5px 14px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
               + Thêm
             </button>
-            <span style={{ fontSize: 12, color: "#888" }}>{filtered.length} vị trí</span>
+            <span style={{ fontSize: 12, color: "#888" }}>{filtered.length} {filtered.length === 1 ? "job" : "jobs"}</span>
           </div>
         </div>
       </div>
