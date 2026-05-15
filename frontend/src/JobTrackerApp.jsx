@@ -291,16 +291,14 @@ function TrackerPage({ username, token }) {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
           <h1 style={{ fontSize: 20, fontWeight: 500 }}>Job Tracker</h1>
-          <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
-            style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
-            Sign out
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 12, color: "#888" }}>{username}</span>
+            <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
+              style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+              Sign out
+            </button>
+          </div>
         </div>
-        <p style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>
-          {username} · <span style={{ color: "#5F5E5A", fontWeight: 500 }}>{counts.a}</span> {counts.a === 1 ? "job" : "jobs"} đã apply
-          {" · "}<span style={{ color: "#0C447C", fontWeight: 500 }}>{counts.v}</span> {counts.v === 1 ? "job" : "jobs"} đã xem CV
-          {", "}<span style={{ color: "#27500A", fontWeight: 500 }}>{counts.d}</span> {counts.d === 1 ? "job" : "jobs"} đã tải CV
-        </p>
 
         {/* Stats */}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
