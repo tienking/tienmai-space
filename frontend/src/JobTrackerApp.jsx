@@ -159,7 +159,7 @@ function TrackerPage({ username, token }) {
   };
 
   const handleAdd = async (job) => {
-    const updated = [...jobs, job];
+    const updated = [job, ...jobs];
     setJobs(updated); setModal(null);
     await saveToServer(updated);
   };
