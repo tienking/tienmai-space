@@ -170,6 +170,12 @@ function TrackerPage({ username, token }) {
     await saveToServer(updated);
   };
 
+  const handleStatusChange = async (index, newStatus) => {
+    const updated = jobs.map((j, i) => i === index ? { ...j, status: newStatus } : j);
+    setJobs(updated);
+    await saveToServer(updated);
+  };
+
   const handleDelete = async (index) => {
     if (!confirm("Xoá job này?")) return;
     const updated = jobs.filter((_, i) => i !== index);
@@ -319,8 +325,13 @@ function TrackerPage({ username, token }) {
                     </td>
                     <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{String(j.month).padStart(2, "0")}</td>
                     <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{j.year}</td>
-                    <td style={{ padding: "6px 10px" }}>
-                      <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color }}>{b.text}</span>
+                    <td style={{ padding: "4px 10px" }}>
+                      <select value={j.status} onChange={e => handleStatusChange(j._idx, e.target.value)}
+                        style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "inherit", outline: "none" }}>
+                        <option value="applied">Đã apply</option>
+                        <option value="viewed">Đã xem CV</option>
+                        <option value="downloaded">Đã tải CV</option>
+                      </select>
                     </td>
                     <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
                       <button onClick={() => setModal({ mode: "edit", index: j._idx })}
