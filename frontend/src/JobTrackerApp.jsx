@@ -336,18 +336,7 @@ function TrackerPage({ username, token }) {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
           <h1 style={{ fontSize: 20, fontWeight: 500 }}>Job Tracker</h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            {resumeExists && <>
-              <button onClick={handleViewResume}
-                style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Xem</button>
-              <button onClick={handleDeleteResume}
-                style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>Xóa</button>
-            </>}
-            <button onClick={() => fileInputRef.current?.click()}
-              style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
-              {resumeExists ? "New Resume" : "Upload Resume"}
-            </button>
-            <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleUploadResume} style={{ display: "none" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 12, color: "#888" }}>{username}</span>
             <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
               style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
@@ -395,9 +384,20 @@ function TrackerPage({ username, token }) {
           </select>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
             {saving && <span style={{ fontSize: 12, color: "#888" }}>Đang lưu...</span>}
+            {resumeExists && <>
+              <button onClick={handleViewResume}
+                style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Xem</button>
+              <button onClick={handleDeleteResume}
+                style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>Xóa</button>
+            </>}
+            <button onClick={() => fileInputRef.current?.click()}
+              style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+              {resumeExists ? "New Resume" : "Upload Resume"}
+            </button>
+            <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleUploadResume} style={{ display: "none" }} />
             <button onClick={() => setModal({ mode: "add" })}
               style={{ fontSize: 12, padding: "5px 14px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
-              + Thêm
+              + Thêm job
             </button>
             <span style={{ fontSize: 12, color: "#888" }}>{filtered.length} {filtered.length === 1 ? "job" : "jobs"}</span>
           </div>
