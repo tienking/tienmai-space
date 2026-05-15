@@ -29,6 +29,24 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
 def hash_password(plain: str) -> str:
     return bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
 
+def create_jobtracker_token(username: str):
+    to_encode = {"sub": username, "type": "jobtracker"}
+    expire = datetime.utcnow() + timedelta(hours=24 * 7)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
+
+def verify_jobtracker_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[ALGORITHM])
+        if payload.get("type") != "jobtracker":
+            raise HTTPException(status_code=401, detail="Invalid token")
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return username
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
 async def authenticate_user(username: str, password: str) -> bool:
     from database import get_admin_credentials
     creds = await get_admin_credentials()

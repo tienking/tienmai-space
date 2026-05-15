@@ -5,9 +5,13 @@ from typing import List, Optional, Dict, Any
 from google import genai
 from google.genai import types
 from config import GEMINI_API_KEY
-from database import save_message, get_chat_history, log_visitor, get_profile, update_profile, get_analytics_data, is_first_web_message, get_ai_settings, update_ai_settings, set_admin_credentials
+from database import (save_message, get_chat_history, log_visitor, get_profile, update_profile,
+                      get_analytics_data, is_first_web_message, get_ai_settings, update_ai_settings,
+                      set_admin_credentials, get_jobtracker_users, get_jobtracker_user,
+                      create_jobtracker_user, update_jobtracker_password, delete_jobtracker_user,
+                      get_jobtracker_jobs, set_jobtracker_jobs)
 from notifications import notify_new_chat, notify_jd_upload
-from auth import create_access_token, authenticate_user, verify_token, hash_password
+from auth import create_access_token, authenticate_user, verify_token, hash_password, create_jobtracker_token, verify_jobtracker_token
 import os
 import shutil
 import base64
@@ -381,3 +385,72 @@ async def update_ai_settings_endpoint(data: AISettingsUpdate, username: str = De
         raise HTTPException(status_code=400, detail="No fields to update")
     await update_ai_settings(updates)
     return {"message": "AI settings updated"}
+
+# ── Job Tracker ────────────────────────────────────────────────────────────────
+
+class JobTrackerLoginRequest(BaseModel):
+    username: str
+    password: str
+
+class JobTrackerPasswordUpdate(BaseModel):
+    password: str
+
+class JobTrackerUserCreate(BaseModel):
+    username: str
+    password: str
+
+# Public: login
+@router.post("/api/jobtracker/login")
+async def jobtracker_login(request: JobTrackerLoginRequest):
+    user = await get_jobtracker_user(request.username)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    import bcrypt as _bcrypt
+    if not _bcrypt.checkpw(request.password.encode(), user["hashed_password"].encode()):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    token = create_jobtracker_token(request.username)
+    return {"access_token": token, "token_type": "bearer", "username": request.username}
+
+# Public: get jobs (jobtracker JWT required, own data only)
+@router.get("/api/jobtracker/jobs/{jt_username}")
+async def jobtracker_get_jobs(jt_username: str, token_user: str = Depends(verify_jobtracker_token)):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403, detail="Access denied")
+    return {"jobs": await get_jobtracker_jobs(jt_username)}
+
+# Admin: list users
+@router.get("/api/admin/jobtracker/users")
+async def admin_list_jt_users(username: str = Depends(verify_token)):
+    return await get_jobtracker_users()
+
+# Admin: create user
+@router.post("/api/admin/jobtracker/users")
+async def admin_create_jt_user(data: JobTrackerUserCreate, username: str = Depends(verify_token)):
+    if await get_jobtracker_user(data.username):
+        raise HTTPException(status_code=400, detail="Username already exists")
+    await create_jobtracker_user(data.username, hash_password(data.password))
+    return {"message": "User created"}
+
+# Admin: change password
+@router.put("/api/admin/jobtracker/users/{jt_username}")
+async def admin_update_jt_user(jt_username: str, data: JobTrackerPasswordUpdate, username: str = Depends(verify_token)):
+    if not await get_jobtracker_user(jt_username):
+        raise HTTPException(status_code=404, detail="User not found")
+    await update_jobtracker_password(jt_username, hash_password(data.password))
+    return {"message": "Password updated"}
+
+# Admin: delete user
+@router.delete("/api/admin/jobtracker/users/{jt_username}")
+async def admin_delete_jt_user(jt_username: str, username: str = Depends(verify_token)):
+    if not await get_jobtracker_user(jt_username):
+        raise HTTPException(status_code=404, detail="User not found")
+    await delete_jobtracker_user(jt_username)
+    return {"message": "User deleted"}
+
+# Admin: upload/replace jobs for a user
+@router.put("/api/admin/jobtracker/jobs/{jt_username}")
+async def admin_set_jt_jobs(jt_username: str, jobs: List[Dict[str, Any]], username: str = Depends(verify_token)):
+    if not await get_jobtracker_user(jt_username):
+        raise HTTPException(status_code=404, detail="User not found")
+    await set_jobtracker_jobs(jt_username, jobs)
+    return {"message": f"Jobs updated for {jt_username}"}

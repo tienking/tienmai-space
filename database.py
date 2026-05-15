@@ -11,6 +11,8 @@ chat_collection = db["chat_history"]
 visitor_collection = db["visitors"]
 profile_collection = db["profile"]
 settings_collection = db["settings"]
+jobtracker_users_col = db["jobtracker_users"]
+jobtracker_jobs_col = db["jobtracker_jobs"]
 
 # --- Profile ---
 async def get_profile():
@@ -118,3 +120,40 @@ async def get_analytics_data():
             for q in recent_questions
         ],
     }
+
+# --- Job Tracker Users ---
+async def get_jobtracker_users():
+    cursor = jobtracker_users_col.find({}, {"_id": 0, "hashed_password": 0})
+    return await cursor.to_list(length=None)
+
+async def get_jobtracker_user(username: str):
+    return await jobtracker_users_col.find_one({"username": username}, {"_id": 0})
+
+async def create_jobtracker_user(username: str, hashed_password: str):
+    await jobtracker_users_col.insert_one({
+        "username": username,
+        "hashed_password": hashed_password,
+        "created_at": datetime.utcnow()
+    })
+
+async def update_jobtracker_password(username: str, hashed_password: str):
+    await jobtracker_users_col.update_one(
+        {"username": username},
+        {"$set": {"hashed_password": hashed_password}}
+    )
+
+async def delete_jobtracker_user(username: str):
+    await jobtracker_users_col.delete_one({"username": username})
+    await jobtracker_jobs_col.delete_one({"username": username})
+
+# --- Job Tracker Jobs ---
+async def get_jobtracker_jobs(username: str):
+    doc = await jobtracker_jobs_col.find_one({"username": username}, {"_id": 0})
+    return doc.get("jobs", []) if doc else []
+
+async def set_jobtracker_jobs(username: str, jobs: list):
+    await jobtracker_jobs_col.update_one(
+        {"username": username},
+        {"$set": {"jobs": jobs, "updated_at": datetime.utcnow()}},
+        upsert=True
+    )
