@@ -90,7 +90,7 @@ function JdEditorModal({ value, onSave, onClose }) {
           style={{ width: "100%", height: "50vh", fontSize: 13, padding: "10px", borderRadius: 8, border: "0.5px solid #ccc", fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6 }} />
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{ padding: "8px 18px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Huỷ</button>
-          <button onClick={() => onSave(text)} style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Lưu JD</button>
+          <button onClick={() => onSave(text.trim() || null)} style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Lưu JD</button>
         </div>
       </div>
     </div>
@@ -125,7 +125,7 @@ function JobModal({ initial, onSave, onClose }) {
 
   const handleSave = () => {
     if (!form.title.trim() || !form.company.trim()) return;
-    onSave({ ...form, month: parseInt(form.month), year: parseInt(form.year) });
+    onSave({ ...form, month: parseInt(form.month), year: parseInt(form.year), jd: form.jd?.trim() || null });
   };
 
   return (
@@ -439,12 +439,11 @@ function TrackerPage({ username, token }) {
                           </select>
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "center" }}>
-                          {j.jd
-                            ? <button onClick={() => setViewJd({ title: j.title, jd: j.jd })}
-                                style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
-                                JD
-                              </button>
-                            : <span style={{ fontSize: 11, color: "#ddd" }}>—</span>}
+                          {j.jd &&
+                            <button onClick={() => setViewJd({ title: j.title, jd: j.jd })}
+                              style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+                              JD
+                            </button>}
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
                           <button onClick={() => setModal({ mode: "edit", index: j._idx })}
