@@ -221,7 +221,7 @@ function TrackerPage({ username, token }) {
   };
 
   const handleAdd = async (job) => {
-    const updated = [job, ...jobs];
+    const updated = [{ ...job, added_at: new Date().toISOString() }, ...jobs];
     setJobs(updated); setModal(null);
     await saveToServer(updated);
   };
@@ -266,7 +266,8 @@ function TrackerPage({ username, token }) {
       if (typeof va === "string") { va = va.toLowerCase(); vb = vb.toLowerCase(); }
       return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
     }
-    return b.year - a.year || b.month - a.month;
+    const toDate = j => j.added_at ? new Date(j.added_at) : new Date(j.year, j.month - 1, 1);
+    return toDate(b) - toDate(a);
   });
 
   const sel = { fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", color: "#333", fontFamily: "inherit" };
