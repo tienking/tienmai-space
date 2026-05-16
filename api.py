@@ -506,7 +506,7 @@ async def jt_resume_delete(jt_username: str, token_user: str = Depends(verify_jo
 def build_jt_system_prompt(username: str, jobs: list, resume_exists: bool) -> str:
     status_map = {"applied": "Đã apply", "viewed": "Đã xem CV", "downloaded": "Đã tải CV"}
     job_lines = [
-        f"{i}. {j.get('title','')} tại {j.get('company','')} | {j.get('loc','')} | {j.get('mode','')} | {j.get('month','')}/{j.get('year','')} | {status_map.get(j.get('status',''), j.get('status',''))}"
+        f"{i}. {j.get('title','')} tại {j.get('company','')} | {j.get('loc','')} | {j.get('mode','')} | {j.get('month','')}/{j.get('year','')} | {status_map.get(j.get('status',''), j.get('status',''))} | {'có JD' if j.get('jd') else 'chưa có JD'}"
         for i, j in enumerate(jobs, 1)
     ]
     job_list = "\n".join(job_lines) if job_lines else "Chưa có job nào."
@@ -521,6 +521,8 @@ def build_jt_system_prompt(username: str, jobs: list, resume_exists: bool) -> st
 - So sánh JD với các job đã apply, tránh trùng lặp
 - Tư vấn chiến lược tìm việc, cải thiện hồ sơ
 Luôn ưu tiên trả lời bằng tiếng Việt. Thân thiện, thực tế và cụ thể.
+
+Khi người dùng hỏi về một job cụ thể mà job đó được đánh dấu "chưa có JD", hãy nhắc họ thêm JD vào job đó (nút "Sửa" → "+ Thêm JD") để được phân tích chi tiết hơn.
 
 Danh sách {len(jobs)} job đã apply:
 {job_list}
