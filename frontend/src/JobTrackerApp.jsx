@@ -191,6 +191,28 @@ function JobModal({ initial, onSave, onClose }) {
   );
 }
 
+// ── Simple markdown renderer for chat messages ────────────────────────────────
+function renderMd(text) {
+  return text.split('\n').map((line, i) => {
+    const bullet = /^[*-] /.test(line);
+    const raw = bullet ? line.slice(2) : line;
+
+    const parts = raw.split(/(\*\*.*?\*\*)/g).map((seg, j) =>
+      seg.startsWith('**') && seg.endsWith('**')
+        ? <strong key={j}>{seg.slice(2, -2)}</strong>
+        : seg
+    );
+
+    if (bullet) return (
+      <div key={i} style={{ display: "flex", gap: 6, marginBottom: 3 }}>
+        <span style={{ flexShrink: 0 }}>•</span><span>{parts}</span>
+      </div>
+    );
+    if (!raw.trim()) return <div key={i} style={{ height: 6 }} />;
+    return <div key={i} style={{ marginBottom: 2 }}>{parts}</div>;
+  });
+}
+
 // ── Job Tracker Chatbot ────────────────────────────────────────────────────────
 const JT_WELCOME = { role: "assistant", content: "Xin chào! Tôi là AI hỗ trợ tìm việc của bạn 👋\nTôi có thể giúp phân tích danh sách job đã apply, đánh giá JD mới, hoặc tư vấn cải thiện hồ sơ. Bạn cần hỗ trợ gì?" };
 const JT_SUGGESTED = ["Tổng kết tình hình apply của tôi", "Tôi nên cải thiện gì trong hồ sơ?", "Phân tích job nào phù hợp nhất với tôi?"];
@@ -200,8 +222,8 @@ function JtChatMessage({ msg }) {
   return (
     <div style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start", marginBottom: 10 }}>
       {!isUser && <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "#f0f0ec", border: "0.5px solid #e0e0dc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#888", marginRight: 7, fontWeight: 500 }}>AI</div>}
-      <div style={{ maxWidth: "80%", padding: "9px 13px", fontSize: 13, lineHeight: 1.6, background: isUser ? "#1a1a18" : "#fff", border: `0.5px solid ${isUser ? "#1a1a18" : "#e0e0dc"}`, borderRadius: isUser ? "14px 14px 3px 14px" : "14px 14px 14px 3px", color: isUser ? "#fff" : "#1a1a18", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-        {msg.content}
+      <div style={{ maxWidth: "80%", padding: "9px 13px", fontSize: 13, lineHeight: 1.6, background: isUser ? "#1a1a18" : "#fff", border: `0.5px solid ${isUser ? "#1a1a18" : "#e0e0dc"}`, borderRadius: isUser ? "14px 14px 3px 14px" : "14px 14px 14px 3px", color: isUser ? "#fff" : "#1a1a18", wordBreak: "break-word" }}>
+        {isUser ? msg.content : renderMd(msg.content)}
       </div>
     </div>
   );
