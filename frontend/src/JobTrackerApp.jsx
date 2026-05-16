@@ -392,7 +392,7 @@ function TrackerPage({ username, token }) {
             </>}
             <button onClick={() => fileInputRef.current?.click()}
               style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
-              {resumeExists ? "New Resume" : "Upload Resume"}
+              ↑ Upload Resume
             </button>
             <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleUploadResume} style={{ display: "none" }} />
             <button onClick={() => setModal({ mode: "add" })}
