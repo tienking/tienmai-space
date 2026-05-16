@@ -243,7 +243,10 @@ function JtChatPopup({ username, token, onClose }) {
   useEffect(() => {
     fetch(`/api/jobtracker/chat/${username}/history`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then(d => setMessages(d.messages?.length ? d.messages : [JT_WELCOME]))
+      .then(d => {
+        setMessages(d.messages?.length ? d.messages : [JT_WELCOME]);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "instant" }), 50);
+      })
       .catch(() => setMessages([JT_WELCOME]));
   }, [username, token]);
 
