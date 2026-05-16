@@ -501,3 +501,117 @@ async def jt_resume_delete(jt_username: str, token_user: str = Depends(verify_jo
     if os.path.exists(path):
         os.remove(path)
     return {"ok": True}
+
+# ── Jobtracker Chatbot ─────────────────────────────────────────────────────────
+def build_jt_system_prompt(username: str, jobs: list, resume_exists: bool) -> str:
+    status_map = {"applied": "Đã apply", "viewed": "Đã xem CV", "downloaded": "Đã tải CV"}
+    job_lines = [
+        f"{i}. {j.get('title','')} tại {j.get('company','')} | {j.get('loc','')} | {j.get('mode','')} | {j.get('month','')}/{j.get('year','')} | {status_map.get(j.get('status',''), j.get('status',''))}"
+        for i, j in enumerate(jobs, 1)
+    ]
+    job_list = "\n".join(job_lines) if job_lines else "Chưa có job nào."
+    resume_note = (
+        "Resume của người dùng đã được đính kèm trong cuộc trò chuyện này."
+        if resume_exists else
+        "Người dùng chưa upload resume. Khi phù hợp, nhắc nhở upload resume (nút '↑ Upload Resume' trên giao diện) để được hỗ trợ tốt hơn."
+    )
+    return f"""Bạn là AI hỗ trợ tìm kiếm việc làm cho {username}. Nhiệm vụ:
+- Phân tích danh sách job đã apply, đưa ra nhận xét và thống kê
+- Đánh giá JD mới xem có nên apply không, dựa trên resume và hồ sơ người dùng
+- So sánh JD với các job đã apply, tránh trùng lặp
+- Tư vấn chiến lược tìm việc, cải thiện hồ sơ
+Luôn ưu tiên trả lời bằng tiếng Việt. Thân thiện, thực tế và cụ thể.
+
+Danh sách {len(jobs)} job đã apply:
+{job_list}
+
+{resume_note}"""
+
+def find_relevant_jds(user_message: str, jobs: list) -> list:
+    user_lower = user_message.lower()
+    result = []
+    for job in jobs:
+        if not job.get("jd"):
+            continue
+        company = job.get("company", "").lower()
+        title_words = [w for w in job.get("title", "").lower().split() if len(w) > 3]
+        if (company and company in user_lower) or any(w in user_lower for w in title_words):
+            result.append(job)
+    return result[:2]
+
+@router.post("/api/jobtracker/chat/{jt_username}")
+async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depends(verify_jobtracker_token)):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403)
+    session_id = f"jt_{jt_username}_{request.session_id}"
+    jobs = await get_jobtracker_jobs(jt_username)
+    resume_path = os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf")
+    resume_exists = os.path.exists(resume_path)
+    system_prompt = build_jt_system_prompt(jt_username, jobs, resume_exists)
+    ai_settings = await get_ai_settings()
+    model = ai_settings.get("active_model")
+    await save_message(session_id, "user", request.message, source="jobtracker")
+    history = await get_chat_history(session_id, limit=20)
+    contents = []
+    if resume_exists:
+        resume_bytes = open(resume_path, "rb").read()
+        contents += [
+            types.Content(role="user", parts=[types.Part(inline_data=types.Blob(mime_type="application/pdf", data=base64.b64encode(resume_bytes).decode())), types.Part(text="Đây là resume của tôi.")]),
+            types.Content(role="model", parts=[types.Part(text="Đã đọc resume của bạn.")]),
+        ]
+    relevant_jds = find_relevant_jds(request.message, jobs)
+    for msg in history[:-1]:
+        contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])]))
+    current_parts = [types.Part(text=f"[JD: {j.get('company')} - {j.get('title')}]\n{j['jd']}\n") for j in relevant_jds]
+    current_parts.append(types.Part(text=request.message))
+    contents.append(types.Content(role="user", parts=current_parts))
+    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(system_instruction=system_prompt))
+    reply = response.text
+    await save_message(session_id, "model", reply, source="jobtracker")
+    return {"reply": reply}
+
+@router.post("/api/jobtracker/chat/{jt_username}/file")
+async def jt_chat_file(
+    jt_username: str,
+    message: str = Form(default=""),
+    session_id: str = Form(default="default"),
+    file: UploadFile = File(...),
+    token_user: str = Depends(verify_jobtracker_token)
+):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403)
+    sid = f"jt_{jt_username}_{session_id}"
+    jobs = await get_jobtracker_jobs(jt_username)
+    resume_path = os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf")
+    resume_exists = os.path.exists(resume_path)
+    system_prompt = build_jt_system_prompt(jt_username, jobs, resume_exists)
+    ai_settings = await get_ai_settings()
+    model = ai_settings.get("active_model")
+    file_bytes = await file.read()
+    filename = file.filename.lower()
+    display = message or "Hãy phân tích JD này và cho biết tôi có nên apply không, dựa trên resume và kinh nghiệm của tôi."
+    user_label = f"[File: {file.filename}] {display}"
+    await save_message(sid, "user", user_label, source="jobtracker")
+    history = await get_chat_history(sid, limit=18)
+    contents = []
+    if resume_exists:
+        resume_bytes = open(resume_path, "rb").read()
+        contents += [
+            types.Content(role="user", parts=[types.Part(inline_data=types.Blob(mime_type="application/pdf", data=base64.b64encode(resume_bytes).decode())), types.Part(text="Đây là resume của tôi.")]),
+            types.Content(role="model", parts=[types.Part(text="Đã đọc resume của bạn.")]),
+        ]
+    for msg in history[:-1]:
+        contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])]))
+    if filename.endswith(".pdf"):
+        current_parts = [types.Part(inline_data=types.Blob(mime_type="application/pdf", data=base64.b64encode(file_bytes).decode())), types.Part(text=display)]
+    elif filename.endswith(".docx"):
+        current_parts = [types.Part(text=f"Nội dung file ({file.filename}):\n\n{extract_docx_text(file_bytes)}\n\n{display}")]
+    elif filename.endswith(".txt"):
+        current_parts = [types.Part(text=f"Nội dung file ({file.filename}):\n\n{file_bytes.decode('utf-8', errors='ignore')}\n\n{display}")]
+    else:
+        return {"reply": "Chỉ hỗ trợ file PDF, Word (.docx) và Text (.txt)."}
+    contents.append(types.Content(role="user", parts=current_parts))
+    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(system_instruction=system_prompt))
+    reply = response.text
+    await save_message(sid, "model", reply, source="jobtracker")
+    return {"reply": reply}
