@@ -539,6 +539,14 @@ def find_relevant_jds(user_message: str, jobs: list) -> list:
             result.append(job)
     return result[:2]
 
+@router.get("/api/jobtracker/chat/{jt_username}/history")
+async def jt_chat_history(jt_username: str, token_user: str = Depends(verify_jobtracker_token)):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403)
+    history = await get_chat_history(f"jt_{jt_username}_main", limit=60)
+    messages = [{"role": "assistant" if m["role"] == "model" else m["role"], "content": m["content"]} for m in history]
+    return {"messages": messages}
+
 @router.post("/api/jobtracker/chat/{jt_username}")
 async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depends(verify_jobtracker_token)):
     if token_user != jt_username:

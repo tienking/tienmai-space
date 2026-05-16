@@ -192,8 +192,7 @@ function JobModal({ initial, onSave, onClose }) {
 }
 
 // ── Job Tracker Chatbot ────────────────────────────────────────────────────────
-const JT_SESSION_KEY = "jt_chat_session";
-const JT_MESSAGES_KEY = "jt_chat_messages";
+const JT_WELCOME = { role: "assistant", content: "Xin chào! Tôi là AI hỗ trợ tìm việc của bạn 👋\nTôi có thể giúp phân tích danh sách job đã apply, đánh giá JD mới, hoặc tư vấn cải thiện hồ sơ. Bạn cần hỗ trợ gì?" };
 const JT_SUGGESTED = ["Tổng kết tình hình apply của tôi", "Tôi nên cải thiện gì trong hồ sơ?", "Phân tích job nào phù hợp nhất với tôi?"];
 
 function JtChatMessage({ msg }) {
@@ -209,25 +208,21 @@ function JtChatMessage({ msg }) {
 }
 
 function JtChatPopup({ username, token, onClose }) {
-  const [sessionId] = useState(() => {
-    const s = localStorage.getItem(JT_SESSION_KEY);
-    if (s) return s;
-    const id = Math.random().toString(36).slice(2);
-    localStorage.setItem(JT_SESSION_KEY, id);
-    return id;
-  });
-  const [messages, setMessages] = useState(() => {
-    try { const s = localStorage.getItem(JT_MESSAGES_KEY); if (s) return JSON.parse(s); } catch {}
-    return [{ role: "assistant", content: "Xin chào! Tôi là AI hỗ trợ tìm việc của bạn 👋\nTôi có thể giúp phân tích danh sách job đã apply, đánh giá JD mới, hoặc tư vấn cải thiện hồ sơ. Bạn cần hỗ trợ gì?" }];
-  });
+  const [messages, setMessages] = useState(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const bottomRef = useRef(null);
   const chatFileRef = useRef(null);
 
+  useEffect(() => {
+    fetch(`/api/jobtracker/chat/${username}/history`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => setMessages(d.messages?.length ? d.messages : [JT_WELCOME]))
+      .catch(() => setMessages([JT_WELCOME]));
+  }, [username, token]);
+
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
-  useEffect(() => { localStorage.setItem(JT_MESSAGES_KEY, JSON.stringify(messages.slice(-40))); }, [messages]);
 
   const sendToApi = async (text, file) => {
     const headers = { Authorization: `Bearer ${token}` };
@@ -235,17 +230,17 @@ function JtChatPopup({ username, token, onClose }) {
       const fd = new FormData();
       fd.append("file", file);
       fd.append("message", text || "");
-      fd.append("session_id", sessionId);
+      fd.append("session_id", "main");
       const res = await fetch(`/api/jobtracker/chat/${username}/file`, { method: "POST", headers, body: fd });
       return (await res.json()).reply;
     }
-    const res = await fetch(`/api/jobtracker/chat/${username}`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ message: text, session_id: sessionId }) });
+    const res = await fetch(`/api/jobtracker/chat/${username}`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ message: text, session_id: "main" }) });
     return (await res.json()).reply;
   };
 
   const handleSend = async (textOverride) => {
     const text = textOverride !== undefined ? textOverride.trim() : input.trim();
-    if ((!text && !selectedFile) || loading) return;
+    if ((!text && !selectedFile) || loading || messages === null) return;
     if (textOverride === undefined) setInput("");
     const file = selectedFile; setSelectedFile(null);
     setLoading(true);
@@ -270,8 +265,10 @@ function JtChatPopup({ username, token, onClose }) {
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
-        {messages.map((msg, i) => <JtChatMessage key={i} msg={msg} />)}
-        {messages.length === 1 && !loading && (
+        {messages === null
+          ? <div style={{ textAlign: "center", color: "#aaa", fontSize: 12, marginTop: 20 }}>Đang tải...</div>
+          : messages.map((msg, i) => <JtChatMessage key={i} msg={msg} />)}
+        {messages?.length === 1 && !loading && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 33 }}>
             {JT_SUGGESTED.map(q => (
               <button key={q} onClick={() => handleSend(q)}
@@ -539,7 +536,7 @@ function TrackerPage({ username, token }) {
       </div>
 
       {/* Scrollable content */}
-      <div style={{ flex: 1, overflow: "auto", padding: isMobile ? "0 16px 24px" : "0 24px 24px" }}>
+      <div style={{ flex: 1, overflow: "auto", padding: isMobile ? "0 16px 88px" : "0 24px 88px" }}>
 
         {/* Mobile: card list */}
         {isMobile ? (
