@@ -214,7 +214,9 @@ function JtChatPopup({ username, token, onClose }) {
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const bottomRef = useRef(null);
+  const chatContainerRef = useRef(null);
   const chatFileRef = useRef(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
   useEffect(() => {
     fetch(`/api/jobtracker/chat/${username}/history`, { headers: { Authorization: `Bearer ${token}` } })
@@ -223,7 +225,24 @@ function JtChatPopup({ username, token, onClose }) {
       .catch(() => setMessages([JT_WELCOME]));
   }, [username, token]);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+  // Chỉ scroll xuống khi user gửi tin (loading bắt đầu), không scroll khi AI trả lời
+  const prevLoadingRef = useRef(false);
+  useEffect(() => {
+    if (loading && !prevLoadingRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevLoadingRef.current = loading;
+  }, [loading]);
+
+  useEffect(() => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      setIsAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 50);
+    };
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   const sendToApi = async (text, file) => {
     const headers = { Authorization: `Bearer ${token}` };
@@ -265,7 +284,7 @@ function JtChatPopup({ username, token, onClose }) {
         <button onClick={onClose} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
+      <div ref={chatContainerRef} style={{ flex: 1, overflowY: "auto", padding: "14px 12px", position: "relative" }}>
         {messages === null
           ? <div style={{ textAlign: "center", color: "#aaa", fontSize: 12, marginTop: 20 }}>Đang tải...</div>
           : messages.map((msg, i) => <JtChatMessage key={i} msg={msg} />)}
@@ -285,6 +304,15 @@ function JtChatPopup({ username, token, onClose }) {
         )}
         <div ref={bottomRef} />
       </div>
+
+      {!isAtBottom && (
+        <div style={{ display: "flex", justifyContent: "center", padding: "4px 0", flexShrink: 0 }}>
+          <button onClick={() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }}
+            style={{ fontSize: 12, padding: "4px 14px", borderRadius: 20, border: "0.5px solid #ccc", background: "#fff", color: "#555", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", fontFamily: "inherit" }}>
+            ↓ Cuối
+          </button>
+        </div>
+      )}
 
       {selectedFile && (
         <div style={{ padding: "6px 12px", borderTop: "0.5px solid #e0e0dc", display: "flex", alignItems: "center", gap: 8, background: "#f5f5f3", flexShrink: 0 }}>
