@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from google import genai
 from google.genai import types
 from config import GEMINI_API_KEY
-from database import (save_message, get_chat_history, log_visitor, get_profile, update_profile,
+from database import (save_message, get_chat_history, delete_chat_history, log_visitor, get_profile, update_profile,
                       get_analytics_data, is_first_web_message, get_ai_settings, update_ai_settings,
                       set_admin_credentials, get_admin_token_version, increment_admin_token_version,
                       log_admin_login, get_admin_login_history,
@@ -225,6 +225,13 @@ async def web_chat(request: ChatRequest):
     except Exception as e:
         print(f"Web chat error: {e}")
         return {"reply": "Sorry, I'm having trouble processing that right now."}
+
+# --- Public: Clear chat history ---
+@router.delete("/api/chat/{session_id}")
+async def clear_chat(session_id: str):
+    """Delete all messages for a session when user starts a new conversation."""
+    await delete_chat_history(session_id)
+    return {"ok": True}
 
 # --- Public: Chat with file ---
 @router.post("/api/chat/file")

@@ -50,6 +50,10 @@ async def get_chat_history(session_id: str, limit: int = 20):
     ).limit(limit)
     return await cursor.to_list(length=limit)
 
+async def delete_chat_history(session_id: str):
+    """Delete all messages for a given session."""
+    await chat_collection.delete_many({"session_id": session_id})
+
 # --- Visitors ---
 async def log_visitor(session_id: str):
     """Record a visitor session."""

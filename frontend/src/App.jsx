@@ -315,6 +315,7 @@ function ChatPopup({ onClose }) {
   });
 
   const clearChat = () => {
+    fetch(`/api/chat/${sessionId}`, { method: "DELETE" }).catch(() => {});
     const newId = generateSessionId();
     localStorage.setItem(STORAGE_SESSION, newId);
     localStorage.removeItem(STORAGE_MESSAGES);
