@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
@@ -482,7 +482,12 @@ async def jt_resume_check(jt_username: str, token_user: str = Depends(verify_job
     return {"exists": os.path.exists(os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf"))}
 
 @router.post("/api/jobtracker/resume/{jt_username}")
-async def jt_resume_upload(jt_username: str, file: UploadFile = File(...), token_user: str = Depends(verify_jobtracker_token)):
+async def jt_resume_upload(
+    jt_username: str,
+    file: UploadFile = File(...),
+    do_import: bool = Query(False, alias="import"),
+    token_user: str = Depends(verify_jobtracker_token)
+):
     if token_user != jt_username:
         raise HTTPException(status_code=403)
     if file.content_type != "application/pdf":
@@ -490,6 +495,9 @@ async def jt_resume_upload(jt_username: str, file: UploadFile = File(...), token
     content = await file.read()
     with open(os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf"), "wb") as f:
         f.write(content)
+
+    if not do_import:
+        return {"ok": True, "profile": None}
 
     try:
         resume_text = extract_pdf_text(content)

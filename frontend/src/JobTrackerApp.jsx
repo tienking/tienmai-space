@@ -691,7 +691,7 @@ function JtProfilePage({ username, token }) {
   const [resumeExists, setResumeExists] = useState(false);
   const [resumeUrl, setResumeUrl] = useState(null);
   const [importing, setImporting] = useState(false);
-  const [pendingImport, setPendingImport] = useState(null);
+  const [pendingFile, setPendingFile] = useState(null);
   const fileInputRef = useRef(null);
   const [info, setInfo] = useState({ name: "", title: "", location: "", email: "", phone: "", linkedin: "", about: "" });
   const [skills, setSkills] = useState([]);
@@ -719,31 +719,33 @@ function JtProfilePage({ username, token }) {
     setResumeUrl(URL.createObjectURL(blob));
   };
   const handleCloseResume = () => { URL.revokeObjectURL(resumeUrl); setResumeUrl(null); };
-  const handleUploadResume = async (e) => {
+  const handleFileSelected = (e) => {
     const file = e.target.files[0]; e.target.value = "";
-    if (!file) return;
+    if (file) setPendingFile(file);
+  };
+
+  const handleUpload = async (withImport) => {
+    const file = pendingFile; setPendingFile(null);
     setImporting(true);
     const form = new FormData(); form.append("file", file);
     try {
-      const res = await fetch(`/api/jobtracker/resume/${username}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
+      const url = `/api/jobtracker/resume/${username}${withImport ? "?import=true" : ""}`;
+      const res = await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
       const data = await res.json();
       setResumeExists(true);
-      if (data.profile) setPendingImport(data.profile);
+      if (withImport && data.profile) {
+        const p = data.profile;
+        setInfo(f => ({
+          name: p.name || f.name, title: p.title || f.title, location: p.location || f.location,
+          email: p.email || f.email, phone: p.phone || f.phone, linkedin: p.linkedin || f.linkedin,
+          about: p.about || f.about,
+        }));
+        if (p.skills?.length)      setSkills(p.skills);
+        if (p.experiences?.length) setExperiences(p.experiences);
+        if (p.educations?.length)  setEducations(p.educations);
+      }
     } catch {}
     setImporting(false);
-  };
-
-  const applyImport = () => {
-    const p = pendingImport;
-    setInfo(f => ({
-      name: p.name || f.name, title: p.title || f.title, location: p.location || f.location,
-      email: p.email || f.email, phone: p.phone || f.phone, linkedin: p.linkedin || f.linkedin,
-      about: p.about || f.about,
-    }));
-    if (p.skills?.length)      setSkills(p.skills);
-    if (p.experiences?.length) setExperiences(p.experiences);
-    if (p.educations?.length)  setEducations(p.educations);
-    setPendingImport(null);
   };
   const handleDeleteResume = async () => {
     if (!confirm("Xóa Resume hiện tại?")) return;
@@ -848,7 +850,7 @@ function JtProfilePage({ username, token }) {
                     style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: importing ? "default" : "pointer", opacity: importing ? 0.5 : 1, fontFamily: "inherit" }}>
                     {importing ? "Đang xử lý..." : "↑ Upload"}
                   </button>
-                  <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleUploadResume} style={{ display: "none" }} />
+                  <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileSelected} style={{ display: "none" }} />
                 </div>
               </div>
             </div>
@@ -864,23 +866,23 @@ function JtProfilePage({ username, token }) {
         )}
         {resumeUrl && <ResumeViewModal url={resumeUrl} onClose={handleCloseResume} />}
 
-        {pendingImport && (
+        {pendingFile && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}
-            onClick={e => e.target === e.currentTarget && setPendingImport(null)}>
+            onClick={e => e.target === e.currentTarget && setPendingFile(null)}>
             <div style={{ background: "#fff", borderRadius: 12, padding: "28px 28px 24px", width: 400, maxWidth: "92vw", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
-              <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Điền thông tin từ Resume?</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Upload Resume</h2>
               <p style={{ fontSize: 13, color: "#555", lineHeight: 1.6, marginBottom: 20 }}>
-                AI đã phân tích Resume và trích xuất thông tin. Bạn có muốn tự động điền vào các tab Cá nhân, Kỹ năng, Kinh nghiệm và Học vấn không?<br />
-                <span style={{ fontSize: 12, color: "#aaa" }}>Nội dung hiện tại trong form sẽ bị thay thế.</span>
+                Bạn có muốn AI phân tích Resume và tự động điền thông tin vào hồ sơ không?<br />
+                <span style={{ fontSize: 12, color: "#aaa" }}>Chọn "Chỉ upload" nếu chỉ muốn lưu file.</span>
               </p>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button onClick={() => setPendingImport(null)}
+                <button onClick={() => handleUpload(false)}
                   style={{ padding: "8px 18px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-                  Không
+                  Chỉ upload
                 </button>
-                <button onClick={applyImport}
+                <button onClick={() => handleUpload(true)}
                   style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-                  Có, điền vào
+                  Phân tích và điền thông tin
                 </button>
               </div>
             </div>
