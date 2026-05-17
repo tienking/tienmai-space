@@ -690,6 +690,8 @@ function JtProfilePage({ username, token }) {
   const [saved, setSaved] = useState(false);
   const [resumeExists, setResumeExists] = useState(false);
   const [resumeUrl, setResumeUrl] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState(null);
   const fileInputRef = useRef(null);
   const [info, setInfo] = useState({ name: "", title: "", location: "", email: "", phone: "", linkedin: "", about: "" });
   const [skills, setSkills] = useState([]);
@@ -720,9 +722,28 @@ function JtProfilePage({ username, token }) {
   const handleUploadResume = async (e) => {
     const file = e.target.files[0]; e.target.value = "";
     if (!file) return;
+    setImporting(true); setImportMsg(null);
     const form = new FormData(); form.append("file", file);
-    await fetch(`/api/jobtracker/resume/${username}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
-    setResumeExists(true);
+    try {
+      const res = await fetch(`/api/jobtracker/resume/${username}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
+      const data = await res.json();
+      setResumeExists(true);
+      if (data.profile) {
+        const p = data.profile;
+        setInfo(f => ({
+          name: p.name || f.name, title: p.title || f.title, location: p.location || f.location,
+          email: p.email || f.email, phone: p.phone || f.phone, linkedin: p.linkedin || f.linkedin,
+          about: p.about || f.about,
+        }));
+        if (p.skills?.length)      setSkills(p.skills);
+        if (p.experiences?.length) setExperiences(p.experiences);
+        if (p.educations?.length)  setEducations(p.educations);
+        setImportMsg("Đã điền thông tin từ Resume. Kiểm tra lại và nhấn Lưu ở từng tab.");
+      } else {
+        setImportMsg("Upload thành công. Không thể tự điền thông tin.");
+      }
+    } catch { setImportMsg("Có lỗi xảy ra khi upload."); }
+    setImporting(false);
   };
   const handleDeleteResume = async () => {
     if (!confirm("Xóa Resume hiện tại?")) return;
@@ -808,26 +829,33 @@ function JtProfilePage({ username, token }) {
             </div>
 
             {/* Resume section */}
-            <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>Resume (PDF)</div>
-                <div style={{ fontSize: 12, color: resumeExists ? "#27500A" : "#aaa" }}>
-                  {resumeExists ? "Đã có resume" : "Chưa upload resume"}
+            <div style={{ ...card }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>Resume (PDF)</div>
+                  <div style={{ fontSize: 12, color: resumeExists ? "#27500A" : "#aaa" }}>
+                    {importing ? "Đang phân tích resume..." : resumeExists ? "Đã có resume" : "Chưa upload resume"}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                  {resumeExists && !importing && <>
+                    <button onClick={handleViewResume}
+                      style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Xem</button>
+                    <button onClick={handleDeleteResume}
+                      style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>Xóa</button>
+                  </>}
+                  <button onClick={() => fileInputRef.current?.click()} disabled={importing}
+                    style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: importing ? "default" : "pointer", opacity: importing ? 0.5 : 1, fontFamily: "inherit" }}>
+                    {importing ? "Đang xử lý..." : "↑ Upload"}
+                  </button>
+                  <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleUploadResume} style={{ display: "none" }} />
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                {resumeExists && <>
-                  <button onClick={handleViewResume}
-                    style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Xem</button>
-                  <button onClick={handleDeleteResume}
-                    style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>Xóa</button>
-                </>}
-                <button onClick={() => fileInputRef.current?.click()}
-                  style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
-                  ↑ Upload
-                </button>
-                <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleUploadResume} style={{ display: "none" }} />
-              </div>
+              {importMsg && (
+                <div style={{ marginTop: 10, fontSize: 12, padding: "8px 12px", borderRadius: 6, background: "#EAF3DE", color: "#27500A", lineHeight: 1.5 }}>
+                  {importMsg}
+                </div>
+              )}
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>

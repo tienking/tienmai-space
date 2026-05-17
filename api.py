@@ -490,7 +490,37 @@ async def jt_resume_upload(jt_username: str, file: UploadFile = File(...), token
     content = await file.read()
     with open(os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf"), "wb") as f:
         f.write(content)
-    return {"ok": True}
+
+    try:
+        resume_text = extract_pdf_text(content)
+        ai_settings = await get_ai_settings()
+        model_name = ai_settings.get("active_model")
+        prompt = (
+            "Extract information from this resume and return ONLY valid JSON, no other text:\n"
+            "{\n"
+            '  "name": "full name or null",\n'
+            '  "title": "current or target job title or null",\n'
+            '  "location": "city/country or null",\n'
+            '  "email": "email or null",\n'
+            '  "phone": "phone number or null",\n'
+            '  "linkedin": "linkedin URL or null",\n'
+            '  "about": "2-3 sentence summary of the candidate or null",\n'
+            '  "skills": ["skill1", "skill2"],\n'
+            '  "experiences": [{"role": "job title", "company": "company name", "period": "date range", "description": "brief description"}],\n'
+            '  "educations": [{"degree": "degree name", "school": "school name", "period": "date range"}]\n'
+            "}\n\nResume:\n" + resume_text
+        )
+        response = client.models.generate_content(
+            model=model_name,
+            contents=[types.Content(role="user", parts=[types.Part(text=prompt)])]
+        )
+        raw = response.text.strip()
+        raw = re.sub(r"^```(?:json)?\s*", "", raw).rstrip("` \n")
+        profile_data = {k: v for k, v in json.loads(raw).items() if v is not None}
+        return {"ok": True, "profile": profile_data}
+    except Exception as e:
+        print(f"Resume import error: {e}")
+        return {"ok": True, "profile": None}
 
 @router.get("/api/jobtracker/resume/{jt_username}")
 async def jt_resume_get(jt_username: str, token_user: str = Depends(verify_jobtracker_token)):
