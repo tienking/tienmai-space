@@ -101,6 +101,7 @@ def build_system_prompt(profile: dict) -> str:
     phone = profile.get("phone", "")
     linkedin = profile.get("linkedin", "")
     about = profile.get("about", "")
+    open_to_work = profile.get("openToWork", False)
     raw_skills = profile.get("skills", [])
     if raw_skills and isinstance(raw_skills[0], dict):
         skills = ", ".join(s for g in raw_skills for s in g.get("items", []))
@@ -137,6 +138,7 @@ Location: {location}
 Email: {email}
 Phone: {phone}
 LinkedIn: {linkedin}
+Open to work: {"Yes" if open_to_work else "No"}
 
 About me:
 {about}
