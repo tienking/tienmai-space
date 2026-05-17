@@ -140,7 +140,7 @@ function LoginPage({ onLogin }) {
         {error && (
           <div style={{ fontSize: 13, color: "#f87171", marginBottom: 14 }}>
             <p>{error}</p>
-            {isLocked && <p style={{ fontFamily: "var(--font-mono)", fontSize: 12, marginTop: 4 }}>Thử lại sau: {mins}:{secs}</p>}
+            {isLocked && <p style={{ fontFamily: "var(--font-mono)", fontSize: 12, marginTop: 4 }}>Try again in: {mins}:{secs}</p>}
           </div>
         )}
         <button onClick={handleSubmit} disabled={loading || isLocked}
@@ -1417,11 +1417,11 @@ function SettingsTab({ token, onLogout }) {
   const inputStyle = { fontSize: 13, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text)", fontFamily: "var(--font-display)", outline: "none", width: "100%", boxSizing: "border-box" };
 
   const handleSave = async () => {
-    if (!currentPw) { setMsg({ text: "Nhập password hiện tại.", error: true }); return; }
-    if (!newPw) { setMsg({ text: "Nhập password mới.", error: true }); return; }
-    if (newPw !== confirmPw) { setMsg({ text: "Password mới không khớp.", error: true }); return; }
+    if (!currentPw) { setMsg({ text: "Enter your current password.", error: true }); return; }
+    if (!newPw) { setMsg({ text: "Enter a new password.", error: true }); return; }
+    if (newPw !== confirmPw) { setMsg({ text: "New passwords do not match.", error: true }); return; }
 
-    // Verify current password first
+    // Verify current password before applying changes
     setSaving(true); setMsg(null);
     try {
       const verifyRes = await fetch("/api/admin/login", {
@@ -1429,7 +1429,7 @@ function SettingsTab({ token, onLogout }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username || "admin", password: currentPw })
       });
-      if (!verifyRes.ok) { setMsg({ text: "Password hiện tại không đúng.", error: true }); setSaving(false); return; }
+      if (!verifyRes.ok) { setMsg({ text: "Current password is incorrect.", error: true }); setSaving(false); return; }
 
       const body = { new_password: newPw };
       if (username) body.new_username = username;
@@ -1439,11 +1439,11 @@ function SettingsTab({ token, onLogout }) {
         body: JSON.stringify(body)
       });
       if (!res.ok) throw new Error();
-      setMsg({ text: "Đã cập nhật. Vui lòng đăng nhập lại.", error: false });
+      setMsg({ text: "Updated. Signing you out...", error: false });
       setCurrentPw(""); setNewPw(""); setConfirmPw("");
       setTimeout(() => onLogout(), 2000);
     } catch {
-      setMsg({ text: "Có lỗi xảy ra.", error: true });
+      setMsg({ text: "Something went wrong.", error: true });
     }
     setSaving(false);
   };
@@ -1453,18 +1453,18 @@ function SettingsTab({ token, onLogout }) {
       <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20 }}>Settings</h2>
 
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "20px 22px", marginBottom: 16 }}>
-        <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 16 }}>Đổi thông tin đăng nhập</p>
+        <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 16 }}>Change credentials</p>
 
-        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Username mới (để trống nếu không đổi)</label>
-        <input value={username} onChange={e => setUsername(e.target.value)} placeholder="Giữ nguyên username cũ" style={{ ...inputStyle, marginBottom: 14 }} />
+        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>New username <span style={{ color: "var(--text-muted)" }}>(leave blank to keep current)</span></label>
+        <input value={username} onChange={e => setUsername(e.target.value)} placeholder="Keep current username" style={{ ...inputStyle, marginBottom: 14 }} />
 
-        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Password hiện tại <span style={{ color: "#f87171" }}>*</span></label>
+        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Current password <span style={{ color: "#f87171" }}>*</span></label>
         <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} style={{ ...inputStyle, marginBottom: 14 }} />
 
-        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Password mới <span style={{ color: "#f87171" }}>*</span></label>
+        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>New password <span style={{ color: "#f87171" }}>*</span></label>
         <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} style={{ ...inputStyle, marginBottom: 14 }} />
 
-        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Xác nhận password mới <span style={{ color: "#f87171" }}>*</span></label>
+        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Confirm new password <span style={{ color: "#f87171" }}>*</span></label>
         <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
           onKeyDown={e => e.key === "Enter" && handleSave()}
           style={{ ...inputStyle, marginBottom: 16 }} />
@@ -1473,7 +1473,7 @@ function SettingsTab({ token, onLogout }) {
 
         <button onClick={handleSave} disabled={saving}
           style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "var(--font-display)" }}>
-          {saving ? "Đang lưu..." : "Cập nhật"}
+          {saving ? "Saving..." : "Update"}
         </button>
       </div>
     </div>

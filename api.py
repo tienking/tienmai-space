@@ -40,7 +40,7 @@ def _check_login_rate(ip: str):
         mins, secs = divmod(remaining, 60)
         raise HTTPException(
             status_code=429,
-            detail={"message": f"Quá nhiều lần thử sai. Vui lòng thử lại sau {mins} phút {secs} giây.", "locked_until": entry["locked_until"]}
+            detail={"message": f"Too many failed attempts. Try again in {mins}m {secs}s.", "locked_until": entry["locked_until"]}
         )
 
 def _record_login_failure(ip: str):
@@ -350,9 +350,9 @@ async def admin_login(request: LoginRequest, req: Request):
         _record_login_failure(ip)
         entry = _login_attempts.get(ip, {})
         remaining = max(0, _MAX_ATTEMPTS - entry.get("count", 0))
-        detail = "Sai username hoặc password."
+        detail = "Invalid username or password."
         if remaining > 0:
-            detail += f" Còn {remaining} lần thử."
+            detail += f" {remaining} attempt(s) remaining."
         raise HTTPException(status_code=401, detail=detail)
     _reset_login_attempts(ip)
     token = create_access_token({"sub": request.username})
