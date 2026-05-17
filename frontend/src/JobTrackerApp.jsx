@@ -269,6 +269,11 @@ function JtChatPopup({ username, token, onClose }) {
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
+  const clearChat = () => {
+    fetch(`/api/jobtracker/chat/${username}/history`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+    setMessages([JT_WELCOME]);
+  };
+
   const sendToApi = async (text, file) => {
     const headers = { Authorization: `Bearer ${token}` };
     if (file) {
@@ -306,7 +311,10 @@ function JtChatPopup({ username, token, onClose }) {
           <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#1a1a18" }} />
           <span style={{ fontSize: 13, fontWeight: 500 }}>AI Trợ lý</span>
         </div>
-        <button onClick={onClose} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <button onClick={clearChat} title="Cuộc trò chuyện mới" style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 15, lineHeight: 1, padding: "0 4px" }}>↺</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
+        </div>
       </div>
 
       <div ref={chatContainerRef} style={{ flex: 1, overflowY: "auto", padding: "14px 12px", position: "relative" }}>
