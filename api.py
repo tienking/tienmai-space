@@ -683,17 +683,26 @@ Danh sách {len(jobs)} job đã apply:
 
 {resume_note}"""
 
-def find_relevant_jds(user_message: str, jobs: list) -> list:
-    user_lower = user_message.lower()
-    result = []
-    for job in jobs:
-        if not job.get("jd"):
+_MAX_JD_CHARS = 3000      # per-JD character cap to prevent single huge JDs
+_MAX_TOTAL_JD_CHARS = 150000  # total JD context cap (~100k tokens, safe for Gemini)
+
+def build_jd_context(jobs: list) -> str:
+    """Return a formatted string of all JDs, with per-JD and total character caps."""
+    parts = []
+    total = 0
+    for i, j in enumerate(jobs, 1):
+        if not j.get("jd"):
             continue
-        company = job.get("company", "").lower()
-        title_words = [w for w in job.get("title", "").lower().split() if len(w) > 3]
-        if (company and company in user_lower) or any(w in user_lower for w in title_words):
-            result.append(job)
-    return result[:2]
+        jd_text = j["jd"]
+        if len(jd_text) > _MAX_JD_CHARS:
+            jd_text = jd_text[:_MAX_JD_CHARS] + "\n... [nội dung JD bị cắt bớt do quá dài]"
+        entry = f"[JD #{i}: {j.get('company', '')} — {j.get('title', '')}]\n{jd_text}\n"
+        if total + len(entry) > _MAX_TOTAL_JD_CHARS:
+            parts.append("[Một số JD đã bị bỏ qua do tổng nội dung quá lớn.]")
+            break
+        parts.append(entry)
+        total += len(entry)
+    return "\n".join(parts)
 
 @router.get("/api/jobtracker/chat/{jt_username}/history")
 async def jt_chat_history(jt_username: str, token_user: str = Depends(verify_jobtracker_token)):
@@ -723,12 +732,15 @@ async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depe
             types.Content(role="user", parts=[types.Part(text=f"Đây là resume của tôi:\n\n{resume_text}")]),
             types.Content(role="model", parts=[types.Part(text="Đã đọc resume của bạn.")]),
         ]
-    relevant_jds = find_relevant_jds(request.message, jobs)
+    jd_context = build_jd_context(jobs)
+    if jd_context:
+        contents += [
+            types.Content(role="user", parts=[types.Part(text=f"Đây là toàn bộ JD của các job tôi đã apply:\n\n{jd_context}")]),
+            types.Content(role="model", parts=[types.Part(text="Đã đọc toàn bộ JD.")]),
+        ]
     for msg in history[:-1]:
         contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])]))
-    current_parts = [types.Part(text=f"[JD: {j.get('company')} - {j.get('title')}]\n{j['jd']}\n") for j in relevant_jds]
-    current_parts.append(types.Part(text=request.message))
-    contents.append(types.Content(role="user", parts=current_parts))
+    contents.append(types.Content(role="user", parts=[types.Part(text=request.message)]))
     response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(system_instruction=system_prompt))
     reply = response.text
     await save_message(session_id, "model", reply, source="jobtracker")
@@ -763,6 +775,12 @@ async def jt_chat_file(
         contents += [
             types.Content(role="user", parts=[types.Part(text=f"Đây là resume của tôi:\n\n{resume_text}")]),
             types.Content(role="model", parts=[types.Part(text="Đã đọc resume của bạn.")]),
+        ]
+    jd_context = build_jd_context(jobs)
+    if jd_context:
+        contents += [
+            types.Content(role="user", parts=[types.Part(text=f"Đây là toàn bộ JD của các job tôi đã apply:\n\n{jd_context}")]),
+            types.Content(role="model", parts=[types.Part(text="Đã đọc toàn bộ JD.")]),
         ]
     for msg in history[:-1]:
         contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])]))
