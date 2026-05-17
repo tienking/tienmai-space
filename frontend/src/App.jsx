@@ -324,10 +324,34 @@ function ChatPopup({ onClose }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const bottomRef = useRef(null);
+  const chatContainerRef = useRef(null);
   const fileRef = useRef(null);
+  const prevLoadingRef = useRef(false);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+  // Scroll to bottom on popup open
+  useEffect(() => {
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "instant" }), 50);
+  }, []);
+
+  // Scroll to bottom only when user sends (loading starts), not on AI reply
+  useEffect(() => {
+    if (loading && !prevLoadingRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevLoadingRef.current = loading;
+  }, [loading]);
+
+  // Track whether user is at the bottom of the chat
+  useEffect(() => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const onScroll = () => setIsAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 50);
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
   useEffect(() => { localStorage.setItem(STORAGE_MESSAGES, JSON.stringify(messages.slice(-30))); }, [messages]);
 
   const handleSend = async (textOverride) => {
@@ -387,7 +411,7 @@ function ChatPopup({ onClose }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
+      <div ref={chatContainerRef} style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
         {messages.map((msg, i) => <ChatMessage key={i} msg={msg} />)}
         {messages.length === 1 && !loading && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 33 }}>
@@ -408,6 +432,15 @@ function ChatPopup({ onClose }) {
         )}
         <div ref={bottomRef} />
       </div>
+
+      {!isAtBottom && (
+        <div style={{ display: "flex", justifyContent: "center", padding: "4px 0", flexShrink: 0 }}>
+          <button onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+            style={{ fontSize: 12, padding: "4px 14px", borderRadius: 20, border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-muted)", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", fontFamily: "var(--font-display)" }}>
+            ↓
+          </button>
+        </div>
+      )}
 
       {/* Selected file preview */}
       {selectedFile && (
