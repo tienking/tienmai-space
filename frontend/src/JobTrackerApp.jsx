@@ -691,7 +691,7 @@ function JtProfilePage({ username, token }) {
   const [resumeExists, setResumeExists] = useState(false);
   const [resumeUrl, setResumeUrl] = useState(null);
   const [importing, setImporting] = useState(false);
-  const [importMsg, setImportMsg] = useState(null);
+  const [pendingImport, setPendingImport] = useState(null);
   const fileInputRef = useRef(null);
   const [info, setInfo] = useState({ name: "", title: "", location: "", email: "", phone: "", linkedin: "", about: "" });
   const [skills, setSkills] = useState([]);
@@ -722,28 +722,28 @@ function JtProfilePage({ username, token }) {
   const handleUploadResume = async (e) => {
     const file = e.target.files[0]; e.target.value = "";
     if (!file) return;
-    setImporting(true); setImportMsg(null);
+    setImporting(true);
     const form = new FormData(); form.append("file", file);
     try {
       const res = await fetch(`/api/jobtracker/resume/${username}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
       const data = await res.json();
       setResumeExists(true);
-      if (data.profile) {
-        const p = data.profile;
-        setInfo(f => ({
-          name: p.name || f.name, title: p.title || f.title, location: p.location || f.location,
-          email: p.email || f.email, phone: p.phone || f.phone, linkedin: p.linkedin || f.linkedin,
-          about: p.about || f.about,
-        }));
-        if (p.skills?.length)      setSkills(p.skills);
-        if (p.experiences?.length) setExperiences(p.experiences);
-        if (p.educations?.length)  setEducations(p.educations);
-        setImportMsg("Đã điền thông tin từ Resume. Kiểm tra lại và nhấn Lưu ở từng tab.");
-      } else {
-        setImportMsg("Upload thành công. Không thể tự điền thông tin.");
-      }
-    } catch { setImportMsg("Có lỗi xảy ra khi upload."); }
+      if (data.profile) setPendingImport(data.profile);
+    } catch {}
     setImporting(false);
+  };
+
+  const applyImport = () => {
+    const p = pendingImport;
+    setInfo(f => ({
+      name: p.name || f.name, title: p.title || f.title, location: p.location || f.location,
+      email: p.email || f.email, phone: p.phone || f.phone, linkedin: p.linkedin || f.linkedin,
+      about: p.about || f.about,
+    }));
+    if (p.skills?.length)      setSkills(p.skills);
+    if (p.experiences?.length) setExperiences(p.experiences);
+    if (p.educations?.length)  setEducations(p.educations);
+    setPendingImport(null);
   };
   const handleDeleteResume = async () => {
     if (!confirm("Xóa Resume hiện tại?")) return;
@@ -851,11 +851,6 @@ function JtProfilePage({ username, token }) {
                   <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleUploadResume} style={{ display: "none" }} />
                 </div>
               </div>
-              {importMsg && (
-                <div style={{ marginTop: 10, fontSize: 12, padding: "8px 12px", borderRadius: 6, background: "#EAF3DE", color: "#27500A", lineHeight: 1.5 }}>
-                  {importMsg}
-                </div>
-              )}
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
@@ -868,6 +863,29 @@ function JtProfilePage({ username, token }) {
           </div>
         )}
         {resumeUrl && <ResumeViewModal url={resumeUrl} onClose={handleCloseResume} />}
+
+        {pendingImport && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}
+            onClick={e => e.target === e.currentTarget && setPendingImport(null)}>
+            <div style={{ background: "#fff", borderRadius: 12, padding: "28px 28px 24px", width: 400, maxWidth: "92vw", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Điền thông tin từ Resume?</h2>
+              <p style={{ fontSize: 13, color: "#555", lineHeight: 1.6, marginBottom: 20 }}>
+                AI đã phân tích Resume và trích xuất thông tin. Bạn có muốn tự động điền vào các tab Cá nhân, Kỹ năng, Kinh nghiệm và Học vấn không?<br />
+                <span style={{ fontSize: 12, color: "#aaa" }}>Nội dung hiện tại trong form sẽ bị thay thế.</span>
+              </p>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button onClick={() => setPendingImport(null)}
+                  style={{ padding: "8px 18px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                  Không
+                </button>
+                <button onClick={applyImport}
+                  style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                  Có, điền vào
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tab: Kỹ năng */}
         {tab === "skills" && (

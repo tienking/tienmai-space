@@ -506,7 +506,7 @@ async def jt_resume_upload(jt_username: str, file: UploadFile = File(...), token
             '  "linkedin": "linkedin URL or null",\n'
             '  "about": "2-3 sentence summary of the candidate or null",\n'
             '  "skills": ["skill1", "skill2"],\n'
-            '  "experiences": [{"role": "job title", "company": "company name", "period": "date range", "description": "brief description"}],\n'
+            '  "experiences": [{"role": "job title", "company": "company name", "period": "date range", "description": "copy the EXACT bullet points / description text verbatim from the resume for this role, preserving all details, numbers, and formatting — do NOT summarize or paraphrase"}],\n'
             '  "educations": [{"degree": "degree name", "school": "school name", "period": "date range"}]\n'
             "}\n\nResume:\n" + resume_text
         )
