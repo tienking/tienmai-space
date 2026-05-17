@@ -13,6 +13,7 @@ profile_collection = db["profile"]
 settings_collection = db["settings"]
 jobtracker_users_col = db["jobtracker_users"]
 jobtracker_jobs_col = db["jobtracker_jobs"]
+jobtracker_profiles_col = db["jobtracker_profiles"]
 
 # --- Profile ---
 async def get_profile():
@@ -145,6 +146,18 @@ async def update_jobtracker_password(username: str, hashed_password: str):
 async def delete_jobtracker_user(username: str):
     await jobtracker_users_col.delete_one({"username": username})
     await jobtracker_jobs_col.delete_one({"username": username})
+
+# --- Job Tracker Profiles ---
+async def get_jt_profile(username: str) -> dict:
+    doc = await jobtracker_profiles_col.find_one({"username": username}, {"_id": 0})
+    return doc or {}
+
+async def update_jt_profile(username: str, data: dict):
+    await jobtracker_profiles_col.update_one(
+        {"username": username},
+        {"$set": {**data, "username": username, "updated_at": datetime.utcnow()}},
+        upsert=True
+    )
 
 # --- Job Tracker Jobs ---
 async def get_jobtracker_jobs(username: str):

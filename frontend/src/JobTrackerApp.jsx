@@ -523,6 +523,10 @@ function TrackerPage({ username, token }) {
           <h1 style={{ fontSize: 20, fontWeight: 500 }}>Job Tracker</h1>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 12, color: "#888" }}>{username}</span>
+            <button onClick={() => window.location.href = `/jobtracker/${username}/profile`}
+              style={{ fontSize: 12, color: "#555", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+              Hồ sơ
+            </button>
             <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
               style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
               Sign out
@@ -718,9 +722,220 @@ function TrackerPage({ username, token }) {
   );
 }
 
+// ── Job Tracker Profile Page ───────────────────────────────────────────────────
+const EMPTY_EXP = () => ({ role: "", company: "", period: "", description: "" });
+const EMPTY_EDU = () => ({ degree: "", school: "", period: "" });
+
+function JtProfilePage({ username, token }) {
+  const [tab, setTab] = useState("info");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [info, setInfo] = useState({ name: "", title: "", location: "", email: "", phone: "", linkedin: "", about: "" });
+  const [skills, setSkills] = useState([]);
+  const [skillInput, setSkillInput] = useState("");
+  const [experiences, setExperiences] = useState([]);
+  const [educations, setEducations] = useState([]);
+
+  useEffect(() => {
+    fetch(`/api/jobtracker/profile/${username}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        setInfo({ name: d.name || "", title: d.title || "", location: d.location || "", email: d.email || "", phone: d.phone || "", linkedin: d.linkedin || "", about: d.about || "" });
+        setSkills(d.skills || []);
+        setExperiences(d.experiences || []);
+        setEducations(d.educations || []);
+      })
+      .catch(() => {});
+  }, [username, token]);
+
+  const save = async (data) => {
+    setSaving(true);
+    await fetch(`/api/jobtracker/profile/${username}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+    setSaving(false); setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const inp = { fontSize: 13, padding: "7px 10px", borderRadius: 6, border: "0.5px solid #ccc", width: "100%", boxSizing: "border-box", fontFamily: "inherit", outline: "none", background: "#fff" };
+  const lbl = { fontSize: 12, color: "#555", display: "block", marginBottom: 4, marginTop: 12 };
+  const card = { background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 10, padding: "16px 18px", marginBottom: 10 };
+  const tabs = ["info", "skills", "exp", "edu"];
+  const tabLabels = { info: "Cá nhân", skills: "Kỹ năng", exp: "Kinh nghiệm", edu: "Học vấn" };
+
+  const addSkill = () => {
+    const v = skillInput.trim();
+    if (v && !skills.includes(v)) setSkills(s => [...s, v]);
+    setSkillInput("");
+  };
+
+  const setExp = (i, k, v) => setExperiences(prev => prev.map((e, idx) => idx === i ? { ...e, [k]: v } : e));
+  const setEdu = (i, k, v) => setEducations(prev => prev.map((e, idx) => idx === i ? { ...e, [k]: v } : e));
+
+  return (
+    <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", fontSize: 13, background: "#f5f5f3", color: "#1a1a18", minHeight: "100vh" }}>
+      {/* Header */}
+      <div style={{ padding: "20px 24px 0", maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button onClick={() => window.location.href = `/jobtracker/${username}`}
+              style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+              ← Quay lại
+            </button>
+            <h1 style={{ fontSize: 18, fontWeight: 500, margin: 0 }}>Hồ sơ cá nhân</h1>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 12, color: "#888" }}>{username}</span>
+            <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
+              style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+              Sign out
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 0, borderBottom: "0.5px solid #e0e0dc", marginBottom: 20 }}>
+          {tabs.map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              style={{ fontSize: 13, padding: "8px 18px", background: "none", border: "none", borderBottom: tab === t ? "2px solid #1a1a18" : "2px solid transparent", color: tab === t ? "#1a1a18" : "#888", cursor: "pointer", fontFamily: "inherit", fontWeight: tab === t ? 500 : 400, marginBottom: -1 }}>
+              {tabLabels[t]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 24px 40px" }}>
+
+        {/* Tab: Cá nhân */}
+        {tab === "info" && (
+          <div>
+            <div style={card}>
+              {[["name", "Họ tên"], ["title", "Vị trí / Chức danh"], ["location", "Địa điểm"], ["email", "Email"], ["phone", "Số điện thoại"], ["linkedin", "LinkedIn URL"]].map(([k, l]) => (
+                <div key={k}>
+                  <label style={lbl}>{l}</label>
+                  <input value={info[k]} onChange={e => setInfo(f => ({ ...f, [k]: e.target.value }))} style={inp} />
+                </div>
+              ))}
+              <label style={lbl}>Giới thiệu bản thân</label>
+              <textarea value={info.about} onChange={e => setInfo(f => ({ ...f, about: e.target.value }))}
+                placeholder="Mô tả ngắn về bản thân, định hướng nghề nghiệp..."
+                style={{ ...inp, height: 100, resize: "vertical", lineHeight: 1.6 }} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
+              {saved && <span style={{ fontSize: 12, color: "#27500A" }}>Đã lưu ✓</span>}
+              <button onClick={() => save(info)} disabled={saving}
+                style={{ fontSize: 13, padding: "7px 20px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit" }}>
+                {saving ? "Đang lưu..." : "Lưu"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Kỹ năng */}
+        {tab === "skills" && (
+          <div>
+            <div style={card}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                <input value={skillInput} onChange={e => setSkillInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
+                  placeholder="Nhập kỹ năng rồi Enter..." style={{ ...inp, flex: 1 }} />
+                <button onClick={addSkill}
+                  style={{ fontSize: 12, padding: "7px 16px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                  + Thêm
+                </button>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                {skills.length === 0 && <span style={{ fontSize: 12, color: "#aaa" }}>Chưa có kỹ năng nào.</span>}
+                {skills.map((s, i) => (
+                  <span key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, padding: "4px 10px", borderRadius: 20, border: "0.5px solid #ccc", background: "#f5f5f3" }}>
+                    {s}
+                    <button onClick={() => setSkills(prev => prev.filter((_, idx) => idx !== i))}
+                      style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
+              {saved && <span style={{ fontSize: 12, color: "#27500A" }}>Đã lưu ✓</span>}
+              <button onClick={() => save({ skills })} disabled={saving}
+                style={{ fontSize: 13, padding: "7px 20px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit" }}>
+                {saving ? "Đang lưu..." : "Lưu"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Kinh nghiệm */}
+        {tab === "exp" && (
+          <div>
+            {experiences.map((e, i) => (
+              <div key={i} style={{ ...card, position: "relative" }}>
+                <button onClick={() => setExperiences(prev => prev.filter((_, idx) => idx !== i))}
+                  style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div><label style={lbl}>Vị trí / Chức danh</label><input value={e.role} onChange={ev => setExp(i, "role", ev.target.value)} style={inp} placeholder="Senior Data Analyst" /></div>
+                  <div><label style={lbl}>Công ty</label><input value={e.company} onChange={ev => setExp(i, "company", ev.target.value)} style={inp} placeholder="Công ty ABC" /></div>
+                  <div style={{ gridColumn: "1/-1" }}><label style={lbl}>Thời gian</label><input value={e.period} onChange={ev => setExp(i, "period", ev.target.value)} style={inp} placeholder="01/2022 - hiện tại" /></div>
+                </div>
+                <label style={lbl}>Mô tả công việc</label>
+                <textarea value={e.description} onChange={ev => setExp(i, "description", ev.target.value)}
+                  placeholder="Mô tả trách nhiệm, thành tích..." style={{ ...inp, height: 80, resize: "vertical", lineHeight: 1.6 }} />
+              </div>
+            ))}
+            <button onClick={() => setExperiences(prev => [...prev, EMPTY_EXP()])}
+              style={{ width: "100%", padding: "10px", borderRadius: 8, border: "0.5px dashed #ccc", background: "#fff", color: "#888", cursor: "pointer", fontSize: 13, fontFamily: "inherit", marginBottom: 12 }}>
+              + Thêm kinh nghiệm
+            </button>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
+              {saved && <span style={{ fontSize: 12, color: "#27500A" }}>Đã lưu ✓</span>}
+              <button onClick={() => save({ experiences })} disabled={saving}
+                style={{ fontSize: 13, padding: "7px 20px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit" }}>
+                {saving ? "Đang lưu..." : "Lưu"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Học vấn */}
+        {tab === "edu" && (
+          <div>
+            {educations.map((e, i) => (
+              <div key={i} style={{ ...card, position: "relative" }}>
+                <button onClick={() => setEducations(prev => prev.filter((_, idx) => idx !== i))}
+                  style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ gridColumn: "1/-1" }}><label style={lbl}>Bằng cấp / Chương trình học</label><input value={e.degree} onChange={ev => setEdu(i, "degree", ev.target.value)} style={inp} placeholder="Cử nhân Kinh tế" /></div>
+                  <div><label style={lbl}>Trường</label><input value={e.school} onChange={ev => setEdu(i, "school", ev.target.value)} style={inp} placeholder="ĐH Kinh tế TP.HCM" /></div>
+                  <div><label style={lbl}>Thời gian</label><input value={e.period} onChange={ev => setEdu(i, "period", ev.target.value)} style={inp} placeholder="2018 - 2022" /></div>
+                </div>
+              </div>
+            ))}
+            <button onClick={() => setEducations(prev => [...prev, EMPTY_EDU()])}
+              style={{ width: "100%", padding: "10px", borderRadius: 8, border: "0.5px dashed #ccc", background: "#fff", color: "#888", cursor: "pointer", fontSize: 13, fontFamily: "inherit", marginBottom: 12 }}>
+              + Thêm học vấn
+            </button>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
+              {saved && <span style={{ fontSize: 12, color: "#27500A" }}>Đã lưu ✓</span>}
+              <button onClick={() => save({ educations })} disabled={saving}
+                style={{ fontSize: 13, padding: "7px 20px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit" }}>
+                {saving ? "Đang lưu..." : "Lưu"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── App Router ─────────────────────────────────────────────────────────────────
 export default function JobTrackerApp() {
-  const urlUsername = getUrlUsername();
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  const urlUsername = parts.length >= 2 ? parts[1] : null;
+  const subPage = parts[2] || null;
   const auth = getTokenData();
 
   if (!urlUsername) {
@@ -729,5 +944,6 @@ export default function JobTrackerApp() {
   }
   if (!auth) { window.location.href = "/jobtracker"; return null; }
   if (auth.username !== urlUsername) { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; return null; }
+  if (subPage === "profile") return <JtProfilePage username={urlUsername} token={auth.token} />;
   return <TrackerPage username={urlUsername} token={auth.token} />;
 }

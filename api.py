@@ -9,9 +9,10 @@ from database import (save_message, get_chat_history, log_visitor, get_profile, 
                       get_analytics_data, is_first_web_message, get_ai_settings, update_ai_settings,
                       set_admin_credentials, get_jobtracker_users, get_jobtracker_user,
                       create_jobtracker_user, update_jobtracker_password, delete_jobtracker_user,
-                      get_jobtracker_jobs, set_jobtracker_jobs)
+                      get_jobtracker_jobs, set_jobtracker_jobs, get_jt_profile, update_jt_profile)
 from notifications import notify_new_chat, notify_jd_upload
 from auth import create_access_token, authenticate_user, verify_token, hash_password, create_jobtracker_token, verify_jobtracker_token
+import asyncio
 import os
 import shutil
 import base64
@@ -509,14 +510,60 @@ async def jt_resume_delete(jt_username: str, token_user: str = Depends(verify_jo
         os.remove(path)
     return {"ok": True}
 
+# ── Jobtracker Profile ─────────────────────────────────────────────────────────
+class JtProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    title: Optional[str] = None
+    location: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin: Optional[str] = None
+    about: Optional[str] = None
+    skills: Optional[List[str]] = None
+    experiences: Optional[List[dict]] = None
+    educations: Optional[List[dict]] = None
+
+@router.get("/api/jobtracker/profile/{jt_username}")
+async def jt_get_profile(jt_username: str, token_user: str = Depends(verify_jobtracker_token)):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403)
+    return await get_jt_profile(jt_username)
+
+@router.put("/api/jobtracker/profile/{jt_username}")
+async def jt_update_profile(jt_username: str, data: JtProfileUpdate, token_user: str = Depends(verify_jobtracker_token)):
+    if token_user != jt_username:
+        raise HTTPException(status_code=403)
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    if updates:
+        await update_jt_profile(jt_username, updates)
+    return {"ok": True}
+
 # ── Jobtracker Chatbot ─────────────────────────────────────────────────────────
-def build_jt_system_prompt(username: str, jobs: list, resume_exists: bool) -> str:
+def build_jt_system_prompt(username: str, jobs: list, resume_exists: bool, profile: dict = None) -> str:
     status_map = {"applied": "Đã apply", "viewed": "Đã xem CV", "downloaded": "Đã tải CV"}
     job_lines = [
         f"{i}. {j.get('title','')} tại {j.get('company','')} | {j.get('loc','')} | {j.get('mode','')} | {j.get('month','')}/{j.get('year','')} | {status_map.get(j.get('status',''), j.get('status',''))} | {'có JD' if j.get('jd') else 'chưa có JD'}"
         for i, j in enumerate(jobs, 1)
     ]
     job_list = "\n".join(job_lines) if job_lines else "Chưa có job nào."
+
+    profile_section = ""
+    if profile:
+        name = profile.get("name") or username
+        parts = []
+        if profile.get("title"):      parts.append(f"Vị trí mục tiêu: {profile['title']}")
+        if profile.get("location"):   parts.append(f"Địa điểm: {profile['location']}")
+        if profile.get("about"):      parts.append(f"Giới thiệu: {profile['about']}")
+        if profile.get("skills"):     parts.append(f"Kỹ năng: {', '.join(profile['skills'])}")
+        if profile.get("experiences"):
+            exps = "\n".join(f"  - {e.get('role','')} tại {e.get('company','')} ({e.get('period','')}): {e.get('description','')}" for e in profile["experiences"])
+            parts.append(f"Kinh nghiệm:\n{exps}")
+        if profile.get("educations"):
+            edus = "\n".join(f"  - {e.get('degree','')} tại {e.get('school','')} ({e.get('period','')})" for e in profile["educations"])
+            parts.append(f"Học vấn:\n{edus}")
+        if parts:
+            profile_section = f"\nHồ sơ cá nhân của {name}:\n" + "\n".join(parts) + "\n"
+
     resume_note = (
         "Resume của người dùng đã được đính kèm trong cuộc trò chuyện này."
         if resume_exists else
@@ -530,7 +577,7 @@ def build_jt_system_prompt(username: str, jobs: list, resume_exists: bool) -> st
 Luôn ưu tiên trả lời bằng tiếng Việt. Thân thiện, thực tế và cụ thể.
 
 Khi người dùng hỏi về một job cụ thể mà job đó được đánh dấu "chưa có JD", hãy nhắc họ thêm JD vào job đó (nút "Sửa" → "+ Thêm JD") để được phân tích chi tiết hơn.
-
+{profile_section}
 Danh sách {len(jobs)} job đã apply:
 {job_list}
 
@@ -561,10 +608,10 @@ async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depe
     if token_user != jt_username:
         raise HTTPException(status_code=403)
     session_id = f"jt_{jt_username}_{request.session_id}"
-    jobs = await get_jobtracker_jobs(jt_username)
+    jobs, profile = await asyncio.gather(get_jobtracker_jobs(jt_username), get_jt_profile(jt_username))
     resume_path = os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf")
     resume_exists = os.path.exists(resume_path)
-    system_prompt = build_jt_system_prompt(jt_username, jobs, resume_exists)
+    system_prompt = build_jt_system_prompt(jt_username, jobs, resume_exists, profile)
     ai_settings = await get_ai_settings()
     model = ai_settings.get("active_model")
     await save_message(session_id, "user", request.message, source="jobtracker")
@@ -598,10 +645,10 @@ async def jt_chat_file(
     if token_user != jt_username:
         raise HTTPException(status_code=403)
     sid = f"jt_{jt_username}_{session_id}"
-    jobs = await get_jobtracker_jobs(jt_username)
+    jobs, profile = await asyncio.gather(get_jobtracker_jobs(jt_username), get_jt_profile(jt_username))
     resume_path = os.path.join(JT_RESUME_DIR, f"{jt_username}.pdf")
     resume_exists = os.path.exists(resume_path)
-    system_prompt = build_jt_system_prompt(jt_username, jobs, resume_exists)
+    system_prompt = build_jt_system_prompt(jt_username, jobs, resume_exists, profile)
     ai_settings = await get_ai_settings()
     model = ai_settings.get("active_model")
     file_bytes = await file.read()
