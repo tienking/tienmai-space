@@ -1,0 +1,15 @@
+[Unit]
+Description=Tienmai FastAPI App
+After=network.target mongod.service
+Wants=mongod.service
+
+[Service]
+Type=simple
+WorkingDirectory=/root/tienmai-bot
+EnvironmentFile=/root/tienmai-bot/.env
+ExecStart=/root/tienmai-bot/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
