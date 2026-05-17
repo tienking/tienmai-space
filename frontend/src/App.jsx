@@ -296,8 +296,10 @@ function ChatMessage({ msg }) {
   );
 }
 
+const WELCOME_MSG = { role: "assistant", content: "Hey! I'm Tien — feel free to ask me anything 👋" };
+
 function ChatPopup({ onClose }) {
-  const [sessionId] = useState(() => {
+  const [sessionId, setSessionId] = useState(() => {
     const s = localStorage.getItem(STORAGE_SESSION);
     if (s) return s;
     const id = generateSessionId();
@@ -309,8 +311,16 @@ function ChatPopup({ onClose }) {
       const stored = localStorage.getItem(STORAGE_MESSAGES);
       if (stored) return JSON.parse(stored);
     } catch {}
-    return [{ role: "assistant", content: "Hey! I'm Tien — feel free to ask me anything 👋" }];
+    return [WELCOME_MSG];
   });
+
+  const clearChat = () => {
+    const newId = generateSessionId();
+    localStorage.setItem(STORAGE_SESSION, newId);
+    localStorage.removeItem(STORAGE_MESSAGES);
+    setSessionId(newId);
+    setMessages([WELCOME_MSG]);
+  };
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -370,7 +380,11 @@ function ChatPopup({ onClose }) {
           <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", animation: "pulse 2s ease infinite" }} />
           <span style={{ fontSize: 13, fontWeight: 500 }}>AI Assistant</span>
         </div>
-        <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <button onClick={clearChat} title="New conversation"
+            style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 14, lineHeight: 1, padding: "2px 6px", borderRadius: 6, opacity: 0.6 }}>↺</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
+        </div>
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
