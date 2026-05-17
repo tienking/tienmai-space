@@ -11,6 +11,7 @@ chat_collection = db["chat_history"]
 visitor_collection = db["visitors"]
 profile_collection = db["profile"]
 settings_collection = db["settings"]
+admin_sessions_col = db["admin_sessions"]
 jobtracker_users_col = db["jobtracker_users"]
 jobtracker_jobs_col = db["jobtracker_jobs"]
 jobtracker_profiles_col = db["jobtracker_profiles"]
@@ -101,6 +102,21 @@ async def increment_admin_token_version():
         {"$inc": {"token_version": 1}},
         upsert=True
     )
+
+# --- Admin Login History ---
+async def log_admin_login(ip: str, user_agent: str, success: bool):
+    """Record an admin login attempt."""
+    await admin_sessions_col.insert_one({
+        "ip": ip,
+        "user_agent": user_agent,
+        "success": success,
+        "created_at": datetime.utcnow()
+    })
+
+async def get_admin_login_history(limit: int = 30):
+    """Return recent admin login attempts, newest first."""
+    cursor = admin_sessions_col.find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
+    return await cursor.to_list(length=limit)
 
 async def get_analytics_data():
     """Aggregate analytics data for admin dashboard."""

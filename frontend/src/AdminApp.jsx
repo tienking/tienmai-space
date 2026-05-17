@@ -1406,6 +1406,24 @@ function JobTrackerTab({ token }) {
 
 // ─── Settings Tab ──────────────────────────────────────────────────────────────
 
+function parseUA(ua) {
+  if (!ua) return "Unknown";
+  let os = "Unknown";
+  if (/Windows/.test(ua))     os = "Windows";
+  else if (/iPhone/.test(ua)) os = "iPhone";
+  else if (/iPad/.test(ua))   os = "iPad";
+  else if (/Android/.test(ua)) os = "Android";
+  else if (/Mac/.test(ua))    os = "macOS";
+  else if (/Linux/.test(ua))  os = "Linux";
+  let browser = "";
+  if (/Edg\//.test(ua))        browser = "Edge";
+  else if (/OPR\//.test(ua))   browser = "Opera";
+  else if (/Chrome\//.test(ua)) browser = "Chrome";
+  else if (/Firefox\//.test(ua)) browser = "Firefox";
+  else if (/Safari\//.test(ua))  browser = "Safari";
+  return [browser, os].filter(Boolean).join(" / ");
+}
+
 function SettingsTab({ token, onLogout }) {
   const [username, setUsername] = useState("");
   const [currentPw, setCurrentPw] = useState("");
@@ -1413,8 +1431,14 @@ function SettingsTab({ token, onLogout }) {
   const [confirmPw, setConfirmPw] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null); // { text, error }
+  const [sessions, setSessions] = useState(null);
 
   const inputStyle = { fontSize: 13, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text)", fontFamily: "var(--font-display)", outline: "none", width: "100%", boxSizing: "border-box" };
+
+  useEffect(() => {
+    fetch("/api/admin/sessions", { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(setSessions).catch(() => setSessions([]));
+  }, [token]);
 
   const handleSave = async () => {
     if (!currentPw) { setMsg({ text: "Enter your current password.", error: true }); return; }
@@ -1475,6 +1499,29 @@ function SettingsTab({ token, onLogout }) {
           style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "var(--font-display)" }}>
           {saving ? "Saving..." : "Update"}
         </button>
+      </div>
+
+      {/* Login history */}
+      <h3 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "var(--text)" }}>Login history</h3>
+      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
+        {sessions === null
+          ? <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "16px 18px" }}>Loading...</p>
+          : sessions.length === 0
+          ? <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "16px 18px" }}>No login records yet.</p>
+          : sessions.map((s, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderBottom: i < sessions.length - 1 ? "1px solid var(--border)" : "none" }}>
+              <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, background: s.success ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: s.success ? "#4ade80" : "#f87171", flexShrink: 0 }}>
+                {s.success ? "OK" : "FAIL"}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text)" }}>{s.ip}</div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{parseUA(s.user_agent)}</div>
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0, textAlign: "right" }}>
+                {s.created_at ? new Date(s.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+              </div>
+            </div>
+          ))}
       </div>
     </div>
   );
