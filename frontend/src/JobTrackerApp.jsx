@@ -681,7 +681,32 @@ function TrackerPage({ username, token }) {
 }
 
 // ── Job Tracker Profile Page ───────────────────────────────────────────────────
-const EMPTY_EXP = () => ({ role: "", company: "", period: "", description: "" });
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const EXP_YEARS = Array.from({ length: 40 }, (_, i) => new Date().getFullYear() - i);
+
+const parsePeriod = (period) => {
+  if (!period) return { startMonth: "", startYear: "", endMonth: "", endYear: "", current: false };
+  const isCurrent = period.includes("Present");
+  const parts = period.split("·").map(s => s.trim());
+  const parseMonthYear = (str) => {
+    if (!str) return { month: "", year: "" };
+    const tokens = str.trim().split(" ");
+    if (tokens.length === 2 && MONTHS.includes(tokens[0])) return { month: tokens[0], year: tokens[1] };
+    return { month: "", year: tokens[0] };
+  };
+  const start = parseMonthYear(parts[0] || "");
+  const end = isCurrent ? { month: "", year: "" } : parseMonthYear(parts[1] || "");
+  return { startMonth: start.month, startYear: start.year, endMonth: end.month, endYear: end.year, current: isCurrent };
+};
+
+const buildPeriod = (startMonth, startYear, endMonth, endYear, current) => {
+  const start = [startMonth, startYear].filter(Boolean).join(" ");
+  if (current) return start ? `${start} · Present` : "Present";
+  const end = [endMonth, endYear].filter(Boolean).join(" ");
+  return end ? `${start} · ${end}` : start;
+};
+
+const EMPTY_EXP = () => ({ role: "", company: "", startMonth: "", startYear: "", endMonth: "", endYear: "", current: false, description: "" });
 const EMPTY_EDU = () => ({ degree: "", school: "", period: "" });
 
 function JtProfilePage({ username, token }) {
@@ -705,7 +730,10 @@ function JtProfilePage({ username, token }) {
       .then(d => {
         setInfo({ name: d.name || "", title: d.title || "", location: d.location || "", email: d.email || "", phone: d.phone || "", linkedin: d.linkedin || "", about: d.about || "" });
         setSkills(d.skills || []);
-        setExperiences(d.experiences || []);
+        setExperiences((d.experiences || []).map(e => {
+          const parsed = parsePeriod(e.period || "");
+          return { role: e.role || "", company: e.company || "", description: e.description || "", ...parsed };
+        }));
         setEducations(d.educations || []);
       })
       .catch(() => {});
@@ -741,7 +769,10 @@ function JtProfilePage({ username, token }) {
           about: p.about || f.about,
         }));
         if (p.skills?.length)      setSkills(p.skills);
-        if (p.experiences?.length) setExperiences(p.experiences);
+        if (p.experiences?.length) setExperiences(p.experiences.map(e => {
+          const parsed = parsePeriod(e.period || "");
+          return { role: e.role || "", company: e.company || "", description: e.description || "", ...parsed };
+        }));
         if (p.educations?.length)  setEducations(p.educations);
       }
     } catch {}
@@ -933,7 +964,38 @@ function JtProfilePage({ username, token }) {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <div><label style={lbl}>Vị trí / Chức danh</label><input value={e.role} onChange={ev => setExp(i, "role", ev.target.value)} style={inp} placeholder="Senior Data Analyst" /></div>
                   <div><label style={lbl}>Công ty</label><input value={e.company} onChange={ev => setExp(i, "company", ev.target.value)} style={inp} placeholder="Công ty ABC" /></div>
-                  <div style={{ gridColumn: "1/-1" }}><label style={lbl}>Thời gian</label><input value={e.period} onChange={ev => setExp(i, "period", ev.target.value)} style={inp} placeholder="01/2022 - hiện tại" /></div>
+                  <div style={{ gridColumn: "1/-1" }}>
+                    <label style={lbl}>Thời gian</label>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <select value={e.startMonth} onChange={ev => setExp(i, "startMonth", ev.target.value)}
+                        style={{ fontSize: 12, padding: "6px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontFamily: "inherit", outline: "none", cursor: "pointer" }}>
+                        <option value="">Tháng</option>
+                        {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                      <select value={e.startYear} onChange={ev => setExp(i, "startYear", ev.target.value)}
+                        style={{ fontSize: 12, padding: "6px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontFamily: "inherit", outline: "none", cursor: "pointer" }}>
+                        <option value="">Năm</option>
+                        {EXP_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                      </select>
+                      <span style={{ color: "#aaa", fontSize: 12 }}>→</span>
+                      {!e.current && <>
+                        <select value={e.endMonth} onChange={ev => setExp(i, "endMonth", ev.target.value)}
+                          style={{ fontSize: 12, padding: "6px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontFamily: "inherit", outline: "none", cursor: "pointer" }}>
+                          <option value="">Tháng</option>
+                          {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                        <select value={e.endYear} onChange={ev => setExp(i, "endYear", ev.target.value)}
+                          style={{ fontSize: 12, padding: "6px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontFamily: "inherit", outline: "none", cursor: "pointer" }}>
+                          <option value="">Năm</option>
+                          {EXP_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                        </select>
+                      </>}
+                      <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#555", cursor: "pointer", userSelect: "none" }}>
+                        <input type="checkbox" checked={e.current} onChange={ev => setExp(i, "current", ev.target.checked)} />
+                        Hiện tại
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 <label style={lbl}>Mô tả công việc</label>
                 <textarea value={e.description} onChange={ev => setExp(i, "description", ev.target.value)}
@@ -946,7 +1008,7 @@ function JtProfilePage({ username, token }) {
             </button>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
               {saved && <span style={{ fontSize: 12, color: "#27500A" }}>Đã lưu ✓</span>}
-              <button onClick={() => save({ experiences })} disabled={saving}
+              <button onClick={() => save({ experiences: experiences.map(({ startMonth, startYear, endMonth, endYear, current, ...rest }) => ({ ...rest, period: buildPeriod(startMonth, startYear, endMonth, endYear, current) })) })} disabled={saving}
                 style={{ fontSize: 13, padding: "7px 20px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit" }}>
                 {saving ? "Đang lưu..." : "Lưu"}
               </button>
