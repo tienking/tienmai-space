@@ -7,7 +7,8 @@ from google.genai import types
 from config import GEMINI_API_KEY
 from database import (save_message, get_chat_history, log_visitor, get_profile, update_profile,
                       get_analytics_data, is_first_web_message, get_ai_settings, update_ai_settings,
-                      set_admin_credentials, get_jobtracker_users, get_jobtracker_user,
+                      set_admin_credentials, get_admin_token_version, increment_admin_token_version,
+                      get_jobtracker_users, get_jobtracker_user,
                       create_jobtracker_user, update_jobtracker_password, delete_jobtracker_user,
                       get_jobtracker_jobs, set_jobtracker_jobs, get_jt_profile, update_jt_profile)
 from notifications import notify_new_chat, notify_jd_upload
@@ -355,7 +356,8 @@ async def admin_login(request: LoginRequest, req: Request):
             detail += f" {remaining} attempt(s) remaining."
         raise HTTPException(status_code=401, detail=detail)
     _reset_login_attempts(ip)
-    token = create_access_token({"sub": request.username})
+    version = await get_admin_token_version()
+    token = create_access_token({"sub": request.username}, token_version=version)
     return {"access_token": token, "token_type": "bearer"}
 
 # --- Admin: Change Password ---
@@ -365,9 +367,10 @@ class ChangePasswordRequest(BaseModel):
 
 @router.put("/api/admin/password")
 async def change_password(data: ChangePasswordRequest, username: str = Depends(verify_token)):
-    """Change admin username and/or password."""
+    """Change admin username and/or password, then invalidate all active sessions."""
     new_username = data.new_username or username
     await set_admin_credentials(new_username, hash_password(data.new_password))
+    await increment_admin_token_version()
     return {"message": "Credentials updated successfully"}
 
 # --- Admin: Update Profile ---

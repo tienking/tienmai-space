@@ -10,18 +10,22 @@ ACCESS_TOKEN_EXPIRE_HOURS = 24 * 30
 
 security = HTTPBearer()
 
-def create_access_token(data: dict):
+def create_access_token(data: dict, token_version: int = 0):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "ver": token_version})
     return jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+async def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
     try:
         payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[ALGORITHM])
         username = payload.get("sub")
         if username is None:
             raise HTTPException(status_code=401, detail="Invalid token")
+        from database import get_admin_token_version
+        current_version = await get_admin_token_version()
+        if payload.get("ver", 0) != current_version:
+            raise HTTPException(status_code=401, detail="Session expired. Please sign in again.")
         return username
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")

@@ -89,6 +89,19 @@ async def set_admin_credentials(username: str, hashed_password: str):
         upsert=True
     )
 
+async def get_admin_token_version() -> int:
+    """Return the current admin token version (used to invalidate old sessions)."""
+    doc = await settings_collection.find_one({"type": "admin"}, {"_id": 0, "token_version": 1})
+    return (doc or {}).get("token_version", 0)
+
+async def increment_admin_token_version():
+    """Bump token version, invalidating all existing admin sessions."""
+    await settings_collection.update_one(
+        {"type": "admin"},
+        {"$inc": {"token_version": 1}},
+        upsert=True
+    )
+
 async def get_analytics_data():
     """Aggregate analytics data for admin dashboard."""
     total_visitors = await visitor_collection.count_documents({})
