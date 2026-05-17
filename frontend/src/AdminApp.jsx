@@ -170,6 +170,7 @@ function Dashboard({ token, onLogout }) {
     { id: "analytics",     icon: "📊", label: "Analytics" },
     { id: "ai",            icon: "🤖", label: "AI Models" },
     { id: "jobtracker",   icon: "📋", label: "Job Tracker" },
+    { id: "settings",     icon: "⚙️", label: "Settings" },
   ];
 
   return (
@@ -213,6 +214,7 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "analytics" && <AnalyticsTab token={token} />}
           {activeTab === "ai" && <AITab token={token} />}
           {activeTab === "jobtracker" && <JobTrackerTab token={token} />}
+          {activeTab === "settings" && <SettingsTab token={token} onLogout={onLogout} />}
         </div>
       </div>
     </div>
@@ -1364,6 +1366,82 @@ function JobTrackerTab({ token }) {
       <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
         Mỗi user truy cập tại: <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent)" }}>tienmai.space/jobtracker/username</span>
       </p>
+    </div>
+  );
+}
+
+// ─── Settings Tab ──────────────────────────────────────────────────────────────
+
+function SettingsTab({ token, onLogout }) {
+  const [username, setUsername] = useState("");
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState(null); // { text, error }
+
+  const inputStyle = { fontSize: 13, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text)", fontFamily: "var(--font-display)", outline: "none", width: "100%", boxSizing: "border-box" };
+
+  const handleSave = async () => {
+    if (!currentPw) { setMsg({ text: "Nhập password hiện tại.", error: true }); return; }
+    if (!newPw) { setMsg({ text: "Nhập password mới.", error: true }); return; }
+    if (newPw !== confirmPw) { setMsg({ text: "Password mới không khớp.", error: true }); return; }
+
+    // Verify current password first
+    setSaving(true); setMsg(null);
+    try {
+      const verifyRes = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username || "admin", password: currentPw })
+      });
+      if (!verifyRes.ok) { setMsg({ text: "Password hiện tại không đúng.", error: true }); setSaving(false); return; }
+
+      const body = { new_password: newPw };
+      if (username) body.new_username = username;
+      const res = await fetch("/api/admin/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error();
+      setMsg({ text: "Đã cập nhật. Vui lòng đăng nhập lại.", error: false });
+      setCurrentPw(""); setNewPw(""); setConfirmPw("");
+      setTimeout(() => onLogout(), 2000);
+    } catch {
+      setMsg({ text: "Có lỗi xảy ra.", error: true });
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 440 }}>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20 }}>Settings</h2>
+
+      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "20px 22px", marginBottom: 16 }}>
+        <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 16 }}>Đổi thông tin đăng nhập</p>
+
+        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Username mới (để trống nếu không đổi)</label>
+        <input value={username} onChange={e => setUsername(e.target.value)} placeholder="Giữ nguyên username cũ" style={{ ...inputStyle, marginBottom: 14 }} />
+
+        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Password hiện tại <span style={{ color: "#f87171" }}>*</span></label>
+        <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} style={{ ...inputStyle, marginBottom: 14 }} />
+
+        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Password mới <span style={{ color: "#f87171" }}>*</span></label>
+        <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} style={{ ...inputStyle, marginBottom: 14 }} />
+
+        <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5 }}>Xác nhận password mới <span style={{ color: "#f87171" }}>*</span></label>
+        <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSave()}
+          style={{ ...inputStyle, marginBottom: 16 }} />
+
+        {msg && <p style={{ fontSize: 12, color: msg.error ? "#f87171" : "var(--accent)", marginBottom: 12 }}>{msg.text}</p>}
+
+        <button onClick={handleSave} disabled={saving}
+          style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "var(--font-display)" }}>
+          {saving ? "Đang lưu..." : "Cập nhật"}
+        </button>
+      </div>
     </div>
   );
 }
