@@ -406,36 +406,6 @@ function TrackerPage({ username, token }) {
   const [fYear, setFYear] = useState("");
   const [modal, setModal] = useState(null);
   const [viewJd, setViewJd] = useState(null);
-  const [resumeExists, setResumeExists] = useState(false);
-  const [resumeUrl, setResumeUrl] = useState(null);
-  const fileInputRef = useRef(null);
-
-  useEffect(() => {
-    fetch(`/api/jobtracker/resume/${username}/check`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json()).then(d => setResumeExists(d.exists)).catch(() => {});
-  }, [username, token]);
-
-  const handleViewResume = async () => {
-    const res = await fetch(`/api/jobtracker/resume/${username}`, { headers: { Authorization: `Bearer ${token}` } });
-    const blob = await res.blob();
-    setResumeUrl(URL.createObjectURL(blob));
-  };
-
-  const handleCloseResume = () => { URL.revokeObjectURL(resumeUrl); setResumeUrl(null); };
-
-  const handleUploadResume = async (e) => {
-    const file = e.target.files[0]; e.target.value = "";
-    if (!file) return;
-    const form = new FormData(); form.append("file", file);
-    await fetch(`/api/jobtracker/resume/${username}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
-    setResumeExists(true);
-  };
-
-  const handleDeleteResume = async () => {
-    if (!confirm("Xóa Resume hiện tại?")) return;
-    await fetch(`/api/jobtracker/resume/${username}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-    setResumeExists(false);
-  };
 
   useEffect(() => {
     fetch(`/api/jobtracker/jobs/${username}`, { headers: { Authorization: `Bearer ${token}` } })
@@ -573,17 +543,6 @@ function TrackerPage({ username, token }) {
           </select>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
             {saving && <span style={{ fontSize: 12, color: "#888" }}>Đang lưu...</span>}
-            {resumeExists && <>
-              <button onClick={handleViewResume}
-                style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Xem</button>
-              <button onClick={handleDeleteResume}
-                style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>Xóa</button>
-            </>}
-            <button onClick={() => fileInputRef.current?.click()}
-              style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
-              ↑ Upload Resume
-            </button>
-            <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleUploadResume} style={{ display: "none" }} />
             <button onClick={() => setModal({ mode: "add" })}
               style={{ fontSize: 12, padding: "5px 14px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
               + Thêm job
@@ -715,7 +674,6 @@ function TrackerPage({ username, token }) {
         {modal?.mode === "add" && <JobModal onSave={handleAdd} onClose={() => setModal(null)} />}
         {modal?.mode === "edit" && <JobModal initial={jobs[modal.index]} onSave={handleEdit} onClose={() => setModal(null)} />}
         {viewJd && <JdViewModal title={viewJd.title} jd={viewJd.jd} onClose={() => setViewJd(null)} />}
-        {resumeUrl && <ResumeViewModal url={resumeUrl} onClose={handleCloseResume} />}
       </div>
       <JtChatBot username={username} token={token} />
     </div>
@@ -730,6 +688,9 @@ function JtProfilePage({ username, token }) {
   const [tab, setTab] = useState("info");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [resumeExists, setResumeExists] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState(null);
+  const fileInputRef = useRef(null);
   const [info, setInfo] = useState({ name: "", title: "", location: "", email: "", phone: "", linkedin: "", about: "" });
   const [skills, setSkills] = useState([]);
   const [skillInput, setSkillInput] = useState("");
@@ -746,7 +707,28 @@ function JtProfilePage({ username, token }) {
         setEducations(d.educations || []);
       })
       .catch(() => {});
+    fetch(`/api/jobtracker/resume/${username}/check`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(d => setResumeExists(d.exists)).catch(() => {});
   }, [username, token]);
+
+  const handleViewResume = async () => {
+    const res = await fetch(`/api/jobtracker/resume/${username}`, { headers: { Authorization: `Bearer ${token}` } });
+    const blob = await res.blob();
+    setResumeUrl(URL.createObjectURL(blob));
+  };
+  const handleCloseResume = () => { URL.revokeObjectURL(resumeUrl); setResumeUrl(null); };
+  const handleUploadResume = async (e) => {
+    const file = e.target.files[0]; e.target.value = "";
+    if (!file) return;
+    const form = new FormData(); form.append("file", file);
+    await fetch(`/api/jobtracker/resume/${username}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
+    setResumeExists(true);
+  };
+  const handleDeleteResume = async () => {
+    if (!confirm("Xóa Resume hiện tại?")) return;
+    await fetch(`/api/jobtracker/resume/${username}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    setResumeExists(false);
+  };
 
   const save = async (data) => {
     setSaving(true);
@@ -824,6 +806,30 @@ function JtProfilePage({ username, token }) {
                 placeholder="Mô tả ngắn về bản thân, định hướng nghề nghiệp..."
                 style={{ ...inp, height: 100, resize: "vertical", lineHeight: 1.6 }} />
             </div>
+
+            {/* Resume section */}
+            <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>Resume (PDF)</div>
+                <div style={{ fontSize: 12, color: resumeExists ? "#27500A" : "#aaa" }}>
+                  {resumeExists ? "Đã có resume" : "Chưa upload resume"}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                {resumeExists && <>
+                  <button onClick={handleViewResume}
+                    style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Xem</button>
+                  <button onClick={handleDeleteResume}
+                    style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>Xóa</button>
+                </>}
+                <button onClick={() => fileInputRef.current?.click()}
+                  style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+                  ↑ Upload
+                </button>
+                <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleUploadResume} style={{ display: "none" }} />
+              </div>
+            </div>
+
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
               {saved && <span style={{ fontSize: 12, color: "#27500A" }}>Đã lưu ✓</span>}
               <button onClick={() => save(info)} disabled={saving}
@@ -833,6 +839,7 @@ function JtProfilePage({ username, token }) {
             </div>
           </div>
         )}
+        {resumeUrl && <ResumeViewModal url={resumeUrl} onClose={handleCloseResume} />}
 
         {/* Tab: Kỹ năng */}
         {tab === "skills" && (
