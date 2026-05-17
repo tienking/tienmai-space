@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
@@ -14,6 +14,7 @@ from notifications import notify_new_chat, notify_jd_upload
 from auth import create_access_token, authenticate_user, verify_token, hash_password, create_jobtracker_token, verify_jobtracker_token
 import asyncio
 import os
+from time import time as _now
 import shutil
 import base64
 import docx
@@ -24,6 +25,33 @@ import pdfplumber
 
 # --- Gemini Client ---
 client = genai.Client(api_key=GEMINI_API_KEY)
+
+# --- Admin login rate limiting (in-memory, resets on restart) ---
+_login_attempts: dict = {}  # ip -> {"count": int, "locked_until": float}
+_MAX_ATTEMPTS = 5
+_LOCKOUT_SECONDS = 300  # 5 minutes
+
+def _check_login_rate(ip: str):
+    entry = _login_attempts.get(ip)
+    if not entry:
+        return
+    if entry["locked_until"] > _now():
+        remaining = int(entry["locked_until"] - _now())
+        mins, secs = divmod(remaining, 60)
+        raise HTTPException(
+            status_code=429,
+            detail={"message": f"Quá nhiều lần thử sai. Vui lòng thử lại sau {mins} phút {secs} giây.", "locked_until": entry["locked_until"]}
+        )
+
+def _record_login_failure(ip: str):
+    entry = _login_attempts.get(ip, {"count": 0, "locked_until": 0.0})
+    entry["count"] += 1
+    if entry["count"] >= _MAX_ATTEMPTS:
+        entry["locked_until"] = _now() + _LOCKOUT_SECONDS
+    _login_attempts[ip] = entry
+
+def _reset_login_attempts(ip: str):
+    _login_attempts.pop(ip, None)
 
 # --- Router ---
 router = APIRouter()
@@ -314,10 +342,19 @@ async def jd_match(file: UploadFile = File(...)):
 
 # --- Admin: Login ---
 @router.post("/api/admin/login")
-async def admin_login(request: LoginRequest):
+async def admin_login(request: LoginRequest, req: Request):
     """Admin login - returns JWT token."""
+    ip = req.client.host
+    _check_login_rate(ip)
     if not await authenticate_user(request.username, request.password):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        _record_login_failure(ip)
+        entry = _login_attempts.get(ip, {})
+        remaining = max(0, _MAX_ATTEMPTS - entry.get("count", 0))
+        detail = "Sai username hoặc password."
+        if remaining > 0:
+            detail += f" Còn {remaining} lần thử."
+        raise HTTPException(status_code=401, detail=detail)
+    _reset_login_attempts(ip)
     token = create_access_token({"sub": request.username})
     return {"access_token": token, "token_type": "bearer"}
 

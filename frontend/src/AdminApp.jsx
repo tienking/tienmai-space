@@ -55,7 +55,12 @@ function useAuth() {
   });
   const login = async (username, password) => {
     const res = await fetch(`${API}/api/admin/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
-    if (!res.ok) throw new Error("Invalid credentials");
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const err = new Error(typeof data.detail === "object" ? data.detail.message : (data.detail || "Invalid credentials"));
+      if (res.status === 429 && data.detail?.locked_until) err.lockedUntil = data.detail.locked_until * 1000;
+      throw err;
+    }
     const data = await res.json();
     localStorage.setItem("admin_token", data.access_token);
     setToken(data.access_token);
@@ -87,13 +92,36 @@ function LoginPage({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lockedUntil, setLockedUntil] = useState(null); // ms timestamp
+  const [countdown, setCountdown] = useState(0);
+
+  useEffect(() => {
+    if (!lockedUntil) return;
+    const tick = () => {
+      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) { setLockedUntil(null); setCountdown(0); setError(""); }
+      else setCountdown(remaining);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [lockedUntil]);
+
+  const isLocked = lockedUntil && Date.now() < lockedUntil;
 
   const handleSubmit = async () => {
+    if (isLocked || loading) return;
     setLoading(true); setError("");
     try { await onLogin(username, password); }
-    catch { setError("Invalid username or password"); }
+    catch (e) {
+      if (e.lockedUntil) setLockedUntil(e.lockedUntil);
+      setError(e.message || "Invalid username or password");
+    }
     setLoading(false);
   };
+
+  const mins = Math.floor(countdown / 60);
+  const secs = String(countdown % 60).padStart(2, "0");
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
@@ -103,15 +131,21 @@ function LoginPage({ onLogin }) {
         <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 28 }}>tienmai.space dashboard</p>
         <div style={{ marginBottom: 14 }}>
           <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>Username</label>
-          <input value={username} onChange={e => setUsername(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} style={inputStyle} />
+          <input value={username} onChange={e => setUsername(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} disabled={isLocked} style={inputStyle} />
         </div>
         <div style={{ marginBottom: 20 }}>
           <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>Password</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} style={inputStyle} />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} disabled={isLocked} style={inputStyle} />
         </div>
-        {error && <p style={{ fontSize: 13, color: "#f87171", marginBottom: 14 }}>{error}</p>}
-        <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", padding: "11px", borderRadius: 10, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 14, fontWeight: 500, cursor: loading ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: loading ? 0.7 : 1 }}>
-          {loading ? "Signing in..." : "Sign in"}
+        {error && (
+          <div style={{ fontSize: 13, color: "#f87171", marginBottom: 14 }}>
+            <p>{error}</p>
+            {isLocked && <p style={{ fontFamily: "var(--font-mono)", fontSize: 12, marginTop: 4 }}>Thử lại sau: {mins}:{secs}</p>}
+          </div>
+        )}
+        <button onClick={handleSubmit} disabled={loading || isLocked}
+          style={{ width: "100%", padding: "11px", borderRadius: 10, border: "none", background: isLocked ? "var(--border)" : "var(--accent)", color: "#0a0a0b", fontSize: 14, fontWeight: 500, cursor: (loading || isLocked) ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: loading ? 0.7 : 1 }}>
+          {loading ? "Signing in..." : isLocked ? `Locked (${mins}:${secs})` : "Sign in"}
         </button>
       </div>
     </div>
