@@ -19,6 +19,7 @@ import docx
 import io
 import json
 import re
+import pdfplumber
 
 # --- Gemini Client ---
 client = genai.Client(api_key=GEMINI_API_KEY)
@@ -125,6 +126,12 @@ Only speak based on the profile information above. Do not invent details not pro
 def extract_docx_text(file_bytes: bytes) -> str:
     doc = docx.Document(io.BytesIO(file_bytes))
     return "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
+
+# --- Extract text from PDF ---
+def extract_pdf_text(source) -> str:
+    src = io.BytesIO(source) if isinstance(source, bytes) else source
+    with pdfplumber.open(src) as pdf:
+        return "\n".join(p.extract_text() or "" for p in pdf.pages).strip()
 
 # --- Public: Profile ---
 @router.get("/api/profile")
@@ -564,9 +571,9 @@ async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depe
     history = await get_chat_history(session_id, limit=20)
     contents = []
     if resume_exists:
-        resume_bytes = open(resume_path, "rb").read()
+        resume_text = extract_pdf_text(resume_path)
         contents += [
-            types.Content(role="user", parts=[types.Part(inline_data=types.Blob(mime_type="application/pdf", data=base64.b64encode(resume_bytes).decode())), types.Part(text="Đây là resume của tôi.")]),
+            types.Content(role="user", parts=[types.Part(text=f"Đây là resume của tôi:\n\n{resume_text}")]),
             types.Content(role="model", parts=[types.Part(text="Đã đọc resume của bạn.")]),
         ]
     relevant_jds = find_relevant_jds(request.message, jobs)
@@ -605,15 +612,16 @@ async def jt_chat_file(
     history = await get_chat_history(sid, limit=18)
     contents = []
     if resume_exists:
-        resume_bytes = open(resume_path, "rb").read()
+        resume_text = extract_pdf_text(resume_path)
         contents += [
-            types.Content(role="user", parts=[types.Part(inline_data=types.Blob(mime_type="application/pdf", data=base64.b64encode(resume_bytes).decode())), types.Part(text="Đây là resume của tôi.")]),
+            types.Content(role="user", parts=[types.Part(text=f"Đây là resume của tôi:\n\n{resume_text}")]),
             types.Content(role="model", parts=[types.Part(text="Đã đọc resume của bạn.")]),
         ]
     for msg in history[:-1]:
         contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])]))
     if filename.endswith(".pdf"):
-        current_parts = [types.Part(inline_data=types.Blob(mime_type="application/pdf", data=base64.b64encode(file_bytes).decode())), types.Part(text=display)]
+        pdf_text = extract_pdf_text(file_bytes)
+        current_parts = [types.Part(text=f"Nội dung file ({file.filename}):\n\n{pdf_text}\n\n{display}")]
     elif filename.endswith(".docx"):
         current_parts = [types.Part(text=f"Nội dung file ({file.filename}):\n\n{extract_docx_text(file_bytes)}\n\n{display}")]
     elif filename.endswith(".txt"):
