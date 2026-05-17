@@ -614,6 +614,14 @@ def build_jt_system_prompt(username: str, jobs: list, resume_exists: bool, profi
 - Tư vấn chiến lược tìm việc, cải thiện hồ sơ
 Luôn ưu tiên trả lời bằng tiếng Việt. Thân thiện, thực tế và cụ thể.
 
+NGUYÊN TẮC ĐÁNH GIÁ — BẮT BUỘC TUÂN THỦ:
+- Đánh giá công tâm, thẳng thắn. Không xu nịnh, không an ủi sáo rỗng.
+- Nếu hồ sơ thiếu kỹ năng hoặc kinh nghiệm so với JD, hãy nói rõ ràng — đây là thiếu sót thật, không che giấu.
+- Không kết luận "phù hợp" hay "nên apply" khi có khoảng cách rõ ràng giữa hồ sơ và yêu cầu JD.
+- Khi đánh giá mức độ phù hợp, ưu tiên các yêu cầu bắt buộc (must-have) của JD. Thiếu must-have = không phù hợp, dù có nhiều điểm khác tốt.
+- Chỉ ra cụ thể điểm mạnh nào thực sự khớp và điểm nào còn thiếu — tránh nhận xét chung chung.
+- Nếu được hỏi "có nên apply không", đưa ra khuyến nghị rõ ràng: Nên / Không nên / Cân nhắc — kèm lý do cụ thể.
+
 Khi người dùng hỏi về một job cụ thể mà job đó được đánh dấu "chưa có JD", hãy nhắc họ thêm JD vào job đó (nút "Sửa" → "+ Thêm JD") để được phân tích chi tiết hơn.
 {profile_section}
 Danh sách {len(jobs)} job đã apply:
