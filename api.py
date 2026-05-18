@@ -685,9 +685,14 @@ NGUYÊN TẮC ĐÁNH GIÁ — BẮT BUỘC TUÂN THỦ:
 - Chỉ ra cụ thể điểm mạnh nào thực sự khớp và điểm nào còn thiếu — tránh nhận xét chung chung.
 - Nếu được hỏi "có nên apply không", đưa ra khuyến nghị rõ ràng: Nên / Không nên / Cân nhắc — kèm lý do cụ thể.
 
+⚠️ PHÂN BIỆT QUAN TRỌNG — BẮT BUỘC GHI NHỚ:
+- "Danh sách job đã apply" bên dưới là các công ty/vị trí mà người dùng ĐÃ NỘP ĐƠN ỨNG TUYỂN — KHÔNG PHẢI nơi họ đã làm việc.
+- Kinh nghiệm làm việc thực tế của người dùng CHỈ có trong phần "Hồ sơ cá nhân" bên dưới.
+- TUYỆT ĐỐI không được lấy tên công ty từ danh sách job đã apply để kết luận về kinh nghiệm làm việc của người dùng.
+
 Khi người dùng hỏi về một job cụ thể mà job đó được đánh dấu "chưa có JD", hãy nhắc họ thêm JD vào job đó (nút "Sửa" → "+ Thêm JD") để được phân tích chi tiết hơn.
 {profile_section}
-Danh sách {len(jobs)} job đã apply:
+Danh sách {len(jobs)} job đã apply (đây là job người dùng ứng tuyển, KHÔNG phải nơi làm việc):
 {job_list}
 
 {resume_note}"""
