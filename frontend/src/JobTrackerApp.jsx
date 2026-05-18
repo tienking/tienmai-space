@@ -231,7 +231,7 @@ function JtChatMessage({ msg }) {
   );
 }
 
-function JtChatPopup({ username, token, onClose }) {
+function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
   const isMobile = useIsMobile();
   const [messages, setMessages] = useState(null);
   const [input, setInput] = useState("");
@@ -241,6 +241,7 @@ function JtChatPopup({ username, token, onClose }) {
   const chatContainerRef = useRef(null);
   const chatFileRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const analyzeSentRef = useRef(false);
 
   useEffect(() => {
     fetch(`/api/jobtracker/chat/${username}/history`, { headers: { Authorization: `Bearer ${token}` } })
@@ -251,6 +252,16 @@ function JtChatPopup({ username, token, onClose }) {
       })
       .catch(() => setMessages([JT_WELCOME]));
   }, [username, token]);
+
+  // Auto-send analyze message once chat history is loaded
+  useEffect(() => {
+    if (analyzeMsg && messages !== null && !analyzeSentRef.current) {
+      analyzeSentRef.current = true;
+      clearAnalyze?.();
+      handleSend(analyzeMsg);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analyzeMsg, messages]);
 
   // Chỉ scroll xuống khi user gửi tin (loading bắt đầu), không scroll khi AI trả lời
   const prevLoadingRef = useRef(false);
@@ -373,12 +384,11 @@ function JtChatPopup({ username, token, onClose }) {
   );
 }
 
-function JtChatBot({ username, token }) {
-  const [open, setOpen] = useState(false);
+function JtChatBot({ username, token, open, onToggle, analyzeMsg, clearAnalyze }) {
   return (
     <>
-      {open && <JtChatPopup username={username} token={token} onClose={() => setOpen(false)} />}
-      <button onClick={() => setOpen(o => !o)}
+      {open && <JtChatPopup username={username} token={token} onClose={() => onToggle(false)} analyzeMsg={analyzeMsg} clearAnalyze={clearAnalyze} />}
+      <button onClick={() => onToggle(o => !o)}
         style={{ position: "fixed", bottom: 24, right: 40, zIndex: 1000, width: 48, height: 48, borderRadius: "50%", border: open ? "0.5px solid #ccc" : "none", background: open ? "#fff" : "#1a1a18", color: open ? "#888" : "#fff", fontSize: open ? 22 : 18, cursor: "pointer", boxShadow: open ? "none" : "0 4px 16px rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", fontFamily: "inherit" }}>
         {open ? "×" : "✦"}
       </button>
@@ -416,6 +426,20 @@ function TrackerPage({ username, token }) {
   const [fYear, setFYear] = useState("");
   const [modal, setModal] = useState(null);
   const [viewJd, setViewJd] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [analyzeMsg, setAnalyzeMsg] = useState(null);
+  const [analyzeAlert, setAnalyzeAlert] = useState(null);
+
+  const handleAnalyze = (j) => {
+    if (!j.jd) {
+      setAnalyzeAlert("Job này chưa có JD. Hãy thêm JD rồi nhấn Phân tích lại nhé!");
+      setTimeout(() => setAnalyzeAlert(null), 4000);
+      return;
+    }
+    const prompt = `Phân tích job sau và đánh giá mức độ phù hợp với Hồ sơ của tôi (đã lưu trong hệ thống):\n\n**Vị trí**: ${j.title}\n**Công ty**: ${j.company}\n**Địa điểm**: ${j.loc} · ${j.mode}${j.url ? `\n**Link**: ${j.url}` : ""}\n\n**Job Description**:\n${j.jd}\n\nHãy đánh giá: (1) Mức độ phù hợp với Hồ sơ của tôi (%), (2) Điểm mạnh, (3) Điểm yếu/thiếu sót, (4) Những điểm cần lưu ý khi apply.`;
+    setAnalyzeMsg(prompt);
+    setChatOpen(true);
+  };
 
   useEffect(() => {
     fetch(`/api/jobtracker/jobs/${username}`, { headers: { Authorization: `Bearer ${token}` } })
@@ -597,6 +621,8 @@ function TrackerPage({ username, token }) {
                       <div style={{ display: "flex", gap: 6 }}>
                         {j.jd && <button onClick={() => setViewJd({ title: j.title, jd: j.jd })}
                           style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>JD</button>}
+                        <button onClick={() => handleAnalyze(j)}
+                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #185FA5", background: "#fff", color: "#185FA5", cursor: "pointer", fontFamily: "inherit" }}>Phân tích</button>
                         <button onClick={() => setModal({ mode: "edit", index: j._idx })}
                           style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Sửa</button>
                         <button onClick={() => handleDelete(j._idx)}
@@ -667,6 +693,10 @@ function TrackerPage({ username, token }) {
                             </button>}
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
+                          <button onClick={() => handleAnalyze(j)}
+                            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #185FA5", background: "#fff", color: "#185FA5", cursor: "pointer", marginRight: 4, fontFamily: "inherit" }}>
+                            Phân tích
+                          </button>
                           <button onClick={() => setModal({ mode: "edit", index: j._idx })}
                             style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", marginRight: 4, fontFamily: "inherit" }}>
                             Sửa
@@ -689,7 +719,12 @@ function TrackerPage({ username, token }) {
         {modal?.mode === "edit" && <JobModal initial={jobs[modal.index]} onSave={handleEdit} onClose={() => setModal(null)} />}
         {viewJd && <JdViewModal title={viewJd.title} jd={viewJd.jd} onClose={() => setViewJd(null)} />}
       </div>
-      <JtChatBot username={username} token={token} />
+      {analyzeAlert && (
+        <div style={{ position: "fixed", bottom: 90, left: "50%", transform: "translateX(-50%)", zIndex: 2000, background: "#1a1a18", color: "#fff", padding: "10px 20px", borderRadius: 8, fontSize: 13, boxShadow: "0 4px 16px rgba(0,0,0,0.25)", whiteSpace: "nowrap", pointerEvents: "none" }}>
+          {analyzeAlert}
+        </div>
+      )}
+      <JtChatBot username={username} token={token} open={chatOpen} onToggle={setChatOpen} analyzeMsg={analyzeMsg} clearAnalyze={() => setAnalyzeMsg(null)} />
     </div>
   );
 }
