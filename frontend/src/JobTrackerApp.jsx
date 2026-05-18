@@ -1,5 +1,24 @@
 import { useState, useEffect, useRef } from "react";
 
+async function readSSE(res, onChunk) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (payload === "[DONE]") return;
+      try { const { text } = JSON.parse(payload); if (text) onChunk(text); } catch { /* ignore */ }
+    }
+  }
+}
+
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   useEffect(() => {
@@ -270,20 +289,6 @@ function JtChatPopup({ username, token, onClose }) {
     setMessages([JT_WELCOME]);
   };
 
-  const sendToApi = async (text, file) => {
-    const headers = { Authorization: `Bearer ${token}` };
-    if (file) {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("message", text || "");
-      fd.append("session_id", "main");
-      const res = await fetch(`/api/jobtracker/chat/${username}/file`, { method: "POST", headers, body: fd });
-      return (await res.json()).reply;
-    }
-    const res = await fetch(`/api/jobtracker/chat/${username}`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ message: text, session_id: "main" }) });
-    return (await res.json()).reply;
-  };
-
   const handleSend = async (textOverride) => {
     const text = textOverride !== undefined ? textOverride.trim() : input.trim();
     if ((!text && !selectedFile) || loading || messages === null) return;
@@ -292,12 +297,34 @@ function JtChatPopup({ username, token, onClose }) {
     setLoading(true);
     setMessages(prev => [...prev, { role: "user", content: file ? `📎 ${file.name}${text ? "\n" + text : ""}` : text }]);
     try {
-      const reply = await sendToApi(text, file);
-      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+      const headers = { Authorization: `Bearer ${token}` };
+      let res;
+      if (file) {
+        const fd = new FormData();
+        fd.append("file", file); fd.append("message", text || ""); fd.append("session_id", "main");
+        res = await fetch(`/api/jobtracker/chat/${username}/file`, { method: "POST", headers, body: fd });
+      } else {
+        res = await fetch(`/api/jobtracker/chat/${username}`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ message: text, session_id: "main" }) });
+      }
+      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+      setLoading(false);
+      await readSSE(res, (chunk) => {
+        setMessages(prev => {
+          const msgs = [...prev];
+          msgs[msgs.length - 1] = { role: "assistant", content: msgs[msgs.length - 1].content + chunk };
+          return msgs;
+        });
+      });
     } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "Có lỗi xảy ra. Vui lòng thử lại." }]);
+      setMessages(prev => {
+        const msgs = [...prev];
+        const last = msgs[msgs.length - 1];
+        if (last?.role === "assistant" && last.content === "") msgs[msgs.length - 1] = { role: "assistant", content: "Có lỗi xảy ra. Vui lòng thử lại." };
+        else msgs.push({ role: "assistant", content: "Có lỗi xảy ra. Vui lòng thử lại." });
+        return msgs;
+      });
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

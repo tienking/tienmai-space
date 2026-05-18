@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from google import genai
@@ -187,6 +187,30 @@ async def resume_exists():
     """Check if resume file exists."""
     return {"exists": os.path.exists(RESUME_PATH)}
 
+# --- SSE streaming helper ---
+_SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+
+async def _sse_stream(model, contents, config, session_id, source):
+    """Stream Gemini response as SSE chunks and persist the full reply to DB."""
+    full_reply = ""
+    fallback = "Sorry, I'm having trouble right now." if source == "web" else "Có lỗi xảy ra. Vui lòng thử lại."
+    try:
+        async for chunk in client.aio.models.generate_content_stream(
+            model=model, contents=contents, config=config
+        ):
+            if chunk.text:
+                full_reply += chunk.text
+                yield f"data: {json.dumps({'text': chunk.text}, ensure_ascii=False)}\n\n"
+    except Exception as e:
+        print(f"Stream error ({source}): {e}")
+        if not full_reply:
+            yield f"data: {json.dumps({'text': fallback}, ensure_ascii=False)}\n\n"
+            full_reply = fallback
+    finally:
+        if full_reply:
+            await save_message(session_id, "model", full_reply, source=source)
+        yield "data: [DONE]\n\n"
+
 # --- Public: Chat (text only) ---
 @router.post("/api/chat")
 async def web_chat(request: ChatRequest):
@@ -212,19 +236,18 @@ async def web_chat(request: ChatRequest):
             for msg in history
         ]
 
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=types.GenerateContentConfig(system_instruction=system_prompt)
+        config = types.GenerateContentConfig(system_instruction=system_prompt)
+        return StreamingResponse(
+            _sse_stream(model, contents, config, session_id, "web"),
+            media_type="text/event-stream", headers=_SSE_HEADERS
         )
-        reply = response.text
-
-        await save_message(session_id, "model", reply, source="web")
-        return {"reply": reply}
 
     except Exception as e:
         print(f"Web chat error: {e}")
-        return {"reply": "Sorry, I'm having trouble processing that right now."}
+        async def _err():
+            yield f"data: {json.dumps({'text': 'Sorry, I am having trouble right now.'})}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(_err(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
 # --- Public: Clear chat history ---
 @router.delete("/api/chat/{session_id}")
@@ -278,24 +301,25 @@ async def web_chat_file(
             text_content = file_bytes.decode("utf-8", errors="ignore")
             current_parts = [types.Part(text=f"File content ({file.filename}):\n\n{text_content}\n\n{message}")]
         else:
-            return {"reply": "Sorry, only PDF, Word (.docx), and Text (.txt) files are supported."}
+            async def _unsupported():
+                yield f"data: {json.dumps({'text': 'Sorry, only PDF, Word (.docx), and Text (.txt) files are supported.'})}\n\n"
+                yield "data: [DONE]\n\n"
+            return StreamingResponse(_unsupported(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
         current_content = types.Content(role="user", parts=current_parts)
         all_contents = history_contents + [current_content]
-
-        response = client.models.generate_content(
-            model=model,
-            contents=all_contents,
-            config=types.GenerateContentConfig(system_instruction=system_prompt)
+        config = types.GenerateContentConfig(system_instruction=system_prompt)
+        return StreamingResponse(
+            _sse_stream(model, all_contents, config, session_id, "web"),
+            media_type="text/event-stream", headers=_SSE_HEADERS
         )
-        reply = response.text
-
-        await save_message(session_id, "model", reply, source="web")
-        return {"reply": reply}
 
     except Exception as e:
         print(f"File chat error: {e}")
-        return {"reply": "Sorry, I'm having trouble processing that file right now."}
+        async def _err():
+            yield f"data: {json.dumps({'text': 'Sorry, I am having trouble processing that file right now.'})}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(_err(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
 # --- Public: JD Match ---
 JD_MATCH_PROMPT = """Analyze this job description against my profile.
@@ -758,13 +782,14 @@ async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depe
     for msg in history[:-1]:
         contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])]))
     contents.append(types.Content(role="user", parts=[types.Part(text=request.message)]))
-    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(
+    config = types.GenerateContentConfig(
         system_instruction=system_prompt,
         tools=[types.Tool(google_search=types.GoogleSearch())]
-    ))
-    reply = response.text
-    await save_message(session_id, "model", reply, source="jobtracker")
-    return {"reply": reply}
+    )
+    return StreamingResponse(
+        _sse_stream(model, contents, config, session_id, "jobtracker"),
+        media_type="text/event-stream", headers=_SSE_HEADERS
+    )
 
 @router.post("/api/jobtracker/chat/{jt_username}/file")
 async def jt_chat_file(
@@ -812,12 +837,16 @@ async def jt_chat_file(
     elif filename.endswith(".txt"):
         current_parts = [types.Part(text=f"Nội dung file ({file.filename}):\n\n{file_bytes.decode('utf-8', errors='ignore')}\n\n{display}")]
     else:
-        return {"reply": "Chỉ hỗ trợ file PDF, Word (.docx) và Text (.txt)."}
+        async def _unsupported():
+            yield f"data: {json.dumps({'text': 'Chỉ hỗ trợ file PDF, Word (.docx) và Text (.txt).'}, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(_unsupported(), media_type="text/event-stream", headers=_SSE_HEADERS)
     contents.append(types.Content(role="user", parts=current_parts))
-    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(
+    config = types.GenerateContentConfig(
         system_instruction=system_prompt,
         tools=[types.Tool(google_search=types.GoogleSearch())]
-    ))
-    reply = response.text
-    await save_message(sid, "model", reply, source="jobtracker")
-    return {"reply": reply}
+    )
+    return StreamingResponse(
+        _sse_stream(model, contents, config, sid, "jobtracker"),
+        media_type="text/event-stream", headers=_SSE_HEADERS
+    )
