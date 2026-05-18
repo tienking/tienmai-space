@@ -675,6 +675,7 @@ def build_jt_system_prompt(username: str, jobs: list, resume_exists: bool, profi
 - Đánh giá JD mới xem có nên apply không, dựa trên resume và hồ sơ người dùng
 - So sánh JD với các job đã apply, tránh trùng lặp
 - Tư vấn chiến lược tìm việc, cải thiện hồ sơ
+- Khi người dùng hỏi về job đang tuyển trên thị trường, dùng Google Search để tìm job phù hợp trên các trang như LinkedIn, TopCV, VietnamWorks, ITviec, CareerBuilder, Jobstreet... — lọc theo kỹ năng và vị trí mục tiêu từ hồ sơ, trả về link và mô tả ngắn từng job tìm được
 Luôn ưu tiên trả lời bằng tiếng Việt. Thân thiện, thực tế và cụ thể.
 
 NGUYÊN TẮC ĐÁNH GIÁ — BẮT BUỘC TUÂN THỦ:
@@ -757,7 +758,10 @@ async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depe
     for msg in history[:-1]:
         contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])]))
     contents.append(types.Content(role="user", parts=[types.Part(text=request.message)]))
-    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(system_instruction=system_prompt))
+    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        tools=[types.Tool(google_search=types.GoogleSearch())]
+    ))
     reply = response.text
     await save_message(session_id, "model", reply, source="jobtracker")
     return {"reply": reply}
@@ -810,7 +814,10 @@ async def jt_chat_file(
     else:
         return {"reply": "Chỉ hỗ trợ file PDF, Word (.docx) và Text (.txt)."}
     contents.append(types.Content(role="user", parts=current_parts))
-    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(system_instruction=system_prompt))
+    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        tools=[types.Tool(google_search=types.GoogleSearch())]
+    ))
     reply = response.text
     await save_message(sid, "model", reply, source="jobtracker")
     return {"reply": reply}
