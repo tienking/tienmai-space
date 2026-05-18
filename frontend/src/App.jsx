@@ -10,19 +10,21 @@ async function readSSE(res, onChunk) {
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const payload = line.slice(6).trim();
-      if (payload === "[DONE]") return;
-      try { const { text } = JSON.parse(payload); if (text) onChunk(text); } catch { /* ignore */ }
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const payload = line.slice(6).trim();
+        if (payload === "[DONE]") return;
+        try { const { text } = JSON.parse(payload); if (text) onChunk(text); } catch {}
+      }
     }
-  }
+  } catch {}
 }
 
 function useProfile() {
@@ -376,6 +378,7 @@ function ChatPopup({ onClose }) {
     const displayMsg = file ? (text || "Please analyze this file and evaluate how well it matches my profile.") : text;
     setMessages(prev => [...prev, { role: "user", content: file ? `📎 ${file.name}\n${displayMsg}` : text }]);
 
+    let accumulated = "";
     try {
       let res;
       if (file) {
@@ -393,7 +396,6 @@ function ChatPopup({ onClose }) {
       }
       setMessages(prev => [...prev, { role: "assistant", content: "" }]);
       setLoading(false);
-      let accumulated = "";
       await readSSE(res, (chunk) => {
         accumulated += chunk;
         setMessages(prev => {
@@ -402,21 +404,16 @@ function ChatPopup({ onClose }) {
           return msgs;
         });
       });
-      setMessages(prev => {
-        const msgs = [...prev];
-        msgs[msgs.length - 1] = { role: "assistant", content: accumulated || "Something went wrong. Please try again." };
-        return msgs;
-      });
     } catch {
-      setMessages(prev => {
-        const msgs = [...prev];
-        const last = msgs[msgs.length - 1];
-        if (last?.role === "assistant") msgs[msgs.length - 1] = { role: "assistant", content: "Something went wrong. Please try again." };
-        else msgs.push({ role: "assistant", content: "Something went wrong. Please try again." });
-        return msgs;
-      });
       setLoading(false);
     }
+    setMessages(prev => {
+      const msgs = [...prev];
+      const last = msgs[msgs.length - 1];
+      if (last?.role === "assistant") msgs[msgs.length - 1] = { role: "assistant", content: accumulated || "Something went wrong. Please try again." };
+      else msgs.push({ role: "assistant", content: "Something went wrong. Please try again." });
+      return msgs;
+    });
   };
 
   const handleFileSelect = (e) => {
