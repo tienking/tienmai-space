@@ -21,6 +21,10 @@ function getTokenData() {
   } catch { localStorage.removeItem("jt_token"); return null; }
 }
 
+function getUrlUsername() {
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  return parts.length >= 2 ? parts[1] : null;
+}
 
 // ── Login Page ─────────────────────────────────────────────────────────────────
 function LoginPage() {
@@ -211,7 +215,7 @@ function renderMd(text) {
 
 // ── Job Tracker Chatbot ────────────────────────────────────────────────────────
 const JT_WELCOME = { role: "assistant", content: "Xin chào! Tôi là AI hỗ trợ tìm việc của bạn 👋\nTôi có thể giúp phân tích danh sách job đã apply, đánh giá JD mới, hoặc tư vấn cải thiện hồ sơ. Bạn cần hỗ trợ gì?" };
-const JT_SUGGESTED = ["Tổng kết tình hình apply của tôi", "Tôi nên cải thiện gì trong hồ sơ?", "Phân tích job nào phù hợp nhất với tôi?", "🔍 Tìm job mới đang tuyển trên web phù hợp với tôi"];
+const JT_SUGGESTED = ["Tổng kết tình hình apply của tôi", "Tôi nên cải thiện gì trong hồ sơ?", "Phân tích job nào phù hợp nhất với tôi?"];
 
 function JtChatMessage({ msg }) {
   const isUser = msg.role === "user";

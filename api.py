@@ -675,10 +675,6 @@ def build_jt_system_prompt(username: str, jobs: list, resume_exists: bool, profi
 - Đánh giá JD mới xem có nên apply không, dựa trên resume và hồ sơ người dùng
 - So sánh JD với các job đã apply, tránh trùng lặp
 - Tư vấn chiến lược tìm việc, cải thiện hồ sơ
-- TÌM JOB MỚI: Khi người dùng yêu cầu tìm job đang tuyển hoặc job mới trên thị trường, bạn BẮT BUỘC thực hiện ngay theo các bước sau — KHÔNG hỏi lại người dùng bất kỳ điều gì, KHÔNG dùng danh sách job đã apply để trả lời:
-  1. Đọc hồ sơ cá nhân phía dưới để xác định vị trí mục tiêu, kỹ năng chính, địa điểm.
-  2. Dùng Google Search tìm kiếm ngay các job đang tuyển phù hợp trên LinkedIn, TopCV, VietnamWorks, ITviec, CareerBuilder, Jobstreet...
-  3. Trả về danh sách tối thiểu 5 job với: tên vị trí, công ty, link ứng tuyển, mô tả ngắn yêu cầu chính.
 Luôn ưu tiên trả lời bằng tiếng Việt. Thân thiện, thực tế và cụ thể.
 
 NGUYÊN TẮC ĐÁNH GIÁ — BẮT BUỘC TUÂN THỦ:
@@ -761,10 +757,7 @@ async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depe
     for msg in history[:-1]:
         contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])]))
     contents.append(types.Content(role="user", parts=[types.Part(text=request.message)]))
-    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(
-        system_instruction=system_prompt,
-        tools=[types.Tool(google_search=types.GoogleSearch())]
-    ))
+    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(system_instruction=system_prompt))
     reply = response.text
     await save_message(session_id, "model", reply, source="jobtracker")
     return {"reply": reply}
@@ -817,10 +810,7 @@ async def jt_chat_file(
     else:
         return {"reply": "Chỉ hỗ trợ file PDF, Word (.docx) và Text (.txt)."}
     contents.append(types.Content(role="user", parts=current_parts))
-    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(
-        system_instruction=system_prompt,
-        tools=[types.Tool(google_search=types.GoogleSearch())]
-    ))
+    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(system_instruction=system_prompt))
     reply = response.text
     await save_message(sid, "model", reply, source="jobtracker")
     return {"reply": reply}
