@@ -308,18 +308,26 @@ function JtChatPopup({ username, token, onClose }) {
       }
       setMessages(prev => [...prev, { role: "assistant", content: "" }]);
       setLoading(false);
+      let accumulated = "";
       await readSSE(res, (chunk) => {
+        accumulated += chunk;
         setMessages(prev => {
           const msgs = [...prev];
-          msgs[msgs.length - 1] = { role: "assistant", content: msgs[msgs.length - 1].content + chunk };
+          msgs[msgs.length - 1] = { role: "assistant", content: accumulated };
           return msgs;
         });
+      });
+      // Final update guarantees content appears even if React batched all per-chunk renders
+      setMessages(prev => {
+        const msgs = [...prev];
+        msgs[msgs.length - 1] = { role: "assistant", content: accumulated || "Có lỗi xảy ra. Vui lòng thử lại." };
+        return msgs;
       });
     } catch {
       setMessages(prev => {
         const msgs = [...prev];
         const last = msgs[msgs.length - 1];
-        if (last?.role === "assistant" && last.content === "") msgs[msgs.length - 1] = { role: "assistant", content: "Có lỗi xảy ra. Vui lòng thử lại." };
+        if (last?.role === "assistant") msgs[msgs.length - 1] = { role: "assistant", content: "Có lỗi xảy ra. Vui lòng thử lại." };
         else msgs.push({ role: "assistant", content: "Có lỗi xảy ra. Vui lòng thử lại." });
         return msgs;
       });

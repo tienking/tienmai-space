@@ -393,18 +393,25 @@ function ChatPopup({ onClose }) {
       }
       setMessages(prev => [...prev, { role: "assistant", content: "" }]);
       setLoading(false);
+      let accumulated = "";
       await readSSE(res, (chunk) => {
+        accumulated += chunk;
         setMessages(prev => {
           const msgs = [...prev];
-          msgs[msgs.length - 1] = { role: "assistant", content: msgs[msgs.length - 1].content + chunk };
+          msgs[msgs.length - 1] = { role: "assistant", content: accumulated };
           return msgs;
         });
+      });
+      setMessages(prev => {
+        const msgs = [...prev];
+        msgs[msgs.length - 1] = { role: "assistant", content: accumulated || "Something went wrong. Please try again." };
+        return msgs;
       });
     } catch {
       setMessages(prev => {
         const msgs = [...prev];
         const last = msgs[msgs.length - 1];
-        if (last?.role === "assistant" && last.content === "") msgs[msgs.length - 1] = { role: "assistant", content: "Something went wrong. Please try again." };
+        if (last?.role === "assistant") msgs[msgs.length - 1] = { role: "assistant", content: "Something went wrong. Please try again." };
         else msgs.push({ role: "assistant", content: "Something went wrong. Please try again." });
         return msgs;
       });
