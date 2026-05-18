@@ -69,9 +69,10 @@ function LoginPage() {
 
 // ── Badge ──────────────────────────────────────────────────────────────────────
 function badge(status) {
-  if (status === "viewed")     return { text: "Đã xem CV", bg: "#E6F1FB", color: "#0C447C" };
-  if (status === "downloaded") return { text: "Đã tải CV", bg: "#EAF3DE", color: "#27500A" };
-  return                              { text: "Đã apply",  bg: "#F1EFE8", color: "#5F5E5A" };
+  if (status === "not_applied") return { text: "Chưa apply", bg: "#FFF3E0", color: "#7C4500" };
+  if (status === "viewed")      return { text: "Đã xem CV",  bg: "#E6F1FB", color: "#0C447C" };
+  if (status === "downloaded")  return { text: "Đã tải CV",  bg: "#EAF3DE", color: "#27500A" };
+  return                               { text: "Đã apply",   bg: "#F1EFE8", color: "#5F5E5A" };
 }
 
 // ── Job Modal (Add / Edit) ─────────────────────────────────────────────────────
@@ -147,6 +148,7 @@ function JobModal({ initial, onSave, onClose }) {
           <label style={lbl}>Trạng thái</label>
           <select value={form.status} onChange={e => set("status", e.target.value)} style={{ ...inp, cursor: "pointer" }}>
             <option value="applied">Đã apply</option>
+            <option value="not_applied">Chưa apply</option>
             <option value="viewed">Đã xem CV</option>
             <option value="downloaded">Đã tải CV</option>
           </select>
@@ -484,7 +486,7 @@ function TrackerPage({ username, token }) {
   const thC = { ...thBase, textAlign: "center", cursor: "pointer" };
   const thNC = { ...thBase, textAlign: "center" };
 
-  const counts = { v: jobs.filter(j => j.status === "viewed").length, d: jobs.filter(j => j.status === "downloaded").length, a: jobs.filter(j => j.status === "applied").length };
+  const counts = { na: jobs.filter(j => j.status === "not_applied").length, a: jobs.filter(j => j.status === "applied").length, v: jobs.filter(j => j.status === "viewed").length, d: jobs.filter(j => j.status === "downloaded").length };
 
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f5f5f3", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
@@ -516,9 +518,10 @@ function TrackerPage({ username, token }) {
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
           {[
             { num: jobs.length,     label: "Tổng jobs" },
+            { num: counts.na,       label: "Chưa apply", color: "#7C4500" },
+            { num: counts.a,        label: "Đã apply",   color: "#5F5E5A" },
             { num: counts.v,        label: "Đã xem CV",  color: "#0C447C" },
             { num: counts.d,        label: "Đã tải CV",  color: "#27500A" },
-            { num: counts.a,        label: "Đã apply",   color: "#5F5E5A" },
             { num: filtered.length, label: "Đang hiển thị" },
           ].map(({ num, label, color }) => (
             <div key={label} style={{ background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 8, padding: "10px 16px", minWidth: 100 }}>
@@ -537,6 +540,7 @@ function TrackerPage({ username, token }) {
           </select>
           <select value={fStatus} onChange={e => setFStatus(e.target.value)} style={sel}>
             <option value="">Tất cả trạng thái</option>
+            <option value="not_applied">Chưa apply</option>
             <option value="applied">Đã apply</option>
             <option value="viewed">Đã xem CV</option>
             <option value="downloaded">Đã tải CV</option>
@@ -582,6 +586,7 @@ function TrackerPage({ username, token }) {
                       </div>
                       <select value={j.status} onChange={e => handleStatusChange(j._idx, e.target.value)}
                         style={{ padding: "3px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "inherit", outline: "none", flexShrink: 0 }}>
+                        <option value="not_applied">Chưa apply</option>
                         <option value="applied">Đã apply</option>
                         <option value="viewed">Đã xem CV</option>
                         <option value="downloaded">Đã tải CV</option>
@@ -648,6 +653,7 @@ function TrackerPage({ username, token }) {
                         <td style={{ padding: "4px 10px" }}>
                           <select value={j.status} onChange={e => handleStatusChange(j._idx, e.target.value)}
                             style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "inherit", outline: "none" }}>
+                            <option value="not_applied">Chưa apply</option>
                             <option value="applied">Đã apply</option>
                             <option value="viewed">Đã xem CV</option>
                             <option value="downloaded">Đã tải CV</option>
