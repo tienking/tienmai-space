@@ -6,26 +6,14 @@ function generateSessionId() {
   return Math.random().toString(36).slice(2);
 }
 
-async function readSSE(res, onChunk) {
-  try {
-    if (!res.body) { console.warn("[SSE] res.body is null, status:", res.status); return; }
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const payload = line.slice(6).trim();
-        if (payload === "[DONE]") return;
-        try { const { text } = JSON.parse(payload); if (text) onChunk(text); } catch (e) { console.warn("[SSE] parse error:", e.message, payload.slice(0, 80)); }
-      }
-    }
-  } catch (e) { console.warn("[SSE] stream error:", e.message); }
+async function sendMessage(message, sessionId) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, session_id: sessionId }),
+  });
+  const data = await res.json();
+  return data.reply;
 }
 
 function useProfile() {
@@ -370,51 +358,38 @@ function ChatPopup({ onClose }) {
   const handleSend = async (textOverride) => {
     const text = textOverride !== undefined ? textOverride.trim() : input.trim();
     if ((!text && !selectedFile) || loading) return;
-    if (textOverride === undefined) setInput("");
 
-    const file = selectedFile;
-    setSelectedFile(null);
+    if (textOverride === undefined) setInput("");
     setLoading(true);
 
-    const displayMsg = file ? (text || "Please analyze this file and evaluate how well it matches my profile.") : text;
-    setMessages(prev => [...prev, { role: "user", content: file ? `📎 ${file.name}\n${displayMsg}` : text }]);
-
-    let accumulated = "";
-    try {
-      let res;
-      if (file) {
+    if (selectedFile) {
+      // Send with file
+      const file = selectedFile;
+      setSelectedFile(null);
+      const displayMsg = text || "Please analyze this file and evaluate how well it matches my profile.";
+      setMessages(prev => [...prev, { role: "user", content: `📎 ${file.name}\n${displayMsg}` }]);
+      try {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("message", displayMsg);
         formData.append("session_id", sessionId);
-        res = await fetch("/api/chat/file", { method: "POST", body: formData });
-      } else {
-        res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text, session_id: sessionId }),
-        });
+        const res = await fetch("/api/chat/file", { method: "POST", body: formData });
+        const data = await res.json();
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      } catch {
+        setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong processing the file." }]);
       }
-      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
-      setLoading(false);
-      await readSSE(res, (chunk) => {
-        accumulated += chunk;
-        setMessages(prev => {
-          const msgs = [...prev];
-          msgs[msgs.length - 1] = { role: "assistant", content: accumulated };
-          return msgs;
-        });
-      });
-    } catch {
-      setLoading(false);
+    } else {
+      // Send text only
+      setMessages(prev => [...prev, { role: "user", content: text }]);
+      try {
+        const reply = await sendMessage(text, sessionId);
+        setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+      } catch {
+        setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
+      }
     }
-    setMessages(prev => {
-      const msgs = [...prev];
-      const last = msgs[msgs.length - 1];
-      if (last?.role === "assistant") msgs[msgs.length - 1] = { role: "assistant", content: accumulated || "Something went wrong. Please try again." };
-      else msgs.push({ role: "assistant", content: "Something went wrong. Please try again." });
-      return msgs;
-    });
+    setLoading(false);
   };
 
   const handleFileSelect = (e) => {
