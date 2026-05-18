@@ -305,7 +305,7 @@ function JtChatPopup({ username, token, onClose }) {
   };
 
   return (
-    <div style={{ position: "fixed", bottom: isMobile ? 84 : 84, right: isMobile ? 16 : 40, left: isMobile ? 16 : "auto", zIndex: 999, width: isMobile ? "auto" : "clamp(340px, 33vw, 580px)", height: isMobile ? "70vh" : 520, background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.15)", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
+    <div style={{ position: "fixed", bottom: isMobile ? 84 : 84, right: isMobile ? 16 : 40, left: isMobile ? 16 : "auto", zIndex: 999, width: isMobile ? "auto" : "clamp(408px, 40vw, 696px)", height: isMobile ? "70vh" : 624, background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.15)", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
       <div style={{ padding: "10px 14px", borderBottom: "0.5px solid #e0e0dc", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fafaf8", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#1a1a18" }} />
