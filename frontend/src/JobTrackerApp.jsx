@@ -258,7 +258,7 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
     if (analyzeMsg && messages !== null && !analyzeSentRef.current) {
       analyzeSentRef.current = true;
       clearAnalyze?.();
-      handleSend(analyzeMsg);
+      handleSend(analyzeMsg.api, analyzeMsg.display);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analyzeMsg, messages]);
@@ -301,13 +301,14 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
     return (await res.json()).reply;
   };
 
-  const handleSend = async (textOverride) => {
+  const handleSend = async (textOverride, displayOverride) => {
     const text = textOverride !== undefined ? textOverride.trim() : input.trim();
+    const display = displayOverride !== undefined ? displayOverride : text;
     if ((!text && !selectedFile) || loading || messages === null) return;
     if (textOverride === undefined) setInput("");
     const file = selectedFile; setSelectedFile(null);
     setLoading(true);
-    setMessages(prev => [...prev, { role: "user", content: file ? `📎 ${file.name}${text ? "\n" + text : ""}` : text }]);
+    setMessages(prev => [...prev, { role: "user", content: file ? `📎 ${file.name}${display ? "\n" + display : ""}` : display }]);
     try {
       const reply = await sendToApi(text, file);
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
@@ -436,8 +437,8 @@ function TrackerPage({ username, token }) {
       setTimeout(() => setAnalyzeAlert(null), 4000);
       return;
     }
-    const prompt = `Phân tích job sau và đánh giá mức độ phù hợp với Hồ sơ của tôi (đã lưu trong hệ thống):\n\n**Vị trí**: ${j.title}\n**Công ty**: ${j.company}\n**Địa điểm**: ${j.loc} · ${j.mode}${j.url ? `\n**Link**: ${j.url}` : ""}\n\n**Job Description**:\n${j.jd}\n\nHãy đánh giá: (1) Mức độ phù hợp với Hồ sơ của tôi (%), (2) Điểm mạnh, (3) Điểm yếu/thiếu sót, (4) Những điểm cần lưu ý khi apply.`;
-    setAnalyzeMsg(prompt);
+    const api = `Phân tích job sau và đánh giá mức độ phù hợp với Hồ sơ của tôi (đã lưu trong hệ thống):\n\n**Vị trí**: ${j.title}\n**Công ty**: ${j.company}\n**Địa điểm**: ${j.loc} · ${j.mode}${j.url ? `\n**Link**: ${j.url}` : ""}\n\n**Job Description**:\n${j.jd}\n\nHãy đánh giá: (1) Mức độ phù hợp với Hồ sơ của tôi (%), (2) Điểm mạnh, (3) Điểm yếu/thiếu sót, (4) Những điểm cần lưu ý khi apply.`;
+    setAnalyzeMsg({ display: `Phân tích job: ${j.title} @ ${j.company}`, api });
     setChatOpen(true);
   };
 
