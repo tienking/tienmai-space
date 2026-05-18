@@ -20,7 +20,7 @@ This guide walks through setting up the entire stack from zero: VPS, domain, dat
 12. [SSL Certificate](#12-ssl-certificate)
 13. [Systemd Service](#13-systemd-service)
 14. [GitLab CI/CD](#14-gitlab-cicd)
-15. [Seed Initial Profile Data](#15-seed-initial-profile-data)
+15. [Seed Initial Data](#15-seed-initial-data)
 16. [Verify Everything Works](#16-verify-everything-works)
 
 ---
@@ -59,15 +59,6 @@ ssh root@<YOUR_SERVER_IP>
 
 Change root password on first login when prompted.
 
-### 2.3 Create a Non-Root User (Optional but recommended)
-
-```bash
-adduser deploy
-usermod -aG sudo deploy
-```
-
-For this guide we'll continue as root for simplicity.
-
 ---
 
 ## 3. Domain & DNS
@@ -82,7 +73,6 @@ For this guide we'll continue as root for simplicity.
 2. Add an **A record**:
    - Host: `@`
    - Points to: `<YOUR_SERVER_IP>`
-   - TTL: 3600
 3. Add another **A record**:
    - Host: `www`
    - Points to: `<YOUR_SERVER_IP>`
@@ -115,8 +105,8 @@ apt install -y nodejs
 Verify:
 
 ```bash
-node -v   # v20.x.x
-npm -v    # 10.x.x
+node -v    # v20.x.x
+npm -v     # 10.x.x
 python3 --version  # Python 3.12.x
 ```
 
@@ -135,7 +125,7 @@ python3 --version  # Python 3.12.x
 1. Go to **Security → Database Access → Add New Database User**
 2. Authentication: **Password**
 3. Username: `tienmai_user` (or any name)
-4. Password: generate a strong one, **save it**
+4. Password: generate a strong one and save it
 5. Role: **Atlas admin** (or ReadWriteAnyDatabase)
 6. Click **Add User**
 
@@ -143,14 +133,14 @@ python3 --version  # Python 3.12.x
 
 1. Go to **Security → Network Access → Add IP Address**
 2. Click **Allow Access from Anywhere** (0.0.0.0/0) for simplicity
-   - For production, add only your VPS IP instead
+   - For stricter security, add only your VPS IP instead
 3. Confirm
 
 ### 5.4 Get Connection String
 
 1. Go to **Database → Connect → Drivers**
-2. Select **Python** / **Motor (async)**
-3. Copy the connection string — it looks like:
+2. Select **Python / Motor (async)**
+3. Copy the connection string:
    ```
    mongodb+srv://tienmai_user:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
    ```
@@ -164,15 +154,14 @@ python3 --version  # Python 3.12.x
 
 1. Open Telegram → search for **@BotFather**
 2. Send `/newbot`
-3. Choose a name (e.g. `Tien Mai Bot`)
-4. Choose a username ending in `bot` (e.g. `tienmai_bot`)
-5. BotFather will reply with your **bot token** — save it
+3. Choose a display name and a username ending in `bot`
+4. BotFather replies with your **bot token** — save it
 
 ### 6.2 Get Your Personal Chat ID
 
 1. Search for **@userinfobot** on Telegram
 2. Send `/start`
-3. It will reply with your **Id** — save it (this is your `TELEGRAM_CHAT_ID`)
+3. It replies with your **Id** — save it (this is `TELEGRAM_CHAT_ID`)
 
 ---
 
@@ -189,17 +178,16 @@ python3 --version  # Python 3.12.x
 ### 8.1 Create Account
 
 1. Sign up at **cloudinary.com** (free tier is sufficient)
-2. After login, go to **Dashboard**
-3. Note your **Cloud Name**
+2. After login go to **Dashboard** and note your **Cloud Name**
 
 ### 8.2 Upload Images
 
 For avatar and gallery images:
 1. Go to **Media Library → Upload**
 2. Upload your images
-3. Click on an image → Copy the **URL** (starts with `https://res.cloudinary.com/...`)
+3. Click an image → copy the **URL** (starts with `https://res.cloudinary.com/...`)
 
-These URLs will be used when filling in profile data.
+These URLs are pasted into the Admin dashboard when editing profile data.
 
 ---
 
@@ -208,24 +196,22 @@ These URLs will be used when filling in profile data.
 ### 9.1 Create Repository
 
 1. Go to **gitlab.com → New project → Create blank project**
-2. Name it (e.g. `tienmai-space`)
-3. Set visibility to **Private**
+2. Name it (e.g. `tienmai-space`), set visibility to **Private**
 
-### 9.2 Setup SSH Key on VPS
+### 9.2 Set Up SSH Key on VPS
 
 ```bash
 ssh-keygen -t ed25519 -C "deploy@yourserver" -f ~/.ssh/id_ed25519 -N ""
 cat ~/.ssh/id_ed25519.pub
 ```
 
-Copy the output.
+Copy the output, then:
 
 1. Go to **GitLab → Preferences → SSH Keys**
 2. Paste the public key → Add key
 
-### 9.3 Clone or Push Your Code
+### 9.3 Clone the Repository
 
-If starting from this project:
 ```bash
 cd /root
 git clone git@gitlab.com:yourusername/tienmai-space.git tienmai-bot
@@ -258,8 +244,6 @@ TELEGRAM_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_personal_telegram_id
 GEMINI_API_KEY=your_gemini_api_key
 MONGODB_URL=mongodb+srv://tienmai_user:password@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=choose_a_strong_password
 JWT_SECRET=generate_a_random_64char_string
 ```
 
@@ -276,13 +260,17 @@ npm install
 npm run build
 ```
 
-This creates `frontend/dist/` with the compiled static files.
+This creates `frontend/dist/` with all compiled static files.
 
-### 10.4 Create Uploads Directory
+### 10.4 Create Required Directories
 
 ```bash
 mkdir -p /root/tienmai-bot/uploads
+mkdir -p /root/tienmai-bot/resumes
 ```
+
+- `uploads/` — stores the portfolio resume PDF
+- `resumes/` — stores Job Tracker user resume PDFs (one per user, named `{username}.pdf`)
 
 ---
 
@@ -300,23 +288,35 @@ Paste:
 server {
     listen 80;
     server_name yourdomain.space www.yourdomain.space;
+    return 301 https://$host$request_uri;
+}
 
-    client_max_body_size 20m;
+server {
+    listen 443 ssl;
+    server_name yourdomain.space www.yourdomain.space;
 
-    # Serve React frontend (main app)
+    ssl_certificate /etc/letsencrypt/live/yourdomain.space/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.space/privkey.pem;
+
+    root /root/tienmai-bot/frontend/dist;
+    index index.html;
+
     location / {
-        root /root/tienmai-bot/frontend/dist;
         try_files $uri $uri/ /index.html;
     }
 
-    # Serve Admin page
     location /admin {
-        root /root/tienmai-bot/frontend/dist;
-        try_files $uri $uri/ /admin.html;
+        alias /root/tienmai-bot/frontend/dist;
+        try_files /admin.html /admin.html;
     }
 
-    # Proxy API and webhook to FastAPI
+    location /jobtracker {
+        alias /root/tienmai-bot/frontend/dist;
+        try_files /jobtracker.html /jobtracker.html;
+    }
+
     location /api/ {
+        client_max_body_size 20m;
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -330,6 +330,8 @@ server {
 }
 ```
 
+> Leave out the `ssl_*` lines for now — Certbot will add them automatically in the next step. Start with only the HTTP block, then re-add the HTTPS block after SSL is issued.
+
 ### 11.2 Enable Site
 
 ```bash
@@ -342,7 +344,7 @@ systemctl reload nginx
 
 ## 12. SSL Certificate
 
-Run Certbot (domain must already be pointing to this server's IP):
+The domain must already be pointing to this server's IP before running Certbot.
 
 ```bash
 certbot --nginx -d yourdomain.space -d www.yourdomain.space
@@ -351,11 +353,11 @@ certbot --nginx -d yourdomain.space -d www.yourdomain.space
 Follow the prompts:
 - Enter email
 - Agree to terms
-- Choose **redirect HTTP to HTTPS**
+- Choose **Redirect HTTP to HTTPS**
 
-Certbot will automatically edit your Nginx config and add HTTPS.
+Certbot edits your Nginx config and adds HTTPS automatically.
 
-Verify auto-renewal works:
+Verify auto-renewal:
 ```bash
 certbot renew --dry-run
 ```
@@ -364,26 +366,33 @@ certbot renew --dry-run
 
 ## 13. Systemd Service
 
-### 13.1 Create Service File
+### 13.1 Copy Service File
+
+The service file is already in the repo:
 
 ```bash
-nano /etc/systemd/system/tienmai-bot.service
+cp /root/tienmai-bot/tienmai-api.service /etc/systemd/system/tienmai-api.service
 ```
 
-Paste:
+Or create it manually:
+
+```bash
+nano /etc/systemd/system/tienmai-api.service
+```
 
 ```ini
 [Unit]
-Description=Tienmai Telegram Bot
-After=network.target
+Description=Tienmai FastAPI App
+After=network.target mongod.service
+Wants=mongod.service
 
 [Service]
-User=root
+Type=simple
 WorkingDirectory=/root/tienmai-bot
+EnvironmentFile=/root/tienmai-bot/.env
 ExecStart=/root/tienmai-bot/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
 Restart=always
 RestartSec=5
-EnvironmentFile=/root/tienmai-bot/.env
 
 [Install]
 WantedBy=multi-user.target
@@ -393,9 +402,9 @@ WantedBy=multi-user.target
 
 ```bash
 systemctl daemon-reload
-systemctl enable tienmai-bot
-systemctl start tienmai-bot
-systemctl status tienmai-bot
+systemctl enable tienmai-api
+systemctl start tienmai-api
+systemctl status tienmai-api
 ```
 
 You should see `active (running)`.
@@ -403,7 +412,7 @@ You should see `active (running)`.
 ### 13.3 Check Logs
 
 ```bash
-journalctl -u tienmai-bot -f
+journalctl -u tienmai-api -f
 ```
 
 ---
@@ -414,7 +423,7 @@ journalctl -u tienmai-bot -f
 
 ```bash
 curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" | bash
-apt install gitlab-runner
+apt install -y gitlab-runner
 ```
 
 ### 14.2 Register Runner
@@ -429,16 +438,45 @@ You'll be asked:
 - **Runner name**: anything (e.g. `vps-runner`)
 - **Executor**: `shell`
 
-### 14.3 Give Runner Permissions
+### 14.3 Give Runner Sudo Permissions
 
 ```bash
 usermod -aG sudo gitlab-runner
 echo "gitlab-runner ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 ```
 
-### 14.4 Create .gitlab-ci.yml
+### 14.4 Create Deploy Script
 
-In the project root:
+```bash
+nano /usr/local/bin/deploy-tienmai.sh
+```
+
+```bash
+#!/bin/bash
+set -e
+
+cd /root/tienmai-bot
+
+git pull origin main
+
+source venv/bin/activate
+pip install -r requirements.txt --quiet
+
+cd frontend
+npm install --silent
+npm run build
+cd ..
+
+systemctl restart tienmai-api
+```
+
+```bash
+chmod +x /usr/local/bin/deploy-tienmai.sh
+```
+
+### 14.5 .gitlab-ci.yml
+
+Already in the repo:
 
 ```yaml
 stages:
@@ -446,29 +484,37 @@ stages:
 
 deploy:
   stage: deploy
+  tags:
+    - tienmai-space-vps
   only:
     - main
   script:
-    - cd /root/tienmai-bot
-    - git pull origin main
-    - source venv/bin/activate
-    - pip install -r requirements.txt --quiet
-    - cd frontend && npm install --silent && npm run build
-    - cd ..
-    - sudo systemctl restart tienmai-bot
+    - sudo /usr/local/bin/deploy-tienmai.sh
 ```
 
-Commit and push — every push to `main` will now auto-deploy.
+Push to `main` and the pipeline should trigger automatically.
 
 ---
 
-## 15. Seed Initial Profile Data
+## 15. Seed Initial Data
 
-The profile is stored in MongoDB and must be seeded once. Run this on the VPS:
+### 15.1 Seed Admin Credentials
+
+Admin credentials are stored in MongoDB (not in `.env`). Run once on the VPS:
 
 ```bash
 cd /root/tienmai-bot
 source venv/bin/activate
+python3 seed_admin.py
+```
+
+You will be prompted to enter a username and password. After this, log in at `yourdomain.space/admin` and change credentials via **Settings tab** whenever needed.
+
+### 15.2 Seed Profile Data
+
+Use the Admin dashboard to fill in all profile fields via the UI after first login. Alternatively, run the inline seed script to insert a skeleton profile:
+
+```bash
 python3 - <<'EOF'
 import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -484,39 +530,17 @@ profile = {
     "title": "Your Title",
     "location": "City, Country",
     "email": "you@email.com",
-    "github": "https://github.com/yourusername",
-    "gitlab": "",
     "linkedin": "https://linkedin.com/in/yourusername",
-    "about": "Write a short bio about yourself here.",
+    "github": "https://github.com/yourusername",
+    "about": "Write a short bio here.",
     "avatar": "https://res.cloudinary.com/your-cloud/image/upload/your-avatar.jpg",
-    "openToWork": True,
+    "openToWork": False,
     "skills": [
         {"group": "Languages", "items": ["Python", "JavaScript"]},
-        {"group": "Frameworks", "items": ["FastAPI", "React"]},
     ],
-    "experiences": [
-        {
-            "role": "Software Engineer",
-            "company": "Company Name",
-            "period": "Jan 2023 · Present",
-            "description": "What you did here."
-        }
-    ],
-    "educations": [
-        {
-            "school": "University Name",
-            "degree": "Bachelor of Computer Science",
-            "period": "2019 – 2023"
-        }
-    ],
-    "projects": [
-        {
-            "title": "Project Name",
-            "tag": "Personal",
-            "description": "What this project does.",
-            "link": "https://github.com/..."
-        }
-    ],
+    "experiences": [],
+    "educations": [],
+    "projects": [],
     "certifications": [],
     "gallery": [],
     "theme": {},
@@ -526,16 +550,24 @@ profile = {
 async def seed():
     existing = await db["profile"].find_one({})
     if existing:
-        print("Profile already exists — skipping seed.")
+        print("Profile already exists — skipping.")
     else:
         await db["profile"].insert_one(profile)
-        print("Profile seeded successfully.")
+        print("Profile seeded.")
 
 asyncio.run(seed())
 EOF
 ```
 
-After seeding, use the Admin dashboard at `yourdomain.space/admin` to edit all fields through the UI.
+### 15.3 Seed Job Tracker Users (Optional)
+
+To create a Job Tracker user for testing:
+
+```bash
+python3 seed_jobtracker.py
+```
+
+In production, Job Tracker users are managed from Admin → (user management, if added) or directly via the seed script.
 
 ---
 
@@ -544,27 +576,34 @@ After seeding, use the Admin dashboard at `yourdomain.space/admin` to edit all f
 Run through this checklist:
 
 ```
-□ https://yourdomain.space          → Profile page loads
-□ https://yourdomain.space/admin    → Admin login page loads
-□ Admin login works (username/password from .env)
+□ https://yourdomain.space              → Portfolio page loads
+□ https://yourdomain.space/admin        → Admin login page loads
+□ Admin login works
 □ Profile data shows on the page
-□ Chatbot opens and responds
-□ Resume upload works in Admin
-□ JD upload (FOR RECRUITERS section) returns analysis
+□ AI chatbot opens and responds
+□ New conversation button clears chat history
+□ JD Match Banner: upload a PDF → analysis returned
+□ Resume upload works in Admin → Resume tab
 □ Telegram bot responds when messaged
 □ Telegram notification received when chatbot is used on website
 □ Telegram notification received when JD is uploaded
-□ Push to GitLab main → auto-deploys
+□ https://yourdomain.space/jobtracker   → Job Tracker login page loads
+□ Job Tracker: login, add a job, move it through pipeline
+□ Job Tracker: upload resume → AI fills profile fields
+□ Job Tracker: chatbot reads JDs and responds
+□ Push to GitLab main → pipeline triggers → site updates
 ```
 
-### Useful Commands
+---
+
+## Useful Commands
 
 ```bash
-# View live logs
-journalctl -u tienmai-bot -f
+# View live app logs
+journalctl -u tienmai-api -f
 
 # Restart app
-systemctl restart tienmai-bot
+systemctl restart tienmai-api
 
 # Rebuild frontend manually
 cd /root/tienmai-bot/frontend && npm run build
@@ -575,20 +614,20 @@ systemctl reload nginx
 # Check Nginx config
 nginx -t
 
-# Check SSL expiry
+# Check SSL certificate expiry
 certbot certificates
 ```
 
 ---
 
-## Summary of Services
+## Cost Summary
 
 | Service | Free Tier | Notes |
 |---------|-----------|-------|
-| Hostinger VPS | No (~$5-10/mo) | KVM 1 is enough to start |
-| Hostinger Domain | No (~$2-15/yr) | `.space` domains are cheap |
-| MongoDB Atlas | Yes (M0, 512MB) | Sufficient for personal use |
+| Hostinger VPS | No (~$5–10/mo) | KVM 1 is enough to start |
+| Hostinger Domain | No (~$2–15/yr) | `.space` domains are cheap |
+| MongoDB Atlas | Yes (M0, 512 MB) | Sufficient for personal use |
 | Gemini API | Yes (generous limits) | Upgrade if traffic grows |
-| Cloudinary | Yes (25GB storage) | More than enough |
+| Cloudinary | Yes (25 GB storage) | More than enough |
 | GitLab | Yes | Unlimited private repos |
 | Telegram Bot | Yes | Always free |
