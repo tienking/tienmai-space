@@ -7,10 +7,11 @@ function generateSessionId() {
 }
 
 async function readSSE(res, onChunk) {
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
   try {
+    if (!res.body) { console.warn("[SSE] res.body is null, status:", res.status); return; }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -21,10 +22,10 @@ async function readSSE(res, onChunk) {
         if (!line.startsWith("data: ")) continue;
         const payload = line.slice(6).trim();
         if (payload === "[DONE]") return;
-        try { const { text } = JSON.parse(payload); if (text) onChunk(text); } catch {}
+        try { const { text } = JSON.parse(payload); if (text) onChunk(text); } catch (e) { console.warn("[SSE] parse error:", e.message, payload.slice(0, 80)); }
       }
     }
-  } catch {}
+  } catch (e) { console.warn("[SSE] stream error:", e.message); }
 }
 
 function useProfile() {
