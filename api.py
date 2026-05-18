@@ -191,18 +191,39 @@ async def resume_exists():
 _SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 
 async def _sse_stream(model, contents, config, session_id, source):
-    """Stream Gemini response as SSE chunks and persist the full reply to DB."""
+    """Stream Gemini response as SSE chunks and persist the full reply to DB.
+
+    Runs the synchronous generate_content_stream in a thread pool and bridges
+    chunks to this async generator via a queue so the event loop stays free.
+    """
     full_reply = ""
     fallback = "Sorry, I'm having trouble right now." if source == "web" else "Có lỗi xảy ra. Vui lòng thử lại."
+    queue: asyncio.Queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+
+    def _worker():
+        try:
+            for chunk in client.models.generate_content_stream(
+                model=model, contents=contents, config=config
+            ):
+                loop.call_soon_threadsafe(queue.put_nowait, chunk)
+        except Exception as e:
+            print(f"Gemini stream error ({source}): {e}")
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
+
+    loop.run_in_executor(None, _worker)
+
     try:
-        async for chunk in client.aio.models.generate_content_stream(
-            model=model, contents=contents, config=config
-        ):
+        while True:
+            chunk = await queue.get()
+            if chunk is None:
+                break
             if chunk.text:
                 full_reply += chunk.text
                 yield f"data: {json.dumps({'text': chunk.text}, ensure_ascii=False)}\n\n"
     except Exception as e:
-        print(f"Stream error ({source}): {e}")
+        print(f"Stream read error ({source}): {e}")
         if not full_reply:
             yield f"data: {json.dumps({'text': fallback}, ensure_ascii=False)}\n\n"
             full_reply = fallback
