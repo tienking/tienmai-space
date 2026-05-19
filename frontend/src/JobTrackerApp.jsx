@@ -249,7 +249,10 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
   const chatContainerRef = useRef(null);
   const chatFileRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const analyzeSentRef = useRef(false);
+  // Track last sent analyzeMsg by object identity — resets automatically on each new object
+  const lastSentAnalyzeRef = useRef(null);
+  // Generation counter: bump on clearChat to discard in-flight responses
+  const requestGenRef = useRef(0);
 
   useEffect(() => {
     fetch(`/api/jobtracker/chat/${username}/history`, { headers: { Authorization: `Bearer ${token}` } })
@@ -269,10 +272,10 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
       .catch(() => setMessages([JT_WELCOME]));
   }, [username, token]);
 
-  // Auto-send analyze message once chat history is loaded
+  // Auto-send analyze message once chat history is loaded; uses object identity to allow re-send after reset
   useEffect(() => {
-    if (analyzeMsg && messages !== null && !analyzeSentRef.current) {
-      analyzeSentRef.current = true;
+    if (analyzeMsg && analyzeMsg !== lastSentAnalyzeRef.current && messages !== null) {
+      lastSentAnalyzeRef.current = analyzeMsg;
       clearAnalyze?.();
       handleSend(analyzeMsg.api, analyzeMsg.display);
     }
@@ -300,7 +303,9 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
 
   const clearChat = () => {
     fetch(`/api/jobtracker/chat/${username}/history`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+    requestGenRef.current++;  // invalidate any in-flight request
     setMessages([JT_WELCOME]);
+    setLoading(false);
   };
 
   const sendToApi = async (text, file, display) => {
@@ -327,10 +332,13 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
     const file = selectedFile; setSelectedFile(null);
     setLoading(true);
     setMessages(prev => [...prev, { role: "user", content: file ? `📎 ${file.name}${display ? "\n" + display : ""}` : display }]);
+    const gen = requestGenRef.current;
     try {
       const reply = await sendToApi(text, file, display);
+      if (requestGenRef.current !== gen) return;  // discarded by clearChat
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch {
+      if (requestGenRef.current !== gen) return;
       setMessages(prev => [...prev, { role: "assistant", content: "Có lỗi xảy ra. Vui lòng thử lại." }]);
     }
     setLoading(false);
