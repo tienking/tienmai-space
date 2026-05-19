@@ -642,10 +642,8 @@ function TrackerPage({ username, token }) {
                       <div style={{ display: "flex", gap: 6 }}>
                         {j.jd && <button onClick={() => setViewJd({ title: j.title, jd: j.jd })}
                           style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>JD</button>}
-                        {j.status !== "rejected" && j.status !== "failed" && (
-                          <button onClick={() => handleAnalyze(j)}
-                            style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #185FA5", background: "#fff", color: "#185FA5", cursor: "pointer", fontFamily: "inherit" }}>Phân tích</button>
-                        )}
+                        <button onClick={() => handleAnalyze(j)}
+                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #185FA5", background: "#fff", color: "#185FA5", cursor: "pointer", fontFamily: "inherit", visibility: (j.status === "rejected" || j.status === "failed") ? "hidden" : "visible" }}>Phân tích</button>
                         <button onClick={() => setModal({ mode: "edit", index: j._idx })}
                           style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Sửa</button>
                         <button onClick={() => handleDelete(j._idx)}
@@ -720,12 +718,10 @@ function TrackerPage({ username, token }) {
                             </button>}
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
-                          {j.status !== "rejected" && j.status !== "failed" && (
-                            <button onClick={() => handleAnalyze(j)}
-                              style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #185FA5", background: "#fff", color: "#185FA5", cursor: "pointer", marginRight: 4, fontFamily: "inherit" }}>
-                              Phân tích
-                            </button>
-                          )}
+                          <button onClick={() => handleAnalyze(j)}
+                            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #185FA5", background: "#fff", color: "#185FA5", cursor: "pointer", marginRight: 4, fontFamily: "inherit", visibility: (j.status === "rejected" || j.status === "failed") ? "hidden" : "visible" }}>
+                            Phân tích
+                          </button>
                           <button onClick={() => setModal({ mode: "edit", index: j._idx })}
                             style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", marginRight: 4, fontFamily: "inherit" }}>
                             Sửa
