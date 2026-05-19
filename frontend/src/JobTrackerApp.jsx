@@ -255,7 +255,15 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
     fetch(`/api/jobtracker/chat/${username}/history`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => {
-        setMessages(d.messages?.length ? d.messages : [JT_WELCOME]);
+        const raw = d.messages?.length ? d.messages : [JT_WELCOME];
+        // Collapse any full analyze prompts saved to DB before the display_message fix
+        const cleaned = raw.map(msg => {
+          if (msg.role !== "user" || !msg.content.startsWith("Phân tích job sau")) return msg;
+          const title = msg.content.match(/\*\*Vị trí\*\*: (.+)/)?.[1] ?? "";
+          const company = msg.content.match(/\*\*Công ty\*\*: (.+)/)?.[1] ?? "";
+          return { ...msg, content: `Phân tích job: ${title} @ ${company}`.replace(/ @ $/, "") };
+        });
+        setMessages(cleaned);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "instant" }), 50);
       })
       .catch(() => setMessages([JT_WELCOME]));
