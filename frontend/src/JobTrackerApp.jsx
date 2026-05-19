@@ -69,12 +69,14 @@ function LoginPage() {
 
 // ── Badge ──────────────────────────────────────────────────────────────────────
 function badge(status) {
-  if (status === "not_applied") return { text: "Chưa apply",  bg: "#FFF3E0", color: "#7C4500" };
-  if (status === "viewed")      return { text: "Đã xem CV",   bg: "#E6F1FB", color: "#0C447C" };
-  if (status === "downloaded")  return { text: "Đã tải CV",   bg: "#EAF3DE", color: "#27500A" };
-  if (status === "rejected")    return { text: "Đã từ chối",  bg: "#FFF5F5", color: "#E57373" };
-  if (status === "failed")      return { text: "Rớt",         bg: "#FFEBEE", color: "#B71C1C" };
-  return                               { text: "Đã apply",    bg: "#F1EFE8", color: "#5F5E5A" };
+  if (status === "not_applied")  return { text: "Chưa apply",      bg: "#FFF3E0", color: "#7C4500" };
+  if (status === "viewed")       return { text: "Đã xem CV",       bg: "#E6F1FB", color: "#0C447C" };
+  if (status === "downloaded")   return { text: "Đã tải CV",       bg: "#EAF3DE", color: "#27500A" };
+  if (status === "interviewing") return { text: "Đang phỏng vấn",  bg: "#F5F0FF", color: "#6D28D9" };
+  if (status === "waiting")      return { text: "Chờ kết quả",     bg: "#FFFBEB", color: "#B45309" };
+  if (status === "rejected")     return { text: "Đã từ chối",      bg: "#FFF5F5", color: "#E57373" };
+  if (status === "failed")       return { text: "Rớt",             bg: "#FFEBEE", color: "#B71C1C" };
+  return                                { text: "Đã apply",        bg: "#F1EFE8", color: "#5F5E5A" };
 }
 
 // ── Job Modal (Add / Edit) ─────────────────────────────────────────────────────
@@ -149,10 +151,12 @@ function JobModal({ initial, onSave, onClose }) {
 
           <label style={lbl}>Trạng thái</label>
           <select value={form.status} onChange={e => set("status", e.target.value)} style={{ ...inp, cursor: "pointer" }}>
-            <option value="applied">Đã apply</option>
             <option value="not_applied">Chưa apply</option>
+            <option value="applied">Đã apply</option>
             <option value="viewed">Đã xem CV</option>
             <option value="downloaded">Đã tải CV</option>
+            <option value="interviewing">Đang phỏng vấn</option>
+            <option value="waiting">Chờ kết quả</option>
             <option value="rejected">Đã từ chối</option>
             <option value="failed">Rớt</option>
           </select>
@@ -515,7 +519,7 @@ function TrackerPage({ username, token }) {
   const thC = { ...thBase, textAlign: "center", cursor: "pointer" };
   const thNC = { ...thBase, textAlign: "center" };
 
-  const counts = { na: jobs.filter(j => j.status === "not_applied").length, a: jobs.filter(j => j.status === "applied").length, v: jobs.filter(j => j.status === "viewed").length, d: jobs.filter(j => j.status === "downloaded").length, rj: jobs.filter(j => j.status === "rejected").length, fl: jobs.filter(j => j.status === "failed").length };
+  const counts = { na: jobs.filter(j => j.status === "not_applied").length, a: jobs.filter(j => j.status === "applied").length, v: jobs.filter(j => j.status === "viewed").length, d: jobs.filter(j => j.status === "downloaded").length, iv: jobs.filter(j => j.status === "interviewing").length, wt: jobs.filter(j => j.status === "waiting").length, rj: jobs.filter(j => j.status === "rejected").length, fl: jobs.filter(j => j.status === "failed").length };
 
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f5f5f3", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
@@ -547,12 +551,14 @@ function TrackerPage({ username, token }) {
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
           {[
             { num: jobs.length,     label: "Tổng jobs" },
-            { num: counts.na,       label: "Chưa apply",   color: "#7C4500" },
-            { num: counts.a,        label: "Đã apply",     color: "#5F5E5A" },
-            { num: counts.v,        label: "Đã xem CV",    color: "#0C447C" },
-            { num: counts.d,        label: "Đã tải CV",    color: "#27500A" },
-            { num: counts.rj,       label: "Đã từ chối",   color: "#E57373" },
-            { num: counts.fl,       label: "Rớt",          color: "#B71C1C" },
+            { num: counts.na,       label: "Chưa apply",      color: "#7C4500" },
+            { num: counts.a,        label: "Đã apply",        color: "#5F5E5A" },
+            { num: counts.v,        label: "Đã xem CV",       color: "#0C447C" },
+            { num: counts.d,        label: "Đã tải CV",       color: "#27500A" },
+            { num: counts.iv,       label: "Đang phỏng vấn",  color: "#6D28D9" },
+            { num: counts.wt,       label: "Chờ kết quả",     color: "#B45309" },
+            { num: counts.rj,       label: "Đã từ chối",      color: "#E57373" },
+            { num: counts.fl,       label: "Rớt",             color: "#B71C1C" },
             { num: filtered.length, label: "Đang hiển thị" },
           ].map(({ num, label, color }) => (
             <div key={label} style={{ background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 8, padding: "10px 16px", minWidth: 100 }}>
@@ -575,6 +581,8 @@ function TrackerPage({ username, token }) {
             <option value="applied">Đã apply</option>
             <option value="viewed">Đã xem CV</option>
             <option value="downloaded">Đã tải CV</option>
+            <option value="interviewing">Đang phỏng vấn</option>
+            <option value="waiting">Chờ kết quả</option>
             <option value="rejected">Đã từ chối</option>
             <option value="failed">Rớt</option>
           </select>
@@ -623,6 +631,8 @@ function TrackerPage({ username, token }) {
                         <option value="applied">Đã apply</option>
                         <option value="viewed">Đã xem CV</option>
                         <option value="downloaded">Đã tải CV</option>
+                        <option value="interviewing">Đang phỏng vấn</option>
+                        <option value="waiting">Chờ kết quả</option>
                         <option value="rejected">Đã từ chối</option>
                         <option value="failed">Rớt</option>
                       </select>
