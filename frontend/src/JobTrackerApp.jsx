@@ -621,7 +621,7 @@ function TrackerPage({ username, token }) {
 
         {/* Stats */}
         <div style={isMobile
-          ? { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 12 }
+          ? { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, marginBottom: 12 }
           : { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
           {[
             { num: jobs.length,     label: "Tổng jobs" },
