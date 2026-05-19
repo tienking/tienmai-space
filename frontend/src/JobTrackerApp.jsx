@@ -405,6 +405,78 @@ function JtChatBot({ username, token, open, onToggle, analyzeMsg, clearAnalyze }
   );
 }
 
+// ── Multi-select filter ────────────────────────────────────────────────────────
+const MODE_OPTIONS = [
+  { value: "On-site", label: "On-site" },
+  { value: "Hybrid",  label: "Hybrid"  },
+  { value: "Remote",  label: "Remote"  },
+];
+const STATUS_OPTIONS = [
+  { value: "not_applied",  label: "Chưa apply"     },
+  { value: "applied",      label: "Đã apply"        },
+  { value: "viewed",       label: "Đã xem CV"       },
+  { value: "downloaded",   label: "Đã tải CV"       },
+  { value: "interviewing", label: "Đang phỏng vấn"  },
+  { value: "waiting",      label: "Chờ kết quả"     },
+  { value: "rejected",     label: "Đã từ chối"      },
+  { value: "failed",       label: "Rớt"             },
+];
+
+function MultiSelect({ label, options, selected, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const allSelected = selected === null || selected.size === options.length;
+  const someSelected = !allSelected && selected !== null && selected.size > 0;
+  const isChecked = (val) => selected === null || selected.has(val);
+
+  const toggleAll = () => onChange(allSelected ? new Set() : null);
+
+  const toggle = (val) => {
+    const base = selected === null ? new Set(options.map(o => o.value)) : new Set(selected);
+    if (base.has(val)) base.delete(val); else base.add(val);
+    onChange(base.size === options.length ? null : base);
+  };
+
+  let btnLabel;
+  if (allSelected || (selected !== null && selected.size === 0)) btnLabel = `Tất cả ${label}`;
+  else if (selected.size === 1) {
+    const opt = options.find(o => String(o.value) === String([...selected][0]));
+    btnLabel = opt ? opt.label : label;
+  } else btnLabel = `${selected.size} ${label}`;
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button onClick={() => setOpen(o => !o)}
+        style={{ fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: open ? "#f5f5f3" : "#fff", color: "#333", fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap" }}>
+        {btnLabel} {open ? "▴" : "▾"}
+      </button>
+      {open && (
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 200, background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", padding: "6px 0", minWidth: 160 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 14px", cursor: "pointer", fontSize: 12, userSelect: "none" }}>
+            <input type="checkbox" checked={allSelected} ref={el => { if (el) el.indeterminate = someSelected; }} onChange={toggleAll} />
+            Tất cả
+          </label>
+          <div style={{ height: "0.5px", background: "#f0f0ec", margin: "4px 0" }} />
+          {options.map(opt => (
+            <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 14px", cursor: "pointer", fontSize: 12, userSelect: "none" }}>
+              <input type="checkbox" checked={isChecked(opt.value)} onChange={() => toggle(opt.value)} />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Resume View Modal ──────────────────────────────────────────────────────────
 function ResumeViewModal({ url, onClose }) {
   return (
@@ -429,10 +501,10 @@ function TrackerPage({ username, token }) {
   const [sortCol, setSortCol] = useState(null);
   const [sortAsc, setSortAsc] = useState(true);
   const [search, setSearch] = useState("");
-  const [fMode, setFMode] = useState("");
-  const [fStatus, setFStatus] = useState("");
-  const [fMonth, setFMonth] = useState("");
-  const [fYear, setFYear] = useState("");
+  const [fModes, setFModes] = useState(null);
+  const [fStatuses, setFStatuses] = useState(null);
+  const [fMonths, setFMonths] = useState(null);
+  const [fYears, setFYears] = useState(null);
   const [modal, setModal] = useState(null);
   const [viewJd, setViewJd] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -494,10 +566,10 @@ function TrackerPage({ username, token }) {
   const uniqueYears = [...new Set(jobs.map(j => j.year))].sort((a, b) => b - a);
 
   let filtered = jobs.map((j, i) => ({ ...j, _idx: i })).filter(j => {
-    if (fMode && j.mode !== fMode) return false;
-    if (fStatus && j.status !== fStatus) return false;
-    if (fMonth && j.month !== parseInt(fMonth)) return false;
-    if (fYear && j.year !== parseInt(fYear)) return false;
+    if (fModes !== null && fModes.size > 0 && !fModes.has(j.mode)) return false;
+    if (fStatuses !== null && fStatuses.size > 0 && !fStatuses.has(j.status)) return false;
+    if (fMonths !== null && fMonths.size > 0 && !fMonths.has(j.month)) return false;
+    if (fYears !== null && fYears.size > 0 && !fYears.has(j.year)) return false;
     const q = search.toLowerCase();
     if (q && !j.title.toLowerCase().includes(q) && !j.company.toLowerCase().includes(q)) return false;
     return true;
@@ -573,29 +645,10 @@ function TrackerPage({ username, token }) {
         {/* Filters */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Tìm theo tên job / công ty..." style={{ ...sel, width: isMobile ? "100%" : 220 }} />
-          <select value={fMode} onChange={e => setFMode(e.target.value)} style={sel}>
-            <option value="">Tất cả hình thức</option>
-            <option>On-site</option><option>Hybrid</option><option>Remote</option>
-          </select>
-          <select value={fStatus} onChange={e => setFStatus(e.target.value)} style={sel}>
-            <option value="">Tất cả trạng thái</option>
-            <option value="not_applied">Chưa apply</option>
-            <option value="applied">Đã apply</option>
-            <option value="viewed">Đã xem CV</option>
-            <option value="downloaded">Đã tải CV</option>
-            <option value="interviewing">Đang phỏng vấn</option>
-            <option value="waiting">Chờ kết quả</option>
-            <option value="rejected">Đã từ chối</option>
-            <option value="failed">Rớt</option>
-          </select>
-          <select value={fMonth} onChange={e => setFMonth(e.target.value)} style={sel}>
-            <option value="">Tất cả tháng</option>
-            {uniqueMonths.map(m => <option key={m} value={m}>Tháng {m}</option>)}
-          </select>
-          <select value={fYear} onChange={e => setFYear(e.target.value)} style={sel}>
-            <option value="">Tất cả năm</option>
-            {uniqueYears.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
+          <MultiSelect label="Hình thức" options={MODE_OPTIONS} selected={fModes} onChange={setFModes} />
+          <MultiSelect label="Trạng thái" options={STATUS_OPTIONS} selected={fStatuses} onChange={setFStatuses} />
+          <MultiSelect label="Tháng" options={uniqueMonths.map(m => ({ value: m, label: `Tháng ${m}` }))} selected={fMonths} onChange={setFMonths} />
+          <MultiSelect label="Năm" options={uniqueYears.map(y => ({ value: y, label: String(y) }))} selected={fYears} onChange={setFYears} />
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
             {saving && <span style={{ fontSize: 12, color: "#888" }}>Đang lưu...</span>}
             <button onClick={() => setModal({ mode: "add" })}
