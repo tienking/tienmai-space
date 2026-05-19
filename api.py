@@ -65,7 +65,8 @@ RESUME_PATH = "/root/tienmai-bot/uploads/resume.pdf"
 class ChatRequest(BaseModel):
     message: str
     session_id: str = "default"
-    display_message: Optional[str] = None
+    display_message: Optional[str] = None  # deprecated, kept for compatibility
+    analyze_context: Optional[str] = None  # full JD context sent to AI only, not saved to history
 
 class LoginRequest(BaseModel):
     username: str
@@ -747,7 +748,7 @@ async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depe
     system_prompt = build_jt_system_prompt(jt_username, jobs, resume_exists, profile)
     ai_settings = await get_ai_settings()
     model = ai_settings.get("active_model")
-    await save_message(session_id, "user", request.display_message or request.message, source="jobtracker")
+    await save_message(session_id, "user", request.message, source="jobtracker")
     history = await get_chat_history(session_id, limit=20)
     contents = []
     if resume_exists:
@@ -764,7 +765,7 @@ async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depe
         ]
     for msg in history[:-1]:
         contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])]))
-    contents.append(types.Content(role="user", parts=[types.Part(text=request.message)]))
+    contents.append(types.Content(role="user", parts=[types.Part(text=request.analyze_context or request.message)]))
     response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(system_instruction=system_prompt, temperature=0.2))
     reply = response.text
     await save_message(session_id, "model", reply, source="jobtracker")

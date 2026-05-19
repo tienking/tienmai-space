@@ -259,9 +259,11 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
       .then(r => r.json())
       .then(d => {
         const raw = d.messages?.length ? d.messages : [JT_WELCOME];
-        // Collapse any full analyze prompts saved to DB before the display_message fix
+        // Collapse any full analyze prompts saved to DB before the analyze_context fix
         const cleaned = raw.map(msg => {
-          if (msg.role !== "user" || !msg.content.startsWith("Phân tích job sau")) return msg;
+          if (msg.role !== "user") return msg;
+          const isFullPrompt = msg.content.startsWith("Phân tích job sau") || msg.content.startsWith("[PHÂN TÍCH MỚI");
+          if (!isFullPrompt) return msg;
           const title = msg.content.match(/\*\*Vị trí\*\*: (.+)/)?.[1] ?? "";
           const company = msg.content.match(/\*\*Công ty\*\*: (.+)/)?.[1] ?? "";
           return { ...msg, content: `Phân tích job: ${title} @ ${company}`.replace(/ @ $/, "") };
@@ -318,8 +320,9 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
       const res = await fetch(`/api/jobtracker/chat/${username}/file`, { method: "POST", headers, body: fd });
       return (await res.json()).reply;
     }
-    const body = { message: text, session_id: "main" };
-    if (display && display !== text) body.display_message = display;
+    const hasDisplay = display && display !== text;
+    const body = { message: hasDisplay ? display : text, session_id: "main" };
+    if (hasDisplay) body.analyze_context = text;  // full JD goes to AI, display label goes to DB
     const res = await fetch(`/api/jobtracker/chat/${username}`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(body) });
     return (await res.json()).reply;
   };
