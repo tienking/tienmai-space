@@ -249,7 +249,6 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
   const chatContainerRef = useRef(null);
   const chatFileRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  // Track last sent analyzeMsg by object identity — resets automatically on each new object
   const lastSentAnalyzeRef = useRef(null);
   // Generation counter: bump on clearChat to discard in-flight responses
   const requestGenRef = useRef(0);
@@ -259,25 +258,15 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
       .then(r => r.json())
       .then(d => {
         const raw = d.messages?.length ? d.messages : [JT_WELCOME];
-        // Collapse any full analyze prompts saved to DB before the analyze_context fix
-        const cleaned = raw.map(msg => {
-          if (msg.role !== "user") return msg;
-          const isFullPrompt = msg.content.startsWith("Phân tích job sau") || msg.content.startsWith("[PHÂN TÍCH MỚI");
-          if (!isFullPrompt) return msg;
-          const title = msg.content.match(/\*\*Vị trí\*\*: (.+)/)?.[1] ?? "";
-          const company = msg.content.match(/\*\*Công ty\*\*: (.+)/)?.[1] ?? "";
-          return { ...msg, content: `Phân tích job: ${title} @ ${company}`.replace(/ @ $/, "") };
-        });
-        setMessages(cleaned);
+        setMessages(raw);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "instant" }), 50);
       })
       .catch(() => setMessages([JT_WELCOME]));
   }, [username, token]);
 
-  // Auto-send analyze message once chat history is loaded; uses object identity to allow re-send after reset
   useEffect(() => {
-    if (analyzeMsg && analyzeMsg !== lastSentAnalyzeRef.current && messages !== null) {
-      lastSentAnalyzeRef.current = analyzeMsg;
+    if (analyzeMsg && analyzeMsg.api !== lastSentAnalyzeRef.current && messages !== null && !loading) {
+      lastSentAnalyzeRef.current = analyzeMsg.api;
       clearAnalyze?.();
       handleSend(analyzeMsg.api, analyzeMsg.display);
     }
