@@ -548,7 +548,9 @@ function TrackerPage({ username, token }) {
         </div>
 
         {/* Stats */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+        <div style={isMobile
+          ? { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 12 }
+          : { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
           {[
             { num: jobs.length,     label: "Tổng jobs" },
             { num: counts.na,       label: "Chưa apply",      color: "#7C4500" },
@@ -561,9 +563,9 @@ function TrackerPage({ username, token }) {
             { num: counts.fl,       label: "Rớt",             color: "#B71C1C" },
             { num: filtered.length, label: "Đang hiển thị" },
           ].map(({ num, label, color }) => (
-            <div key={label} style={{ background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 8, padding: "10px 16px", minWidth: 100 }}>
-              <div style={{ fontSize: 22, fontWeight: 500, color: color || "#1a1a18" }}>{num}</div>
-              <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{label}</div>
+            <div key={label} style={{ background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 8, padding: isMobile ? "8px 10px" : "10px 16px", minWidth: isMobile ? 0 : 100 }}>
+              <div style={{ fontSize: isMobile ? 18 : 22, fontWeight: 500, color: color || "#1a1a18" }}>{num}</div>
+              <div style={{ fontSize: isMobile ? 10 : 11, color: "#888", marginTop: 2, lineHeight: 1.3 }}>{label}</div>
             </div>
           ))}
         </div>
