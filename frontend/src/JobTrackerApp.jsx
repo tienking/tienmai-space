@@ -535,7 +535,7 @@ function TrackerPage({ username, token }) {
       setTimeout(() => setAnalyzeAlert(null), 4000);
       return;
     }
-    const api = `Phân tích job sau và đánh giá mức độ phù hợp với Hồ sơ của tôi (đã lưu trong hệ thống):\n\n**Vị trí**: ${j.title}\n**Công ty**: ${j.company}\n**Địa điểm**: ${j.loc} · ${j.mode}${j.url ? `\n**Link**: ${j.url}` : ""}\n\n**Job Description**:\n${j.jd}\n\nHãy đánh giá: (1) Mức độ phù hợp với Hồ sơ của tôi (%), (2) Điểm mạnh, (3) Điểm yếu/thiếu sót, (4) Những điểm cần lưu ý khi apply.`;
+    const api = `[PHÂN TÍCH MỚI - đánh giá độc lập, không tham chiếu kết quả phân tích trước đó trong cuộc trò chuyện này]\n\nPhân tích job sau và đánh giá mức độ phù hợp với Hồ sơ hiện tại của tôi (lấy từ hệ thống, đã bao gồm mọi cập nhật mới nhất):\n\n**Vị trí**: ${j.title}\n**Công ty**: ${j.company}\n**Địa điểm**: ${j.loc} · ${j.mode}${j.url ? `\n**Link**: ${j.url}` : ""}\n\n**Job Description**:\n${j.jd}\n\nHãy đánh giá:\n(1) Mức độ phù hợp (%) — chấm điểm theo tiêu chí: yêu cầu bắt buộc đáp ứng được / tổng yêu cầu bắt buộc\n(2) Điểm mạnh — kỹ năng/kinh nghiệm thực sự khớp với JD\n(3) Điểm yếu/thiếu sót — những gì JD yêu cầu mà Hồ sơ chưa có\n(4) Những điểm cần lưu ý khi apply`;
     setAnalyzeMsg({ display: `Phân tích job: ${j.title} @ ${j.company}`, api });
     setChatOpen(true);
   };

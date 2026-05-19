@@ -765,7 +765,7 @@ async def jt_chat(jt_username: str, request: ChatRequest, token_user: str = Depe
     for msg in history[:-1]:
         contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["content"])]))
     contents.append(types.Content(role="user", parts=[types.Part(text=request.message)]))
-    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(system_instruction=system_prompt))
+    response = client.models.generate_content(model=model, contents=contents, config=types.GenerateContentConfig(system_instruction=system_prompt, temperature=0.2))
     reply = response.text
     await save_message(session_id, "model", reply, source="jobtracker")
     return {"reply": reply}
