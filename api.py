@@ -641,10 +641,12 @@ async def jt_update_profile(jt_username: str, data: JtProfileUpdate, token_user:
 
 # ── Jobtracker Chatbot ─────────────────────────────────────────────────────────
 def build_jt_system_prompt(username: str, jobs: list, resume_exists: bool, profile: dict = None) -> str:
-    status_map = {"applied": "Đã apply", "viewed": "Đã xem CV", "downloaded": "Đã tải CV"}
+    status_map = {"applied": "Đã apply", "viewed": "Đã xem CV", "downloaded": "Đã tải CV", "not_applied": "Chưa apply"}
+    # Exclude rejected/failed jobs — they are no longer active applications
+    active_jobs = [j for j in jobs if j.get("status") not in ("rejected", "failed")]
     job_lines = [
         f"{i}. {j.get('title','')} tại {j.get('company','')} | {j.get('loc','')} | {j.get('mode','')} | {j.get('month','')}/{j.get('year','')} | {status_map.get(j.get('status',''), j.get('status',''))} | {'có JD' if j.get('jd') else 'chưa có JD'}"
-        for i, j in enumerate(jobs, 1)
+        for i, j in enumerate(active_jobs, 1)
     ]
     job_list = "\n".join(job_lines) if job_lines else "Chưa có job nào."
 
