@@ -706,6 +706,8 @@ function TrackerPage({ username, token }) {
                             <option value="applied">Đã apply</option>
                             <option value="viewed">Đã xem CV</option>
                             <option value="downloaded">Đã tải CV</option>
+                            <option value="interviewing">Đang phỏng vấn</option>
+                            <option value="waiting">Chờ kết quả</option>
                             <option value="rejected">Đã từ chối</option>
                             <option value="failed">Rớt</option>
                           </select>
