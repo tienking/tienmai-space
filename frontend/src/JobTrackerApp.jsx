@@ -682,21 +682,23 @@ function TrackerPage({ username, token }) {
                   ? <tr><td colSpan={10} style={{ padding: 32, textAlign: "center", color: "#888" }}>Không tìm thấy kết quả.</td></tr>
                   : filtered.map((j, i) => {
                     const b = badge(j.status);
+                    const dimmed = j.status === "rejected" || j.status === "failed";
+                    const dc = dimmed ? "#B71C1C" : "#888";
                     return (
                       <tr key={j._idx} style={{ borderBottom: "0.5px solid #f0f0ec" }}
                         onMouseEnter={e => e.currentTarget.style.background = "#fafaf8"}
                         onMouseLeave={e => e.currentTarget.style.background = ""}>
-                        <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{i + 1}</td>
+                        <td style={{ padding: "6px 10px", color: dc, textAlign: "center" }}>{i + 1}</td>
                         <td style={{ padding: "6px 10px" }}>
                           {j.url ? <a href={j.url} target="_blank" rel="noreferrer" style={{ color: "#185FA5", textDecoration: "none" }}>{j.title}</a> : j.title}
                         </td>
-                        <td style={{ padding: "6px 10px", color: "#888" }}>{j.company}</td>
-                        <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{j.loc}</td>
+                        <td style={{ padding: "6px 10px", color: dc }}>{j.company}</td>
+                        <td style={{ padding: "6px 10px", color: dc, textAlign: "center" }}>{j.loc}</td>
                         <td style={{ padding: "6px 10px", textAlign: "center" }}>
-                          <span style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, border: "0.5px solid #ddd", color: "#666" }}>{j.mode}</span>
+                          <span style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, border: "0.5px solid #ddd", color: dimmed ? "#B71C1C" : "#666" }}>{j.mode}</span>
                         </td>
-                        <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{String(j.month).padStart(2, "0")}</td>
-                        <td style={{ padding: "6px 10px", color: "#888", textAlign: "center" }}>{j.year}</td>
+                        <td style={{ padding: "6px 10px", color: dc, textAlign: "center" }}>{String(j.month).padStart(2, "0")}</td>
+                        <td style={{ padding: "6px 10px", color: dc, textAlign: "center" }}>{j.year}</td>
                         <td style={{ padding: "4px 10px" }}>
                           <select value={j.status} onChange={e => handleStatusChange(j._idx, e.target.value)}
                             style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "inherit", outline: "none" }}>
