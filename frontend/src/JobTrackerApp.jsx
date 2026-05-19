@@ -295,7 +295,7 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
     setMessages([JT_WELCOME]);
   };
 
-  const sendToApi = async (text, file) => {
+  const sendToApi = async (text, file, display) => {
     const headers = { Authorization: `Bearer ${token}` };
     if (file) {
       const fd = new FormData();
@@ -305,7 +305,9 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
       const res = await fetch(`/api/jobtracker/chat/${username}/file`, { method: "POST", headers, body: fd });
       return (await res.json()).reply;
     }
-    const res = await fetch(`/api/jobtracker/chat/${username}`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ message: text, session_id: "main" }) });
+    const body = { message: text, session_id: "main" };
+    if (display && display !== text) body.display_message = display;
+    const res = await fetch(`/api/jobtracker/chat/${username}`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(body) });
     return (await res.json()).reply;
   };
 
@@ -318,7 +320,7 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze }) {
     setLoading(true);
     setMessages(prev => [...prev, { role: "user", content: file ? `📎 ${file.name}${display ? "\n" + display : ""}` : display }]);
     try {
-      const reply = await sendToApi(text, file);
+      const reply = await sendToApi(text, file, display);
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Có lỗi xảy ra. Vui lòng thử lại." }]);
