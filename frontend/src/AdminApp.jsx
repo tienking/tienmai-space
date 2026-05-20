@@ -1445,13 +1445,13 @@ function SettingsTab({ token, onLogout }) {
     if (!newPw) { setMsg({ text: "Enter a new password.", error: true }); return; }
     if (newPw !== confirmPw) { setMsg({ text: "New passwords do not match.", error: true }); return; }
 
-    // Verify current password before applying changes
+    // Verify current password via dedicated endpoint (avoids triggering the login rate-limiter)
     setSaving(true); setMsg(null);
     try {
-      const verifyRes = await fetch("/api/admin/login", {
+      const verifyRes = await fetch("/api/admin/verify-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username || "admin", password: currentPw })
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ password: currentPw })
       });
       if (!verifyRes.ok) { setMsg({ text: "Current password is incorrect.", error: true }); setSaving(false); return; }
 

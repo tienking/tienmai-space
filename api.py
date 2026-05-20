@@ -385,6 +385,17 @@ async def get_admin_sessions(username: str = Depends(verify_token)):
             e["created_at"] = e["created_at"].isoformat()
     return entries
 
+# --- Admin: Verify Current Password ---
+class VerifyPasswordRequest(BaseModel):
+    password: str
+
+@router.post("/api/admin/verify-password")
+async def verify_admin_password(data: VerifyPasswordRequest, username: str = Depends(verify_token)):
+    """Check current password without touching the login rate-limit counter."""
+    if not await authenticate_user(username, data.password):
+        raise HTTPException(status_code=401, detail="Current password is incorrect.")
+    return {"ok": True}
+
 # --- Admin: Change Password ---
 class ChangePasswordRequest(BaseModel):
     new_username: Optional[str] = None
