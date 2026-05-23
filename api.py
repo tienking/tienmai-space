@@ -421,7 +421,7 @@ async def admin_update_profile(data: ProfileUpdate, username: str = Depends(veri
 
 # --- Admin: Update Gallery ---
 @router.put("/api/admin/gallery")
-async def admin_update_gallery(gallery: list = Body(...), username: str = Depends(verify_token)):
+async def admin_update_gallery(gallery: List[Any] = Body(...), username: str = Depends(verify_token)):
     """Update gallery images and order - requires JWT token."""
     await update_profile({"gallery": gallery})
     return {"message": "Gallery updated successfully"}

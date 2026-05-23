@@ -178,8 +178,7 @@ function Dashboard({ token, onLogout }) {
       const res = await fetch("/api/admin/gallery", { method: "PUT", headers: authHeaders(token), body: JSON.stringify(gallery) });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        const msg = Array.isArray(err.detail) ? err.detail.map(e => e.msg).join(", ") : (err.detail || `HTTP ${res.status}`);
-        throw new Error(msg);
+        throw new Error(err.detail || `HTTP ${res.status}`);
       }
       setProfile(prev => ({ ...prev, gallery }));
       setSaved(true); setTimeout(() => setSaved(false), 2000);
