@@ -241,7 +241,7 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "education" && <EducationTab items={profile.educations || []} onSave={save} saving={saving} />}
           {activeTab === "projects" && <ListTab title="Projects" field="projects" items={profile.projects || []} onSave={save} saving={saving} fields={["title", "tag", "description", "link"]} />}
           {activeTab === "certifications" && <CertificationTab items={profile.certifications || []} onSave={save} saving={saving} />}
-          {activeTab === "gallery" && <GalleryTab gallery={profile.gallery || []} onSave={saveGallery} saving={saving} />}
+          {activeTab === "gallery" && <GalleryTab gallery={profile.gallery || []} onSave={saveGallery} saving={saving} token={token} />}
           {activeTab === "resume" && <ResumeTab token={token} resumeVisible={profile.resumeVisible !== false} onSave={save} saving={saving} />}
           {activeTab === "theme" && <ThemeTab theme={profile.theme || {}} onSave={save} saving={saving} />}
           {activeTab === "fonts" && <FontsTab fonts={profile.fonts || {}} onSave={save} saving={saving} />}
@@ -897,12 +897,14 @@ function ListTab({ title, field, items, onSave, saving, fields }) {
   );
 }
 
-function GalleryTab({ gallery, onSave, saving }) {
+function GalleryTab({ gallery, onSave, saving, token }) {
   // Normalize legacy string items to {url, caption} objects
   const normalize = items => items.map(item => typeof item === "string" ? { url: item, caption: "" } : item);
   const [images, setImages] = useState(() => normalize(gallery));
   const [newUrl, setNewUrl] = useState("");
   const [newCaption, setNewCaption] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const add = () => {
     if (!newUrl.trim()) return;
@@ -910,7 +912,46 @@ function GalleryTab({ gallery, onSave, saving }) {
     setNewUrl("");
     setNewCaption("");
   };
-  const remove = i => setImages(p => p.filter((_, idx) => idx !== i));
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch("/api/admin/gallery/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (res.ok) {
+        const { url } = await res.json();
+        setImages(p => [...p, { url, caption: "" }]);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Upload failed");
+      }
+    } catch {
+      alert("Upload failed");
+    }
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  const remove = async (i) => {
+    const item = images[i];
+    // Delete VPS-hosted files when removed
+    if (item.url.startsWith("/api/gallery/images/")) {
+      const filename = item.url.split("/").pop();
+      await fetch(`/api/admin/gallery/images/${filename}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    }
+    setImages(p => p.filter((_, idx) => idx !== i));
+  };
+
   const moveUp = i => { if (i === 0) return; const l = [...images];[l[i - 1], l[i]] = [l[i], l[i - 1]]; setImages(l); };
   const moveDown = i => { if (i === images.length - 1) return; const l = [...images];[l[i], l[i + 1]] = [l[i + 1], l[i]]; setImages(l); };
   const updateCaption = (i, val) => setImages(p => p.map((item, idx) => idx === i ? { ...item, caption: val } : item));
@@ -923,6 +964,12 @@ function GalleryTab({ gallery, onSave, saving }) {
           <button onClick={add} style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", flexShrink: 0 }}>Add</button>
         </div>
         <input value={newCaption} onChange={e => setNewCaption(e.target.value)} placeholder="Caption (optional)" style={{ ...inputStyle }} onKeyDown={e => e.key === "Enter" && add()} />
+      </Field>
+      <Field label="Or upload image to VPS">
+        <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: "none" }} onChange={handleFileUpload} />
+        <button onClick={() => fileInputRef.current?.click()} disabled={uploading} style={{ padding: "8px 20px", borderRadius: 9, border: "1px solid var(--border)", background: "none", color: uploading ? "var(--text-muted)" : "var(--text)", fontSize: 13, cursor: uploading ? "default" : "pointer", fontFamily: "var(--font-display)" }}>
+          {uploading ? "Uploading..." : "Choose image file"}
+        </button>
       </Field>
       <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
         {images.map((item, i) => (
