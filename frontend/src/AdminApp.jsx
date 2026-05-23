@@ -175,7 +175,11 @@ function Dashboard({ token, onLogout }) {
   const saveGallery = async (gallery) => {
     setSaving(true);
     try {
-      await fetch("/api/admin/gallery", { method: "PUT", headers: authHeaders(token), body: JSON.stringify(gallery) });
+      const res = await fetch("/api/admin/gallery", { method: "PUT", headers: authHeaders(token), body: JSON.stringify(gallery) });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
       setProfile(prev => ({ ...prev, gallery }));
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (e) { alert("Save failed: " + e.message); }
