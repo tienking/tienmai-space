@@ -16,6 +16,8 @@ from notifications import notify_new_chat, notify_jd_upload
 from auth import create_access_token, authenticate_user, verify_token, hash_password, create_jobtracker_token, verify_jobtracker_token
 import asyncio
 import os
+import uuid
+import mimetypes
 from time import time as _now
 import shutil
 import base64
@@ -58,8 +60,12 @@ def _reset_login_attempts(ip: str):
 # --- Router ---
 router = APIRouter()
 
-# --- Resume path ---
+# --- Upload paths ---
 RESUME_PATH = "/root/tienmai-bot/uploads/resume.pdf"
+GALLERY_UPLOAD_DIR = "/root/tienmai-bot/uploads/gallery"
+
+_ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+os.makedirs(GALLERY_UPLOAD_DIR, exist_ok=True)
 
 # --- Models ---
 class ChatRequest(BaseModel):
@@ -425,6 +431,42 @@ async def admin_update_gallery(gallery: List[Any], username: str = Depends(verif
     """Update gallery images and order - requires JWT token."""
     await update_profile({"gallery": gallery})
     return {"message": "Gallery updated successfully"}
+
+# --- Admin: Upload gallery image to VPS ---
+@router.post("/api/admin/gallery/upload")
+async def upload_gallery_image(file: UploadFile = File(...), username: str = Depends(verify_token)):
+    """Upload an image file to VPS storage and return its public URL."""
+    content_type = file.content_type or mimetypes.guess_type(file.filename or "")[0] or ""
+    if content_type not in _ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG, WebP, and GIF images are allowed")
+    ext = mimetypes.guess_extension(content_type) or ".jpg"
+    # mimetypes maps image/jpeg to .jpeg on some platforms — normalize to .jpg
+    if ext == ".jpeg":
+        ext = ".jpg"
+    filename = f"{uuid.uuid4().hex}{ext}"
+    dest = os.path.join(GALLERY_UPLOAD_DIR, filename)
+    with open(dest, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    return {"url": f"/api/gallery/images/{filename}"}
+
+# --- Public: Serve uploaded gallery image ---
+@router.get("/api/gallery/images/{filename}")
+async def serve_gallery_image(filename: str):
+    """Serve a previously uploaded gallery image."""
+    path = os.path.join(GALLERY_UPLOAD_DIR, filename)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Image not found")
+    media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    return FileResponse(path, media_type=media_type)
+
+# --- Admin: Delete uploaded gallery image from VPS ---
+@router.delete("/api/admin/gallery/images/{filename}")
+async def delete_gallery_image(filename: str, username: str = Depends(verify_token)):
+    """Delete an uploaded gallery image from VPS storage."""
+    path = os.path.join(GALLERY_UPLOAD_DIR, filename)
+    if os.path.exists(path):
+        os.remove(path)
+    return {"message": "Image deleted"}
 
 # --- Admin: Upload Resume ---
 @router.post("/api/admin/resume")
