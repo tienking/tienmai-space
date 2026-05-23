@@ -65,7 +65,6 @@ RESUME_PATH = "/root/tienmai-bot/uploads/resume.pdf"
 GALLERY_UPLOAD_DIR = "/root/tienmai-bot/uploads/gallery"
 
 _ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
-os.makedirs(GALLERY_UPLOAD_DIR, exist_ok=True)
 
 # --- Models ---
 class ChatRequest(BaseModel):
@@ -436,6 +435,7 @@ async def admin_update_gallery(gallery: List[Any], username: str = Depends(verif
 @router.post("/api/admin/gallery/upload")
 async def upload_gallery_image(file: UploadFile = File(...), username: str = Depends(verify_token)):
     """Upload an image file to VPS storage and return its public URL."""
+    os.makedirs(GALLERY_UPLOAD_DIR, exist_ok=True)
     content_type = file.content_type or mimetypes.guess_type(file.filename or "")[0] or ""
     if content_type not in _ALLOWED_IMAGE_TYPES:
         raise HTTPException(status_code=400, detail="Only JPEG, PNG, WebP, and GIF images are allowed")
