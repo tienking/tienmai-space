@@ -816,21 +816,14 @@ export default function App() {
             {profile.gallery?.length > 0 && (
               <Section title="Gallery" labelColor={t.labelGallery} lineColor={t.lineColor}>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                  {profile.gallery.map((item, i) => {
-                    const url = typeof item === "string" ? item : item.url;
-                    const caption = typeof item === "string" ? "" : (item.caption || "");
-                    return (
-                      <div key={i} onClick={() => setLightboxIndex(i)} style={{ cursor: "pointer" }}>
-                        <div style={{ aspectRatio: "1", borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", transition: "border-color 0.2s, transform 0.2s" }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.transform = "scale(1.03)"; }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "scale(1)"; }}
-                        >
-                          <img src={url} alt={caption || `Gallery ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        </div>
-                        {caption && <p style={{ marginTop: 5, fontSize: 11, color: "var(--text-muted)", textAlign: "center", lineHeight: 1.3 }}>{caption}</p>}
-                      </div>
-                    );
-                  })}
+                  {profile.gallery.map((url, i) => (
+                    <div key={i} onClick={() => setLightboxIndex(i)} style={{ aspectRatio: "1", borderRadius: 10, overflow: "hidden", cursor: "pointer", border: "1px solid var(--border)", transition: "border-color 0.2s, transform 0.2s" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "scale(1)"; }}
+                    >
+                      <img src={url} alt={`Gallery ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  ))}
                 </div>
               </Section>
             )}
@@ -840,7 +833,7 @@ export default function App() {
       </div>
 
       {resumeOpen && <ResumePopup onClose={() => setResumeOpen(false)} />}
-      {lightboxIndex !== null && <Lightbox images={profile.gallery.map(item => typeof item === "string" ? item : item.url)} index={lightboxIndex} onClose={() => setLightboxIndex(null)} />}
+      {lightboxIndex !== null && <Lightbox images={profile.gallery} index={lightboxIndex} onClose={() => setLightboxIndex(null)} />}
       {chatOpen && <ChatPopup onClose={() => setChatOpen(false)} />}
       <FloatingButton onClick={() => setChatOpen(p => !p)} isOpen={chatOpen} />
     </>
