@@ -917,6 +917,10 @@ function GalleryTab({ gallery, experiences, onSave, saving }) {
   const [images, setImages] = useState(() => normalize(gallery));
   const [newUrl, setNewUrl] = useState("");
 
+  // Drag-and-drop state
+  const [dragIndex, setDragIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+
   // Build year options: currentYear down to earliest year from Experiences
   const currentYear = new Date().getFullYear();
   const earliestYear = (() => {
@@ -934,10 +938,31 @@ function GalleryTab({ gallery, experiences, onSave, saving }) {
     setNewUrl("");
   };
   const remove = i => setImages(p => p.filter((_, idx) => idx !== i));
-  const moveUp = i => { if (i === 0) return; const l = [...images]; [l[i - 1], l[i]] = [l[i], l[i - 1]]; setImages(l); };
-  const moveDown = i => { if (i === images.length - 1) return; const l = [...images]; [l[i], l[i + 1]] = [l[i + 1], l[i]]; setImages(l); };
   const updateCaption = (i, v) => setImages(p => p.map((item, idx) => idx === i ? { ...item, caption: v } : item));
   const updateYear = (i, v) => setImages(p => p.map((item, idx) => idx === i ? { ...item, year: v } : item));
+
+  // Drag handlers — skip drag when the user clicks inside a form control
+  const handleDragStart = (e, i) => {
+    if (["INPUT", "SELECT", "TEXTAREA"].includes(e.target.tagName)) { e.preventDefault(); return; }
+    setDragIndex(i);
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const handleDragOver = (e, i) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverIndex !== i) setDragOverIndex(i);
+  };
+  const handleDrop = (e, i) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === i) { setDragIndex(null); setDragOverIndex(null); return; }
+    const next = [...images];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(i, 0, moved);
+    setImages(next);
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+  const handleDragEnd = () => { setDragIndex(null); setDragOverIndex(null); };
 
   return (
     <TabCard title="Gallery" onSave={() => onSave(images)} saving={saving}>
@@ -948,37 +973,58 @@ function GalleryTab({ gallery, experiences, onSave, saving }) {
         </div>
       </Field>
       <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
-        {images.map((item, i) => (
-          <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px" }}>
-            {/* Row 1: thumbnail + URL + action buttons */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <img src={item.url} alt="" style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
-              <p style={{ flex: 1, fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.url}</p>
-              <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-                <SmallBtn onClick={() => moveUp(i)} disabled={i === 0}>↑</SmallBtn>
-                <SmallBtn onClick={() => moveDown(i)} disabled={i === images.length - 1}>↓</SmallBtn>
+        {images.map((item, i) => {
+          const isDragging = dragIndex === i;
+          const isOver = dragOverIndex === i && dragIndex !== i;
+          return (
+            <div
+              key={i}
+              draggable
+              onDragStart={e => handleDragStart(e, i)}
+              onDragOver={e => handleDragOver(e, i)}
+              onDrop={e => handleDrop(e, i)}
+              onDragEnd={handleDragEnd}
+              style={{
+                background: "var(--bg-card)",
+                border: `1px solid ${isOver ? "var(--accent)" : "var(--border)"}`,
+                borderRadius: 10,
+                padding: "10px 12px",
+                opacity: isDragging ? 0.4 : 1,
+                transition: "border-color 0.15s, opacity 0.15s",
+                boxShadow: isOver ? "0 0 0 2px var(--accent-border)" : "none",
+              }}
+            >
+              {/* Row 1: grip handle + thumbnail + URL + remove */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                {/* Drag handle — ⠿ is a 2×3 dot grid, classic "grip" icon */}
+                <div
+                  title="Drag to reorder"
+                  style={{ color: "var(--text-muted)", fontSize: 18, cursor: isDragging ? "grabbing" : "grab", flexShrink: 0, userSelect: "none", lineHeight: 1, padding: "0 2px" }}
+                >⠿</div>
+                <img src={item.url} alt="" draggable={false} style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
+                <p style={{ flex: 1, fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.url}</p>
                 <SmallBtn onClick={() => remove(i)} danger>✕</SmallBtn>
               </div>
+              {/* Row 2: year dropdown + caption input */}
+              <div style={{ display: "flex", gap: 8 }}>
+                <select
+                  value={item.year ?? ""}
+                  onChange={e => updateYear(i, e.target.value ? parseInt(e.target.value) : null)}
+                  style={{ ...inputStyle, width: 110, flexShrink: 0, fontSize: 12, padding: "7px 10px" }}
+                >
+                  <option value="">No year</option>
+                  {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+                <input
+                  value={item.caption}
+                  onChange={e => updateCaption(i, e.target.value)}
+                  placeholder="Caption (optional)"
+                  style={{ ...inputStyle, flex: 1, fontSize: 12, padding: "7px 10px" }}
+                />
+              </div>
             </div>
-            {/* Row 2: year dropdown + caption input */}
-            <div style={{ display: "flex", gap: 8 }}>
-              <select
-                value={item.year ?? ""}
-                onChange={e => updateYear(i, e.target.value ? parseInt(e.target.value) : null)}
-                style={{ ...inputStyle, width: 110, flexShrink: 0, fontSize: 12, padding: "7px 10px" }}
-              >
-                <option value="">No year</option>
-                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-              <input
-                value={item.caption}
-                onChange={e => updateCaption(i, e.target.value)}
-                placeholder="Caption (optional)"
-                style={{ ...inputStyle, flex: 1, fontSize: 12, padding: "7px 10px" }}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </TabCard>
   );
