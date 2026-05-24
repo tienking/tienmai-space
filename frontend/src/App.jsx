@@ -69,6 +69,11 @@ function applyFonts(fonts) {
   root.style.setProperty("--font-mono", `'${monoFont}', monospace`);
 }
 
+// ─── Gallery helpers — handle both legacy strings and {url, caption} objects ───
+
+const galleryUrl = (item) => typeof item === "string" ? item : (item?.url || "");
+const galleryCaption = (item) => typeof item === "string" ? "" : (item?.caption || "");
+
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
 
 function Lightbox({ images, index, onClose }) {
@@ -91,12 +96,17 @@ function Lightbox({ images, index, onClose }) {
     return () => { document.body.style.overflow = ""; };
   }, []);
 
+  const caption = galleryCaption(images[current]);
+
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeUp 0.2s ease" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", animation: "fadeUp 0.2s ease" }}>
       <button onClick={onClose} style={{ position: "absolute", top: 20, right: 20, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "50%", width: 40, height: 40, color: "#fff", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
       <div style={{ position: "absolute", top: 24, left: "50%", transform: "translateX(-50%)", fontSize: 12, color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-mono)" }}>{current + 1} / {images.length}</div>
       {images.length > 1 && <button onClick={e => { e.stopPropagation(); goPrev(); }} style={{ position: "absolute", left: 20, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "50%", width: 44, height: 44, color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>}
-      <img src={images[current]} onClick={e => e.stopPropagation()} style={{ maxWidth: "88vw", maxHeight: "88vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 24px 80px rgba(0,0,0,0.8)" }} alt={`Gallery ${current + 1}`} />
+      <img src={galleryUrl(images[current])} onClick={e => e.stopPropagation()} style={{ maxWidth: "88vw", maxHeight: caption ? "80vh" : "88vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 24px 80px rgba(0,0,0,0.8)" }} alt={caption || `Gallery ${current + 1}`} />
+      {caption && (
+        <p onClick={e => e.stopPropagation()} style={{ marginTop: 16, fontSize: 14, color: "rgba(255,255,255,0.75)", textAlign: "center", maxWidth: "60vw", lineHeight: 1.5 }}>{caption}</p>
+      )}
       {images.length > 1 && <button onClick={e => { e.stopPropagation(); goNext(); }} style={{ position: "absolute", right: 20, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "50%", width: 44, height: 44, color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>}
     </div>
   );
@@ -816,14 +826,23 @@ export default function App() {
             {profile.gallery?.length > 0 && (
               <Section title="Gallery" labelColor={t.labelGallery} lineColor={t.lineColor}>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                  {profile.gallery.map((url, i) => (
-                    <div key={i} onClick={() => setLightboxIndex(i)} style={{ aspectRatio: "1", borderRadius: 10, overflow: "hidden", cursor: "pointer", border: "1px solid var(--border)", transition: "border-color 0.2s, transform 0.2s" }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.transform = "scale(1.03)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "scale(1)"; }}
-                    >
-                      <img src={url} alt={`Gallery ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    </div>
-                  ))}
+                  {profile.gallery.map((item, i) => {
+                    const url = galleryUrl(item);
+                    const caption = galleryCaption(item);
+                    return (
+                      <div key={i} onClick={() => setLightboxIndex(i)} style={{ cursor: "pointer" }}>
+                        <div style={{ aspectRatio: "1", borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", transition: "border-color 0.2s, transform 0.2s" }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "scale(1)"; }}
+                        >
+                          <img src={url} alt={caption || `Gallery ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </div>
+                        {caption && (
+                          <p style={{ fontSize: 10, color: `var(--text-muted)`, marginTop: 4, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>{caption}</p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </Section>
             )}

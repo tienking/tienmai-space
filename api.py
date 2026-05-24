@@ -88,7 +88,7 @@ class ProfileUpdate(BaseModel):
     educations: Optional[List[dict]] = None
     projects: Optional[List[dict]] = None
     certifications: Optional[List[dict]] = None
-    gallery: Optional[List[str]] = None
+    gallery: Optional[List[Any]] = None
     theme: Optional[Dict[str, Any]] = None
     fonts: Optional[Dict[str, str]] = None
     openToWork: Optional[bool] = None
@@ -421,8 +421,14 @@ async def admin_update_profile(data: ProfileUpdate, username: str = Depends(veri
 
 # --- Admin: Update Gallery ---
 @router.put("/api/admin/gallery")
-async def admin_update_gallery(gallery: List[str], username: str = Depends(verify_token)):
-    """Update gallery images and order - requires JWT token."""
+async def admin_update_gallery(request: Request, _username: str = Depends(verify_token)):
+    """Update gallery images and order - requires JWT token.
+    Accepts array of strings (legacy) or {url, caption} objects.
+    Uses raw request.json() to bypass Pydantic coercion entirely.
+    """
+    gallery = await request.json()
+    if not isinstance(gallery, list):
+        raise HTTPException(status_code=400, detail="Expected a JSON array")
     await update_profile({"gallery": gallery})
     return {"message": "Gallery updated successfully"}
 
