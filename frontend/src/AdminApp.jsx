@@ -175,7 +175,14 @@ function Dashboard({ token, onLogout }) {
   const saveGallery = async (gallery) => {
     setSaving(true);
     try {
-      await fetch("/api/admin/gallery", { method: "PUT", headers: authHeaders(token), body: JSON.stringify(gallery) });
+      const res = await fetch("/api/admin/gallery", { method: "PUT", headers: authHeaders(token), body: JSON.stringify(gallery) });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = Array.isArray(err.detail)
+          ? err.detail.map(e => e.msg).join(", ")
+          : (err.detail || `HTTP ${res.status}`);
+        throw new Error(msg);
+      }
       setProfile(prev => ({ ...prev, gallery }));
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (e) { alert("Save failed: " + e.message); }
@@ -898,26 +905,40 @@ function ListTab({ title, field, items, onSave, saving, fields }) {
 }
 
 function GalleryTab({ gallery, onSave, saving }) {
-  const [images, setImages] = useState(gallery);
+  // Normalize legacy string items to {url, caption} objects
+  const normalize = items => items.map(item => typeof item === "string" ? { url: item, caption: "" } : item);
+  const [images, setImages] = useState(() => normalize(gallery));
   const [newUrl, setNewUrl] = useState("");
-  const add = () => { if (!newUrl.trim()) return; setImages(p => [...p, newUrl.trim()]); setNewUrl(""); };
+  const [newCaption, setNewCaption] = useState("");
+
+  const add = () => {
+    if (!newUrl.trim()) return;
+    setImages(p => [...p, { url: newUrl.trim(), caption: newCaption.trim() }]);
+    setNewUrl("");
+    setNewCaption("");
+  };
   const remove = i => setImages(p => p.filter((_, idx) => idx !== i));
   const moveUp = i => { if (i === 0) return; const l = [...images];[l[i - 1], l[i]] = [l[i], l[i - 1]]; setImages(l); };
   const moveDown = i => { if (i === images.length - 1) return; const l = [...images];[l[i], l[i + 1]] = [l[i + 1], l[i]]; setImages(l); };
+  const updateCaption = (i, val) => setImages(p => p.map((item, idx) => idx === i ? { ...item, caption: val } : item));
 
   return (
     <TabCard title="Gallery" onSave={() => onSave(images)} saving={saving}>
       <Field label="Add image URL (Cloudinary)">
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
           <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} onKeyDown={e => e.key === "Enter" && add()} />
           <button onClick={add} style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", flexShrink: 0 }}>Add</button>
         </div>
+        <input value={newCaption} onChange={e => setNewCaption(e.target.value)} placeholder="Caption (optional)" style={{ ...inputStyle }} onKeyDown={e => e.key === "Enter" && add()} />
       </Field>
       <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
-        {images.map((url, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px" }}>
-            <img src={url} alt="" style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
-            <p style={{ flex: 1, fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{url}</p>
+        {images.map((item, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px" }}>
+            <img src={item.url} alt="" style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 }}>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.url}</p>
+              <input value={item.caption} onChange={e => updateCaption(i, e.target.value)} placeholder="Caption (optional)" style={{ ...inputStyle, fontSize: 12, padding: "5px 10px" }} />
+            </div>
             <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
               <SmallBtn onClick={() => moveUp(i)} disabled={i === 0}>↑</SmallBtn>
               <SmallBtn onClick={() => moveDown(i)} disabled={i === images.length - 1}>↓</SmallBtn>
