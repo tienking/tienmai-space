@@ -176,7 +176,14 @@ function Dashboard({ token, onLogout }) {
     setSaving(true);
     try {
       const res = await fetch("/api/admin/gallery", { method: "PUT", headers: authHeaders(token), body: JSON.stringify(gallery) });
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.detail || `HTTP ${res.status}`); }
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        const detail = d.detail;
+        const msg = typeof detail === "string" ? detail
+          : Array.isArray(detail) ? detail.map(e => e.msg || JSON.stringify(e)).join("; ")
+          : `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
       setProfile(prev => ({ ...prev, gallery }));
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (e) { alert("Save failed: " + e.message); }
