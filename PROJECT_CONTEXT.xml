@@ -1,0 +1,536 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PROJECT_CONTEXT.xml
+  Tài liệu mô tả toàn bộ cấu trúc dự án tienmai.space.
+  Dùng để cung cấp context cho AI assistant khi bắt đầu session mới.
+  Cập nhật thủ công khi có thay đổi lớn về kiến trúc.
+-->
+<project name="tienmai-space" url="https://tienmai.space">
+
+  <!-- ════════════════════════════════════════════════════════════
+       TỔNG QUAN
+       ════════════════════════════════════════════════════════════ -->
+  <overview>
+    <description>
+      Website cá nhân kết hợp portfolio, AI chatbot, và Job Tracker SaaS.
+      Ba app độc lập chạy trên cùng một server và cùng một backend FastAPI.
+    </description>
+    <apps>
+      <app id="portfolio" url="https://tienmai.space/" entry="frontend/index.html">
+        Portfolio cá nhân: giới thiệu, kỹ năng, kinh nghiệm, project, gallery.
+        Có AI chatbot (Gemini) trả lời với persona là chính chủ nhân.
+        Recruiter có thể upload JD để phân tích độ phù hợp.
+      </app>
+      <app id="admin" url="https://tienmai.space/admin" entry="frontend/admin.html">
+        Trang quản trị nội dung portfolio: chỉnh sửa profile, gallery, theme, fonts,
+        resume, AI settings, analytics, quản lý user Job Tracker.
+        Yêu cầu đăng nhập bằng JWT. Rate limiting: 5 lần sai → khóa 5 phút.
+      </app>
+      <app id="jobtracker" url="https://tienmai.space/jobtracker" entry="frontend/jobtracker.html">
+        SaaS theo dõi ứng tuyển việc làm. Mỗi user có tài khoản riêng.
+        Tính năng: danh sách job, trạng thái ứng tuyển, lưu JD, AI chatbot tư vấn,
+        upload resume, import thông tin từ resume.
+        Giao diện tiếng Việt. AI chatbot tiếng Việt.
+      </app>
+    </apps>
+  </overview>
+
+  <!-- ════════════════════════════════════════════════════════════
+       TECH STACK
+       ════════════════════════════════════════════════════════════ -->
+  <techstack>
+    <backend>
+      <item>Python 3 / FastAPI 0.136.1</item>
+      <item>Pydantic 2.13.3 (v2 — có breaking changes so với v1)</item>
+      <item>Motor 3.7.1 (async MongoDB driver)</item>
+      <item>MongoDB — database "tienmai"</item>
+      <item>Google GenAI SDK (google-genai 1.75.0) — Gemini models</item>
+      <item>python-telegram-bot 22.7 — Telegram bot &amp; notifications</item>
+      <item>python-jose — JWT (HS256, 30 ngày)</item>
+      <item>bcrypt — hash password</item>
+      <item>pdfplumber — extract text từ PDF</item>
+      <item>python-docx — extract text từ DOCX</item>
+      <item>Uvicorn 0.46.0 — ASGI server</item>
+    </backend>
+    <frontend>
+      <item>React 19 + Vite 8</item>
+      <item>Inline styles hoàn toàn — không dùng CSS framework hay Tailwind</item>
+      <item>Multi-entry build: 3 HTML entry points, build ra 3 bundle riêng</item>
+      <item>Không có routing library — mỗi app là một SPA riêng biệt</item>
+    </frontend>
+    <infrastructure>
+      <item>VPS Hostinger — Ubuntu</item>
+      <item>Nginx — reverse proxy, serve static files, SSL termination</item>
+      <item>Let's Encrypt — SSL certificate</item>
+      <item>systemd service: tienmai-api.service</item>
+      <item>GitLab CI/CD → deploy script trên VPS</item>
+    </infrastructure>
+  </techstack>
+
+  <!-- ════════════════════════════════════════════════════════════
+       CẤU TRÚC FILE
+       ════════════════════════════════════════════════════════════ -->
+  <filestructure>
+    <root path="d:\Projects\tienmai-space\" vps_path="/root/tienmai-bot/">
+      <file name="main.py">
+        FastAPI app entry point. Khởi tạo app, include router từ api.py,
+        cấu hình Telegram webhook bot.
+        Telegram handler: nhận tin nhắn → gọi Gemini → lưu MongoDB → reply.
+        Webhook endpoint: POST /webhook (Telegram push updates).
+        Startup: set_webhook cho Telegram bot.
+      </file>
+      <file name="api.py">
+        Toàn bộ API routes (APIRouter). Gồm:
+        - Public routes: /api/profile, /api/chat, /api/chat/file, /api/jd-match, /api/resume/*
+        - Admin routes: /api/admin/* (yêu cầu JWT verify_token)
+        - JobTracker routes: /api/jobtracker/* (yêu cầu jobtracker JWT)
+        Pydantic models: ChatRequest, LoginRequest, ProfileUpdate, AISettingsUpdate,
+        JtProfileUpdate, JobTrackerLoginRequest, v.v.
+        Rate limiting admin login: in-memory dict _login_attempts (reset khi restart).
+        build_system_prompt(): tạo system prompt AI từ profile data.
+        build_jt_system_prompt(): tạo system prompt AI cho Job Tracker.
+      </file>
+      <file name="auth.py">
+        JWT management và authentication.
+        create_access_token(): JWT 30 ngày, có trường "ver" (token version).
+        verify_token(): dependency FastAPI, đọc Bearer token, kiểm tra version.
+        Token version stored trong MongoDB — increment khi đổi password → invalidate session cũ.
+        create_jobtracker_token(): JWT 7 ngày, type="jobtracker".
+        verify_jobtracker_token(): dependency riêng cho Job Tracker.
+        authenticate_user(): check username + bcrypt password hash.
+        hash_password(): bcrypt hash.
+      </file>
+      <file name="database.py">
+        Async MongoDB operations (Motor).
+        Database: "tienmai"
+        Collections:
+          - chat_history: lưu lịch sử chat (session_id, role, content, source, created_at)
+          - visitors: log visitor session (session_id, first_seen, last_seen)
+          - profile: profile data portfolio (1 document duy nhất)
+          - settings: AI settings (type="ai") và admin credentials (type="admin")
+          - admin_sessions: lịch sử đăng nhập admin
+          - jobtracker_users: tài khoản Job Tracker users
+          - jobtracker_jobs: danh sách job của mỗi user
+          - jobtracker_profiles: profile cá nhân của mỗi JT user
+      </file>
+      <file name="config.py">
+        Load biến môi trường từ .env (không commit).
+        TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, GEMINI_API_KEY, MONGODB_URL, JWT_SECRET.
+        WEBHOOK_URL = "https://tienmai.space/webhook" (hardcoded, safe to commit).
+      </file>
+      <file name="notifications.py">
+        Telegram notifications cho chủ nhân:
+        notify_new_chat(): khi visitor gửi tin nhắn đầu tiên trên web.
+        notify_jd_upload(): khi có JD được upload, gửi file + match analysis.
+      </file>
+      <file name="nginx.conf">
+        HTTP 80 → redirect HTTPS.
+        HTTPS 443: SSL Let's Encrypt.
+        root: /root/tienmai-bot/frontend/dist
+        location /: SPA fallback → index.html
+        location /admin: serve admin.html
+        location /jobtracker: serve jobtracker.html
+        location /api/: proxy → 127.0.0.1:8000, client_max_body_size 20m
+        location /webhook: proxy → 127.0.0.1:8000
+      </file>
+      <file name="tienmai-api.service">
+        systemd service. WorkingDirectory: /root/tienmai-bot/
+        ExecStart: /root/tienmai-bot/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+        EnvironmentFile: /root/tienmai-bot/.env
+        Restart=always, RestartSec=5
+      </file>
+      <file name=".gitlab-ci.yml">
+        stages: [deploy]. Chỉ deploy trên branch main.
+        Runner tag: tienmai-space-vps
+        Script: sudo /usr/local/bin/deploy-tienmai.sh
+      </file>
+      <file name="requirements.txt">
+        Pin đầy đủ tất cả dependencies. Cập nhật khi thêm package mới.
+        Key versions: fastapi==0.136.1, pydantic==2.13.3, motor==3.7.1,
+        uvicorn==0.46.0, python-telegram-bot==22.7, google-genai==1.75.0
+      </file>
+      <file name=".gitignore">
+        .env, venv/, __pycache__/, *.pyc, frontend/node_modules/, frontend/dist/,
+        seed_admin.py, seed_jobtracker.py
+      </file>
+    </root>
+
+    <frontend_dir path="frontend/">
+      <file name="vite.config.js">
+        Multi-entry build: input = {main: index.html, admin: admin.html, jobtracker: jobtracker.html}
+        Plugin: @vitejs/plugin-react
+      </file>
+      <file name="index.html">Entry point Portfolio app → src/main.jsx</file>
+      <file name="admin.html">Entry point Admin app → src/admin.jsx</file>
+      <file name="jobtracker.html">Entry point Job Tracker app → src/jobtracker.jsx</file>
+      <file name="src/main.jsx">Mount Portfolio React app (App component)</file>
+      <file name="src/admin.jsx">Mount Admin React app (AdminApp component)</file>
+      <file name="src/jobtracker.jsx">Mount Job Tracker React app (JobTrackerApp component)</file>
+      <file name="src/App.jsx">
+        Portfolio SPA. Fetch /api/profile → render toàn bộ portfolio.
+        Sections: Basic Info, About, Skills, Experience, Education, Projects,
+                  Certifications, Gallery (grid 4 cột + lightbox), Resume.
+        Theme: CSS variables từ profile.theme (màu background, section, text, accent...).
+        Fonts: Google Fonts dynamic load từ profile.fonts.
+        Lightbox: component inline, keyboard navigation.
+        ChatPopup: floating chat với Gemini AI.
+        JD upload: recruiter upload PDF/DOCX/TXT → /api/jd-match → hiển thị kết quả.
+        Gallery items: hỗ trợ cả string URL (legacy) lẫn {url, caption} object.
+      </file>
+      <file name="src/AdminApp.jsx">
+        Admin SPA. Login form → JWT stored in localStorage.
+        Tabs: Basic Info, About, Skills, Experience, Education, Projects,
+              Certifications, Gallery, Resume, Theme, Fonts, Analytics, AI, JobTracker, Settings.
+        GalleryTab: list image URLs, add/remove/reorder.
+        ThemeTab: color pickers cho từng section, dark/light presets.
+        FontsTab: chọn Display font và Mono font từ danh sách Google Fonts.
+        AnalyticsTab: tổng visitors, messages, biểu đồ 7 ngày, câu hỏi gần đây.
+        AITab: chọn Gemini model active, quản lý available models.
+        JobTrackerTab: tạo/xóa/đổi mật khẩu user Job Tracker.
+        SettingsTab: đổi username/password admin, xem login history.
+        saveGallery(): PUT /api/admin/gallery với array gallery.
+        save(): PUT /api/admin/profile với partial ProfileUpdate.
+      </file>
+      <file name="src/JobTrackerApp.jsx">
+        Job Tracker SPA. Giao diện tiếng Việt.
+        Login → JWT stored in localStorage (key: "jt_token").
+        Features: bảng job (công ty, vị trí, địa điểm, hình thức, tháng/năm, trạng thái),
+        thêm/sửa/xóa job, lưu JD text cho từng job, AI chatbot tư vấn,
+        upload resume (PDF), import profile từ resume, chỉnh sửa profile.
+        Trạng thái job: not_applied, applied, viewed, downloaded, interviewing,
+                        waiting, rejected, failed.
+        AI chat: gửi kèm toàn bộ JD của các job + resume (nếu có) làm context.
+      </file>
+      <file name="src/index.css">CSS global: font import, reset cơ bản. Phần lớn styling dùng inline styles.</file>
+    </frontend_dir>
+  </filestructure>
+
+  <!-- ════════════════════════════════════════════════════════════
+       API ENDPOINTS
+       ════════════════════════════════════════════════════════════ -->
+  <api base_url="https://tienmai.space">
+
+    <section name="Public — Portfolio">
+      <endpoint method="GET" path="/api/profile">
+        Trả về toàn bộ profile document từ MongoDB (không có _id).
+      </endpoint>
+      <endpoint method="GET" path="/api/resume/file">
+        Serve file resume.pdf từ /root/tienmai-bot/uploads/resume.pdf
+      </endpoint>
+      <endpoint method="GET" path="/api/resume/exists">
+        Kiểm tra resume có tồn tại không. Returns: {exists: bool}
+      </endpoint>
+      <endpoint method="POST" path="/api/chat">
+        Text chat với AI. Body: {message, session_id, analyze_context?}
+        RAG: load profile → build system prompt → Gemini → lưu history.
+        Notify Telegram khi visitor đầu tiên nhắn tin.
+      </endpoint>
+      <endpoint method="DELETE" path="/api/chat/{session_id}">
+        Xóa lịch sử chat của session.
+      </endpoint>
+      <endpoint method="POST" path="/api/chat/file">
+        Chat với file đính kèm (PDF/DOCX/TXT). Form data: message, session_id, file.
+      </endpoint>
+      <endpoint method="POST" path="/api/jd-match">
+        Upload JD file → Gemini phân tích → trả về JSON:
+        {job_title, match_percent, match_skills, missing_skills, assessment}
+        Gửi kết quả qua Telegram cho chủ nhân.
+      </endpoint>
+      <endpoint method="POST" path="/webhook">
+        Telegram webhook. Nhận update → xử lý tin nhắn → reply qua Telegram bot.
+      </endpoint>
+    </section>
+
+    <section name="Admin — yêu cầu Bearer JWT (verify_token)">
+      <endpoint method="POST" path="/api/admin/login">
+        Login. Body: {username, password}. Rate limit: 5 lần → 5 phút.
+        Returns: {access_token, token_type: "bearer"}
+      </endpoint>
+      <endpoint method="GET" path="/api/admin/sessions">
+        Lịch sử đăng nhập (30 entries gần nhất).
+      </endpoint>
+      <endpoint method="POST" path="/api/admin/verify-password">
+        Kiểm tra mật khẩu hiện tại. Body: {password}
+      </endpoint>
+      <endpoint method="PUT" path="/api/admin/password">
+        Đổi username/password. Body: {new_username?, new_password}
+        Tự động increment token_version → invalidate tất cả session cũ.
+      </endpoint>
+      <endpoint method="PUT" path="/api/admin/profile">
+        Cập nhật partial profile. Body: ProfileUpdate model (tất cả fields optional).
+        Fields: name, title, location, email, phone, github, gitlab, linkedin,
+                about, avatar, skills, experiences, educations, projects,
+                certifications, gallery, theme, fonts, openToWork, resumeVisible.
+      </endpoint>
+      <endpoint method="PUT" path="/api/admin/gallery">
+        Cập nhật danh sách gallery. Body: array of items.
+        KNOWN ISSUE: gallery items hiện là List[str] — chưa hỗ trợ {url, caption} dict.
+        Pydantic v2 coerce mạnh nên cần dùng request.json() để bypass (chưa implement).
+      </endpoint>
+      <endpoint method="POST" path="/api/admin/resume">
+        Upload resume PDF. Form: file (PDF only).
+        Lưu tại: /root/tienmai-bot/uploads/resume.pdf
+      </endpoint>
+      <endpoint method="DELETE" path="/api/admin/resume">Xóa resume.</endpoint>
+      <endpoint method="GET" path="/api/admin/analytics">
+        Analytics: total_visitors, total_messages, visitors_by_day (7 ngày), recent_questions.
+      </endpoint>
+      <endpoint method="GET" path="/api/admin/ai-settings">Lấy AI settings (active_model, available_models).</endpoint>
+      <endpoint method="PUT" path="/api/admin/ai-settings">Cập nhật AI settings.</endpoint>
+      <endpoint method="GET" path="/api/admin/jobtracker/users">Danh sách Job Tracker users.</endpoint>
+      <endpoint method="POST" path="/api/admin/jobtracker/users">Tạo user mới. Body: {username, password}</endpoint>
+      <endpoint method="PUT" path="/api/admin/jobtracker/users/{username}">Đổi mật khẩu user. Body: {password}</endpoint>
+      <endpoint method="DELETE" path="/api/admin/jobtracker/users/{username}">Xóa user (xóa cả jobs).</endpoint>
+      <endpoint method="PUT" path="/api/admin/jobtracker/jobs/{username}">Override toàn bộ jobs của user.</endpoint>
+    </section>
+
+    <section name="Job Tracker — yêu cầu Bearer JWT (verify_jobtracker_token, type='jobtracker')">
+      <endpoint method="POST" path="/api/jobtracker/login">
+        Login. Body: {username, password}. Returns: {access_token, token_type, username}
+      </endpoint>
+      <endpoint method="GET" path="/api/jobtracker/jobs/{username}">
+        Lấy danh sách jobs của user. Chỉ xem được data của chính mình.
+      </endpoint>
+      <endpoint method="PUT" path="/api/jobtracker/jobs/{username}">
+        Lưu toàn bộ danh sách jobs. Body: array of job objects.
+        Job object: {id, title, company, loc, mode, month, year, status, jd?, notes?}
+      </endpoint>
+      <endpoint method="GET" path="/api/jobtracker/profile/{username}">Lấy profile cá nhân.</endpoint>
+      <endpoint method="PUT" path="/api/jobtracker/profile/{username}">Cập nhật profile cá nhân.</endpoint>
+      <endpoint method="GET" path="/api/jobtracker/resume/{username}/check">Kiểm tra resume có tồn tại.</endpoint>
+      <endpoint method="POST" path="/api/jobtracker/resume/{username}">
+        Upload resume PDF. Query param: ?import=true để extract profile từ resume.
+        Lưu tại: /root/tienmai-bot/resumes/{username}.pdf
+      </endpoint>
+      <endpoint method="GET" path="/api/jobtracker/resume/{username}">Download resume PDF.</endpoint>
+      <endpoint method="DELETE" path="/api/jobtracker/resume/{username}">Xóa resume.</endpoint>
+      <endpoint method="GET" path="/api/jobtracker/chat/{username}/history">Lịch sử chat AI (60 messages).</endpoint>
+      <endpoint method="DELETE" path="/api/jobtracker/chat/{username}/history">Xóa lịch sử chat.</endpoint>
+      <endpoint method="POST" path="/api/jobtracker/chat/{username}">
+        AI chat. Context: system prompt + resume text + tất cả JD + chat history.
+        analyze_context field: gửi nội dung phân tích bổ sung (không lưu vào history).
+      </endpoint>
+      <endpoint method="POST" path="/api/jobtracker/chat/{username}/file">
+        Chat với file JD đính kèm (PDF/DOCX/TXT).
+      </endpoint>
+    </section>
+  </api>
+
+  <!-- ════════════════════════════════════════════════════════════
+       DATABASE SCHEMA (MongoDB)
+       ════════════════════════════════════════════════════════════ -->
+  <database name="tienmai" driver="Motor (async)">
+
+    <collection name="profile">
+      <description>1 document duy nhất lưu toàn bộ nội dung portfolio.</description>
+      <fields>
+        <field name="name" type="string"/>
+        <field name="title" type="string">Headline/chức danh</field>
+        <field name="location" type="string"/>
+        <field name="email" type="string"/>
+        <field name="phone" type="string"/>
+        <field name="github" type="string">URL</field>
+        <field name="gitlab" type="string">URL</field>
+        <field name="linkedin" type="string">URL</field>
+        <field name="about" type="string">Bio text</field>
+        <field name="avatar" type="string">Cloudinary URL</field>
+        <field name="openToWork" type="bool"/>
+        <field name="resumeVisible" type="bool">Hiển thị nút Resume trên portfolio</field>
+        <field name="skills" type="array">
+          Có 2 format: ["skill1", "skill2"] (flat) hoặc [{group, items: [...]}] (grouped)
+        </field>
+        <field name="experiences" type="array">
+          [{role, company, period, description}]
+        </field>
+        <field name="educations" type="array">
+          [{degree, school, period}]
+        </field>
+        <field name="projects" type="array">
+          [{title, tag, description, link}]
+        </field>
+        <field name="certifications" type="array">
+          [{name, issuer, issueMonth, issueYear, expMonth, expYear, noExpiry, credentialId, link}]
+        </field>
+        <field name="gallery" type="array">
+          Hiện tại: ["url1", "url2"] (plain strings — Cloudinary URLs).
+          Dự định tương lai: [{url, caption}] nhưng chưa implement do lỗi Pydantic v2.
+        </field>
+        <field name="theme" type="object">
+          Màu sắc cho từng section: {bgMain, bgCard, textMain, textMuted, accent,
+          accentDim, accentBorder, border, labelGallery, labelSkills, ..., lineColor}
+        </field>
+        <field name="fonts" type="object">{display: "Syne", mono: "DM Mono"}</field>
+      </fields>
+    </collection>
+
+    <collection name="settings">
+      <description>Lưu nhiều loại settings, phân biệt bằng field "type".</description>
+      <document type="admin">
+        {type: "admin", username, hashed_password, token_version: int}
+      </document>
+      <document type="ai">
+        {type: "ai", active_model: "gemini-2.0-flash", available_models: [...]}
+      </document>
+    </collection>
+
+    <collection name="chat_history">
+      <fields>
+        <field name="session_id" type="string">
+          Web: UUID do client tạo. Telegram: "telegram_{user_id}". JobTracker: "jt_{username}_main"
+        </field>
+        <field name="role" type="string">"user" hoặc "model"</field>
+        <field name="content" type="string"/>
+        <field name="source" type="string">"web", "telegram", hoặc "jobtracker"</field>
+        <field name="created_at" type="datetime"/>
+      </fields>
+    </collection>
+
+    <collection name="visitors">
+      <fields>
+        <field name="session_id" type="string"/>
+        <field name="first_seen" type="datetime"/>
+        <field name="last_seen" type="datetime"/>
+      </fields>
+    </collection>
+
+    <collection name="admin_sessions">
+      <description>Lịch sử đăng nhập admin (thành công và thất bại).</description>
+      <fields>
+        <field name="ip" type="string"/>
+        <field name="user_agent" type="string"/>
+        <field name="success" type="bool"/>
+        <field name="created_at" type="datetime"/>
+      </fields>
+    </collection>
+
+    <collection name="jobtracker_users">
+      <fields>
+        <field name="username" type="string"/>
+        <field name="hashed_password" type="string">bcrypt hash</field>
+        <field name="created_at" type="datetime"/>
+      </fields>
+    </collection>
+
+    <collection name="jobtracker_jobs">
+      <description>Mỗi user có 1 document, lưu toàn bộ jobs dưới dạng array.</description>
+      <fields>
+        <field name="username" type="string"/>
+        <field name="jobs" type="array">
+          [{id, title, company, loc, mode, month, year, status, jd?, notes?}]
+          status values: not_applied | applied | viewed | downloaded |
+                         interviewing | waiting | rejected | failed
+        </field>
+        <field name="updated_at" type="datetime"/>
+      </fields>
+    </collection>
+
+    <collection name="jobtracker_profiles">
+      <fields>
+        <field name="username" type="string"/>
+        <field name="name" type="string"/>
+        <field name="title" type="string"/>
+        <field name="location" type="string"/>
+        <field name="email" type="string"/>
+        <field name="phone" type="string"/>
+        <field name="linkedin" type="string"/>
+        <field name="about" type="string"/>
+        <field name="skills" type="array">["skill1", "skill2"]</field>
+        <field name="experiences" type="array">[{role, company, period, description}]</field>
+        <field name="educations" type="array">[{degree, school, period}]</field>
+        <field name="updated_at" type="datetime"/>
+      </fields>
+    </collection>
+  </database>
+
+  <!-- ════════════════════════════════════════════════════════════
+       DEPLOYMENT
+       ════════════════════════════════════════════════════════════ -->
+  <deployment>
+    <vps_paths>
+      <path alias="app_root">/root/tienmai-bot/</path>
+      <path alias="frontend_dist">/root/tienmai-bot/frontend/dist/</path>
+      <path alias="resume_file">/root/tienmai-bot/uploads/resume.pdf</path>
+      <path alias="jt_resumes">/root/tienmai-bot/resumes/{username}.pdf</path>
+      <path alias="venv">/root/tienmai-bot/venv/</path>
+      <path alias="env_file">/root/tienmai-bot/.env</path>
+      <path alias="deploy_script">/usr/local/bin/deploy-tienmai.sh</path>
+    </vps_paths>
+    <flow>
+      1. Dev push lên GitLab branch main
+      2. GitLab CI/CD runner (tag: tienmai-space-vps) chạy deploy-tienmai.sh
+      3. Script thường: git pull, npm build frontend, pip install, systemctl restart tienmai-api
+      4. Nginx serve frontend/dist/ (static) + proxy /api/ → uvicorn port 8000
+    </flow>
+    <known_deploy_issue>
+      Đôi khi systemctl restart không thành công (service crash khi start do lỗi code),
+      nhưng CI/CD vẫn báo pass. Kết quả: git pull đã cập nhật file nhưng process cũ vẫn
+      đang chạy. Cần kiểm tra log: journalctl -u tienmai-api -n 50
+    </known_deploy_issue>
+  </deployment>
+
+  <!-- ════════════════════════════════════════════════════════════
+       CONVENTIONS &amp; WORKFLOW
+       ════════════════════════════════════════════════════════════ -->
+  <conventions>
+    <convention name="language">
+      Comments trong code: tiếng Anh.
+      UI Portfolio + Admin: tiếng Anh.
+      UI Job Tracker: tiếng Việt.
+    </convention>
+    <convention name="git_workflow">
+      AI chỉ commit — KHÔNG push. Pushing là việc của developer.
+      Branch chính: main (protected trên GitLab — không force push được).
+      Rollback: dùng git revert + commit mới (không force push).
+      Cách rollback sạch nhất: git checkout TARGET_COMMIT -- file1 file2 → git commit
+    </convention>
+    <convention name="frontend_styling">
+      Inline styles 100%. Không có CSS classes hay framework.
+      CSS variables cho theme: --bg-main, --bg-card, --text-main, --text-muted,
+      --accent, --accent-dim, --accent-border, --border, --font-display, --font-mono.
+      Được set dynamic từ profile.theme qua JavaScript.
+    </convention>
+    <convention name="pydantic_v2_warning">
+      Pydantic v2 coerce mạnh hơn v1. List[str] sẽ reject dict items với lỗi
+      "Input should be a valid string". List[Any] trong theory chấp nhận mọi type
+      nhưng thực tế trên server vẫn có thể lỗi.
+      Cách bypass chắc chắn: dùng request: Request + await request.json()
+      (bypass hoàn toàn Pydantic, đọc raw JSON body).
+    </convention>
+  </conventions>
+
+  <!-- ════════════════════════════════════════════════════════════
+       KNOWN ISSUES / PENDING
+       ════════════════════════════════════════════════════════════ -->
+  <known_issues>
+    <issue id="gallery_caption" status="pending">
+      <title>Gallery chưa hỗ trợ caption</title>
+      <description>
+        Hiện tại gallery lưu plain strings (Cloudinary URLs).
+        Đã nhiều lần thử implement {url, caption} dicts nhưng:
+        1. Pydantic v2 reject dicts khi field là List[str] hoặc List[Any]
+        2. request.json() bypass được Pydantic nhưng sau khi deploy vẫn lỗi
+           — nghi do service không restart thành công sau deploy
+        Cần debug: journalctl -u tienmai-api sau khi deploy để xác nhận service đã restart.
+      </description>
+      <target_state>
+        api.py: PUT /api/admin/gallery dùng request.json() (không có Pydantic param).
+        api.py: ProfileUpdate.gallery = Optional[List[Any]] (thay vì List[str]).
+        AdminApp.jsx: GalleryTab có input caption per image, normalize legacy strings.
+        App.jsx: render caption bên dưới ảnh, backward-compat với string items.
+        Lightbox: extract URLs từ items.
+      </target_state>
+    </issue>
+  </known_issues>
+
+  <!-- ════════════════════════════════════════════════════════════
+       ENV VARIABLES (.env — không commit)
+       ════════════════════════════════════════════════════════════ -->
+  <env_variables>
+    <var name="TELEGRAM_TOKEN">Bot token từ BotFather</var>
+    <var name="TELEGRAM_CHAT_ID">Chat ID của chủ nhân để nhận notifications</var>
+    <var name="GEMINI_API_KEY">Google AI Studio API key</var>
+    <var name="MONGODB_URL">MongoDB connection string</var>
+    <var name="JWT_SECRET">Secret key để sign JWT tokens</var>
+  </env_variables>
+
+</project>
