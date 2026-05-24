@@ -421,8 +421,12 @@ async def admin_update_profile(data: ProfileUpdate, username: str = Depends(veri
 
 # --- Admin: Update Gallery ---
 @router.put("/api/admin/gallery")
-async def admin_update_gallery(gallery: List[Any], username: str = Depends(verify_token)):
-    """Update gallery images and order - requires JWT token."""
+async def admin_update_gallery(request: Request, username: str = Depends(verify_token)):
+    """Update gallery images and order - requires JWT token.
+    Uses raw Request to bypass Pydantic validation, since gallery items can be
+    either plain strings (legacy) or {url, caption} objects.
+    """
+    gallery = await request.json()
     await update_profile({"gallery": gallery})
     return {"message": "Gallery updated successfully"}
 
