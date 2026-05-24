@@ -71,8 +71,24 @@ function applyFonts(fonts) {
 
 // ─── Gallery helpers — handle both legacy strings and {url, caption} objects ───
 
-const galleryUrl = (item) => typeof item === "string" ? item : (item?.url || "");
+const galleryUrl     = (item) => typeof item === "string" ? item : (item?.url     || "");
 const galleryCaption = (item) => typeof item === "string" ? "" : (item?.caption || "");
+const galleryYear    = (item) => typeof item === "string" ? null : (item?.year   || null);
+
+// Group gallery by year (desc), items without year go last.
+// Returns { groups: [{year, items}], flat: [...allItemsSorted] }
+function computeGallery(gallery) {
+  const byYear = {};
+  gallery.forEach(item => {
+    const y = galleryYear(item) || 0; // 0 = no year
+    (byYear[y] = byYear[y] || []).push(item);
+  });
+  const sortedKeys = Object.keys(byYear).map(Number)
+    .sort((a, b) => a === 0 ? 1 : b === 0 ? -1 : b - a);
+  const groups = sortedKeys.map(y => ({ year: y || null, items: byYear[y] }));
+  const flat = groups.flatMap(g => g.items);
+  return { groups, flat };
+}
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
 
@@ -667,6 +683,7 @@ export default function App() {
   );
 
   const t = profile.theme || {};
+  const { groups: galleryGroups, flat: sortedGallery } = computeGallery(profile.gallery || []);
 
   return (
     <>
@@ -822,38 +839,47 @@ export default function App() {
               <CertificationsSection certifications={profile.certifications} t={t} />
             )}
 
-            {/* Gallery */}
-            {profile.gallery?.length > 0 && (
+            {/* Gallery — grouped by year, newest first */}
+            {sortedGallery.length > 0 && (
               <Section title="Gallery" labelColor={t.labelGallery} lineColor={t.lineColor}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                  {profile.gallery.map((item, i) => {
-                    const url = galleryUrl(item);
-                    const caption = galleryCaption(item);
-                    return (
-                      <div key={i} onClick={() => setLightboxIndex(i)} style={{ cursor: "pointer" }}>
-                        {/* Image — fixed square via aspectRatio + explicit 100% width */}
-                        <div
-                          style={{ width: "100%", aspectRatio: "1", borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", transition: "border-color 0.2s, transform 0.2s" }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.transform = "scale(1.03)"; }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "scale(1)"; }}
-                        >
-                          <img src={url} alt={caption || `Gallery ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                        </div>
-                        {/* Caption — always rendered to keep row heights equal across the grid;
-                            wraps up to 2 lines, minHeight reserves space even when empty */}
-                        <p style={{
-                          fontSize: 10, color: "var(--text-muted)", marginTop: 5,
-                          textAlign: "center", lineHeight: 1.4,
-                          minHeight: "1.4em",
-                          overflow: "hidden",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                        }}>{caption}</p>
-                      </div>
-                    );
-                  })}
-                </div>
+                {galleryGroups.map(({ year, items }, gIdx) => (
+                  <div key={year ?? "noyear"} style={{ marginBottom: gIdx < galleryGroups.length - 1 ? 20 : 0 }}>
+                    {/* Year label — shown only when at least one item has a year */}
+                    {year && (
+                      <p style={{
+                        fontSize: 11, fontFamily: "var(--font-mono)",
+                        color: "var(--text-muted)", letterSpacing: "0.08em",
+                        marginBottom: 8,
+                      }}>{year}</p>
+                    )}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                      {items.map((item) => {
+                        const url = galleryUrl(item);
+                        const caption = galleryCaption(item);
+                        const flatIdx = sortedGallery.indexOf(item);
+                        return (
+                          <div key={flatIdx} onClick={() => setLightboxIndex(flatIdx)} style={{ cursor: "pointer" }}>
+                            {/* Image — fixed square */}
+                            <div
+                              style={{ width: "100%", aspectRatio: "1", borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", transition: "border-color 0.2s, transform 0.2s" }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "scale(1)"; }}
+                            >
+                              <img src={url} alt={caption || `Gallery ${flatIdx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                            </div>
+                            {/* Caption — always rendered; wraps up to 2 lines for equal row heights */}
+                            <p style={{
+                              fontSize: 10, color: "var(--text-muted)", marginTop: 5,
+                              textAlign: "center", lineHeight: 1.4, minHeight: "1.4em",
+                              overflow: "hidden", display: "-webkit-box",
+                              WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                            }}>{caption}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </Section>
             )}
           </div>
@@ -862,7 +888,7 @@ export default function App() {
       </div>
 
       {resumeOpen && <ResumePopup onClose={() => setResumeOpen(false)} />}
-      {lightboxIndex !== null && <Lightbox images={profile.gallery} index={lightboxIndex} onClose={() => setLightboxIndex(null)} />}
+      {lightboxIndex !== null && <Lightbox images={sortedGallery} index={lightboxIndex} onClose={() => setLightboxIndex(null)} />}
       {chatOpen && <ChatPopup onClose={() => setChatOpen(false)} />}
       <FloatingButton onClick={() => setChatOpen(p => !p)} isOpen={chatOpen} />
     </>

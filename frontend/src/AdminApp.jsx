@@ -249,7 +249,7 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "education" && <EducationTab items={profile.educations || []} onSave={save} saving={saving} />}
           {activeTab === "projects" && <ListTab title="Projects" field="projects" items={profile.projects || []} onSave={save} saving={saving} fields={["title", "tag", "description", "link"]} />}
           {activeTab === "certifications" && <CertificationTab items={profile.certifications || []} onSave={save} saving={saving} />}
-          {activeTab === "gallery" && <GalleryTab gallery={profile.gallery || []} onSave={saveGallery} saving={saving} />}
+          {activeTab === "gallery" && <GalleryTab gallery={profile.gallery || []} experiences={profile.experiences || []} onSave={saveGallery} saving={saving} />}
           {activeTab === "resume" && <ResumeTab token={token} resumeVisible={profile.resumeVisible !== false} onSave={save} saving={saving} />}
           {activeTab === "theme" && <ThemeTab theme={profile.theme || {}} onSave={save} saving={saving} />}
           {activeTab === "fonts" && <FontsTab fonts={profile.fonts || {}} onSave={save} saving={saving} />}
@@ -905,25 +905,39 @@ function ListTab({ title, field, items, onSave, saving, fields }) {
   );
 }
 
-function GalleryTab({ gallery, onSave, saving }) {
-  // Normalize incoming items: legacy strings → {url, caption} objects
+function GalleryTab({ gallery, experiences, onSave, saving }) {
+  // Normalize incoming items: legacy strings → {url, caption, year} objects
   const normalize = (items) =>
     (items || []).map(item =>
-      typeof item === "string" ? { url: item, caption: "" } : { url: item.url || "", caption: item.caption || "" }
+      typeof item === "string"
+        ? { url: item, caption: "", year: null }
+        : { url: item.url || "", caption: item.caption || "", year: item.year || null }
     );
 
   const [images, setImages] = useState(() => normalize(gallery));
   const [newUrl, setNewUrl] = useState("");
 
+  // Build year options: currentYear down to earliest year from Experiences
+  const currentYear = new Date().getFullYear();
+  const earliestYear = (() => {
+    const years = (experiences || []).flatMap(exp => {
+      const matches = (exp.period || "").match(/\d{4}/g) || [];
+      return matches.map(Number);
+    });
+    return years.length > 0 ? Math.min(...years) : currentYear - 10;
+  })();
+  const yearOptions = Array.from({ length: currentYear - earliestYear + 1 }, (_, i) => currentYear - i);
+
   const add = () => {
     if (!newUrl.trim()) return;
-    setImages(p => [...p, { url: newUrl.trim(), caption: "" }]);
+    setImages(p => [...p, { url: newUrl.trim(), caption: "", year: null }]);
     setNewUrl("");
   };
   const remove = i => setImages(p => p.filter((_, idx) => idx !== i));
   const moveUp = i => { if (i === 0) return; const l = [...images]; [l[i - 1], l[i]] = [l[i], l[i - 1]]; setImages(l); };
   const moveDown = i => { if (i === images.length - 1) return; const l = [...images]; [l[i], l[i + 1]] = [l[i + 1], l[i]]; setImages(l); };
   const updateCaption = (i, v) => setImages(p => p.map((item, idx) => idx === i ? { ...item, caption: v } : item));
+  const updateYear = (i, v) => setImages(p => p.map((item, idx) => idx === i ? { ...item, year: v } : item));
 
   return (
     <TabCard title="Gallery" onSave={() => onSave(images)} saving={saving}>
@@ -936,7 +950,7 @@ function GalleryTab({ gallery, onSave, saving }) {
       <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
         {images.map((item, i) => (
           <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px" }}>
-            {/* Row: thumbnail + URL + action buttons */}
+            {/* Row 1: thumbnail + URL + action buttons */}
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
               <img src={item.url} alt="" style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
               <p style={{ flex: 1, fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.url}</p>
@@ -946,13 +960,23 @@ function GalleryTab({ gallery, onSave, saving }) {
                 <SmallBtn onClick={() => remove(i)} danger>✕</SmallBtn>
               </div>
             </div>
-            {/* Caption input */}
-            <input
-              value={item.caption}
-              onChange={e => updateCaption(i, e.target.value)}
-              placeholder="Caption (optional)"
-              style={{ ...inputStyle, fontSize: 12, padding: "7px 10px" }}
-            />
+            {/* Row 2: year dropdown + caption input */}
+            <div style={{ display: "flex", gap: 8 }}>
+              <select
+                value={item.year ?? ""}
+                onChange={e => updateYear(i, e.target.value ? parseInt(e.target.value) : null)}
+                style={{ ...inputStyle, width: 110, flexShrink: 0, fontSize: 12, padding: "7px 10px" }}
+              >
+                <option value="">No year</option>
+                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+              <input
+                value={item.caption}
+                onChange={e => updateCaption(i, e.target.value)}
+                placeholder="Caption (optional)"
+                style={{ ...inputStyle, flex: 1, fontSize: 12, padding: "7px 10px" }}
+              />
+            </div>
           </div>
         ))}
       </div>
