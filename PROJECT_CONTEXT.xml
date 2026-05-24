@@ -502,25 +502,23 @@
        KNOWN ISSUES / PENDING
        ════════════════════════════════════════════════════════════ -->
   <known_issues>
-    <issue id="gallery_caption" status="pending">
-      <title>Gallery chưa hỗ trợ caption</title>
-      <description>
-        Hiện tại gallery lưu plain strings (Cloudinary URLs).
-        Đã nhiều lần thử implement {url, caption} dicts nhưng:
-        1. Pydantic v2 reject dicts khi field là List[str] hoặc List[Any]
-        2. request.json() bypass được Pydantic nhưng sau khi deploy vẫn lỗi
-           — nghi do service không restart thành công sau deploy
-        Cần debug: journalctl -u tienmai-api sau khi deploy để xác nhận service đã restart.
-      </description>
-      <target_state>
-        api.py: PUT /api/admin/gallery dùng request.json() (không có Pydantic param).
-        api.py: ProfileUpdate.gallery = Optional[List[Any]] (thay vì List[str]).
-        AdminApp.jsx: GalleryTab có input caption per image, normalize legacy strings.
-        App.jsx: render caption bên dưới ảnh, backward-compat với string items.
-        Lightbox: extract URLs từ items.
-      </target_state>
-    </issue>
+    <!-- No open issues currently. -->
   </known_issues>
+
+  <resolved_issues>
+    <issue id="gallery_caption" status="resolved" resolved_in="d20a04e">
+      <title>Gallery hỗ trợ caption</title>
+      <description>
+        Gallery lưu {url, caption} objects. Backward-compat với legacy plain strings.
+        api.py: PUT /api/admin/gallery dùng request.json() bypass Pydantic hoàn toàn.
+        api.py: ProfileUpdate.gallery = Optional[List[Any]].
+        AdminApp.jsx: GalleryTab normalize legacy strings, caption input per image.
+        App.jsx: galleryUrl/galleryCaption helpers, caption dưới thumbnail và trong Lightbox.
+        Root cause của các lần thất bại trước: service không restart sau deploy —
+        cần verify bằng: journalctl -u tienmai-api -n 30 sau mỗi deploy.
+      </description>
+    </issue>
+  </resolved_issues>
 
   <!-- ════════════════════════════════════════════════════════════
        ENV VARIABLES (.env — không commit)
