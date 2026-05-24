@@ -831,15 +831,25 @@ export default function App() {
                     const caption = galleryCaption(item);
                     return (
                       <div key={i} onClick={() => setLightboxIndex(i)} style={{ cursor: "pointer" }}>
-                        <div style={{ aspectRatio: "1", borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", transition: "border-color 0.2s, transform 0.2s" }}
+                        {/* Image — fixed square via aspectRatio + explicit 100% width */}
+                        <div
+                          style={{ width: "100%", aspectRatio: "1", borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", transition: "border-color 0.2s, transform 0.2s" }}
                           onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.transform = "scale(1.03)"; }}
                           onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "scale(1)"; }}
                         >
-                          <img src={url} alt={caption || `Gallery ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <img src={url} alt={caption || `Gallery ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                         </div>
-                        {caption && (
-                          <p style={{ fontSize: 10, color: `var(--text-muted)`, marginTop: 4, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>{caption}</p>
-                        )}
+                        {/* Caption — always rendered to keep row heights equal across the grid;
+                            wraps up to 2 lines, minHeight reserves space even when empty */}
+                        <p style={{
+                          fontSize: 10, color: "var(--text-muted)", marginTop: 5,
+                          textAlign: "center", lineHeight: 1.4,
+                          minHeight: "1.4em",
+                          overflow: "hidden",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                        }}>{caption}</p>
                       </div>
                     );
                   })}
