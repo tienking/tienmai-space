@@ -148,7 +148,7 @@ tienmai-space/
 
 ### Job Tracker (`tienmai.space/jobtracker`)
 - Private app — separate JWT-authenticated user accounts (no relation to admin account)
-- **Tracker board** — Kanban-style pipeline: Wishlist / Applied / Interviewing / Offer / Rejected; add notes and job descriptions per card
+- **Tracker board** — Table view with filter (mode, status, month, year), sort by column, search by title/company; filter and sort state persists per user across page reloads (via localStorage); add notes and job descriptions per card
 - **Profile tab** — Name, title, contact info, skills, work experience (month/year dropdowns), education
 - **AI Resume extraction** — Upload PDF/DOCX resume → AI auto-fills all profile fields; preserves exact summary text verbatim
 - **AI Chatbot** — Reads entire resume + all JDs; evaluates fit honestly (not flattering), calls out gaps, recommends Nên apply / Không nên / Cân nhắc

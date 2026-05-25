@@ -234,7 +234,7 @@
       </dir>
       <dir name="src/components/jobtracker/">
         <file name="LoginPage.jsx">Login form tiếng Việt, lưu JWT vào localStorage.</file>
-        <file name="TrackerPage.jsx">Bảng job chính: filter, sort, add/edit/delete, status dropdown, analyze button. Dùng useIsMobile, badge().</file>
+        <file name="TrackerPage.jsx">Bảng job chính: filter (mode/status/month/year), sort, add/edit/delete, status dropdown, analyze button. Dùng useIsMobile, badge(). Filter và sort state được persist vào localStorage key jt_filters_{username} — restore khi reload, search box không persist.</file>
         <file name="JtProfilePage.jsx">Profile editor: 4 tabs (Cá nhân, Kỹ năng, Kinh nghiệm, Học vấn). Resume upload + AI import.</file>
         <file name="JobModal.jsx">Modal thêm/sửa job. Export emptyJob(). Có JdEditorModal sub-popup.</file>
         <file name="JdViewModal.jsx">Modal xem JD text full.</file>
