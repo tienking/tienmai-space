@@ -839,8 +839,8 @@ export default function App() {
               <CertificationsSection certifications={profile.certifications} t={t} />
             )}
 
-            {/* Gallery — grouped by year, newest first */}
-            {sortedGallery.length > 0 && (
+            {/* Gallery — grouped by year, newest first; hidden when galleryVisible === false */}
+            {sortedGallery.length > 0 && profile.galleryVisible !== false && (
               <Section title="Gallery" labelColor={t.labelGallery} lineColor={t.lineColor}>
                 {galleryGroups.map(({ year, items }, gIdx) => (
                   <div key={year ?? "noyear"} style={{ marginBottom: gIdx < galleryGroups.length - 1 ? 20 : 0 }}>

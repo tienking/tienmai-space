@@ -249,7 +249,7 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "education" && <EducationTab items={profile.educations || []} onSave={save} saving={saving} />}
           {activeTab === "projects" && <ListTab title="Projects" field="projects" items={profile.projects || []} onSave={save} saving={saving} fields={["title", "tag", "description", "link"]} />}
           {activeTab === "certifications" && <CertificationTab items={profile.certifications || []} onSave={save} saving={saving} />}
-          {activeTab === "gallery" && <GalleryTab gallery={profile.gallery || []} experiences={profile.experiences || []} onSave={saveGallery} saving={saving} />}
+          {activeTab === "gallery" && <GalleryTab gallery={profile.gallery || []} experiences={profile.experiences || []} galleryVisible={profile.galleryVisible !== false} onSave={saveGallery} onSaveProfile={save} saving={saving} />}
           {activeTab === "resume" && <ResumeTab token={token} resumeVisible={profile.resumeVisible !== false} onSave={save} saving={saving} />}
           {activeTab === "theme" && <ThemeTab theme={profile.theme || {}} onSave={save} saving={saving} />}
           {activeTab === "fonts" && <FontsTab fonts={profile.fonts || {}} onSave={save} saving={saving} />}
@@ -905,7 +905,7 @@ function ListTab({ title, field, items, onSave, saving, fields }) {
   );
 }
 
-function GalleryTab({ gallery, experiences, onSave, saving }) {
+function GalleryTab({ gallery, experiences, galleryVisible, onSave, onSaveProfile, saving }) {
   // Normalize incoming items: legacy strings → {url, caption, year} objects
   const normalize = (items) =>
     (items || []).map(item =>
@@ -964,8 +964,29 @@ function GalleryTab({ gallery, experiences, onSave, saving }) {
   };
   const handleDragEnd = () => { setDragIndex(null); setDragOverIndex(null); };
 
+  const [visible, setVisible] = useState(galleryVisible);
+  const toggleVisible = () => {
+    const next = !visible;
+    setVisible(next);
+    onSaveProfile({ galleryVisible: next });
+  };
+
   return (
     <TabCard title="Gallery" onSave={() => onSave(images)} saving={saving}>
+
+      {/* Visibility toggle */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-card)", border: `1px solid ${visible ? "var(--accent-border)" : "var(--border)"}`, borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
+        <div>
+          <p style={{ fontSize: 14, fontWeight: 500 }}>Show Gallery on profile</p>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+            {visible ? "Visible to visitors" : "Hidden from visitors"}
+          </p>
+        </div>
+        <button onClick={toggleVisible} disabled={saving} style={{ width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", background: visible ? "var(--accent)" : "var(--border)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+          <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: visible ? 23 : 3, transition: "left 0.2s" }} />
+        </button>
+      </div>
+
       <Field label="Add image URL (Cloudinary)">
         <div style={{ display: "flex", gap: 8 }}>
           <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} onKeyDown={e => e.key === "Enter" && add()} />

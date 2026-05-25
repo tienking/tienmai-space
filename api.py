@@ -93,6 +93,7 @@ class ProfileUpdate(BaseModel):
     fonts: Optional[Dict[str, str]] = None
     openToWork: Optional[bool] = None
     resumeVisible: Optional[bool] = None
+    galleryVisible: Optional[bool] = None
 
 # --- Build system prompt from profile ---
 def build_system_prompt(profile: dict) -> str:
