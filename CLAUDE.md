@@ -75,6 +75,7 @@ Only use `type: docs` when the commit touches documentation files **exclusively*
 ## Workflow Conventions
 
 - **Git**: commit only — never push. Pushing is the developer's responsibility.
+- **Remotes**: 2 remotes — `origin` (GitLab) and `github` (GitHub). Developer pushes to both after each session.
 - **Rollback**: `git revert` or `git checkout <hash> -- file1 file2` → new commit. No force-push.
 - **Branch**: `main` is the only branch. Protected on GitLab — no force-push allowed.
 
