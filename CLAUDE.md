@@ -59,13 +59,14 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 ## Documentation Update Rule
 
-**When committing code changes, always check these 3 files and include any relevant updates in the same commit — do NOT make a separate `docs:` commit for them:**
+**After every code change — whether committing or not — automatically check all 4 files below and apply any needed updates in the same commit. Never skip this step, never ask first, never make a separate `docs:` commit for it.**
 
 | File | Update when… |
 |------|-------------|
 | `PROJECT_CONTEXT.xml` | API endpoints, DB schema, file descriptions, or known issues change |
 | `README.md` | User-visible features, admin tabs, or tech stack change |
 | `SETUP.md` | Infrastructure, deployment steps, or env variables change |
+| `CLAUDE.md` | A workflow rule, code convention, or project constraint changes |
 
 Only use `type: docs` when the commit touches documentation files **exclusively**.
 
