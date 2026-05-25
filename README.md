@@ -111,7 +111,7 @@ tienmai-space/
 - Resume button → PDF popup viewer + download
 - Sections: About, Skills (grouped), Experience, Education, Projects, Certifications, Gallery
 - Certifications: sorted by date, expandable list
-- Gallery: 4-column grid with lightbox viewer
+- Gallery: images with captions, grouped by year (newest first), 4-column grid, lightbox with caption display
 - AI chatbot popup (bottom right) — suggested questions, session persistence, new conversation clears UI and MongoDB history
 
 ### JD Match Banner
@@ -142,7 +142,8 @@ tienmai-space/
 
 ### Admin Dashboard (`tienmai.space/admin`)
 - JWT login with brute force protection: 5 failed attempts → 5-minute lockout (countdown shown)
-- **Tabs:** Basic Info, About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume, Theme, Fonts, Analytics, Settings
+- **Tabs:** Basic Info, About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume, Theme, Fonts, Analytics, AI Models, Job Tracker, Settings
+- **Gallery tab:** visibility toggle, drag-and-drop reordering, per-image year (dropdown from first job year to current) and caption
 - **Theme editor:** 10 presets (5 dark + 5 light), full color picker for every section including JD Match Banner
 - **Font selector:** 8 display fonts + 6 mono fonts with live preview
 - **Analytics:** total visitors, total messages, 7-day visitor chart, recent questions list

@@ -175,20 +175,26 @@
         Lightbox: component inline, keyboard navigation.
         ChatPopup: floating chat với Gemini AI.
         JD upload: recruiter upload PDF/DOCX/TXT → /api/jd-match → hiển thị kết quả.
-        Gallery items: hỗ trợ cả string URL (legacy) lẫn {url, caption} object.
+        Gallery items: hỗ trợ cả string URL (legacy) lẫn {url, caption, year} object.
+        computeGallery(): nhóm items theo year giảm dần, items không có year xuống cuối.
+        galleryUrl/galleryCaption/galleryYear helpers: backward-compat với legacy strings.
+        Lightbox navigate theo sortedGallery (thứ tự hiển thị), không phải raw array.
+        Gallery section ẩn khi profile.galleryVisible === false.
       </file>
       <file name="src/AdminApp.jsx">
         Admin SPA. Login form → JWT stored in localStorage.
         Tabs: Basic Info, About, Skills, Experience, Education, Projects,
               Certifications, Gallery, Resume, Theme, Fonts, Analytics, AI, JobTracker, Settings.
-        GalleryTab: list image URLs, add/remove/reorder.
+        GalleryTab: visibility toggle (galleryVisible), drag-and-drop reorder,
+          year dropdown (range từ năm đầu Experiences tới hiện tại), caption input,
+          add/remove ảnh. normalize() chuyển legacy strings → {url, caption, year}.
         ThemeTab: color pickers cho từng section, dark/light presets.
         FontsTab: chọn Display font và Mono font từ danh sách Google Fonts.
         AnalyticsTab: tổng visitors, messages, biểu đồ 7 ngày, câu hỏi gần đây.
         AITab: chọn Gemini model active, quản lý available models.
         JobTrackerTab: tạo/xóa/đổi mật khẩu user Job Tracker.
         SettingsTab: đổi username/password admin, xem login history.
-        saveGallery(): PUT /api/admin/gallery với array gallery.
+        saveGallery(): PUT /api/admin/gallery với array [{url, caption, year}].
         save(): PUT /api/admin/profile với partial ProfileUpdate.
       </file>
       <file name="src/JobTrackerApp.jsx">
@@ -260,12 +266,12 @@
         Cập nhật partial profile. Body: ProfileUpdate model (tất cả fields optional).
         Fields: name, title, location, email, phone, github, gitlab, linkedin,
                 about, avatar, skills, experiences, educations, projects,
-                certifications, gallery, theme, fonts, openToWork, resumeVisible.
+                certifications, gallery, theme, fonts, openToWork, resumeVisible, galleryVisible.
       </endpoint>
       <endpoint method="PUT" path="/api/admin/gallery">
-        Cập nhật danh sách gallery. Body: array of items.
-        KNOWN ISSUE: gallery items hiện là List[str] — chưa hỗ trợ {url, caption} dict.
-        Pydantic v2 coerce mạnh nên cần dùng request.json() để bypass (chưa implement).
+        Cập nhật danh sách gallery. Body: array of [{url, caption, year}] objects.
+        Dùng request.json() thay vì Pydantic param để bypass type coercion hoàn toàn.
+        Backward-compat với plain string items (legacy).
       </endpoint>
       <endpoint method="POST" path="/api/admin/resume">
         Upload resume PDF. Form: file (PDF only).
@@ -336,6 +342,7 @@
         <field name="avatar" type="string">Cloudinary URL</field>
         <field name="openToWork" type="bool"/>
         <field name="resumeVisible" type="bool">Hiển thị nút Resume trên portfolio</field>
+        <field name="galleryVisible" type="bool">Hiển thị section Gallery trên portfolio (mặc định true nếu không có field)</field>
         <field name="skills" type="array">
           Có 2 format: ["skill1", "skill2"] (flat) hoặc [{group, items: [...]}] (grouped)
         </field>
@@ -352,8 +359,9 @@
           [{name, issuer, issueMonth, issueYear, expMonth, expYear, noExpiry, credentialId, link}]
         </field>
         <field name="gallery" type="array">
-          Hiện tại: ["url1", "url2"] (plain strings — Cloudinary URLs).
-          Dự định tương lai: [{url, caption}] nhưng chưa implement do lỗi Pydantic v2.
+          Mỗi item: {url: string, caption: string, year: int|null}
+          Legacy items dạng plain string vẫn được hỗ trợ (backward-compat).
+          Hiển thị trên portfolio được nhóm theo year giảm dần; items không có year xuống cuối.
         </field>
         <field name="theme" type="object">
           Màu sắc cho từng section: {bgMain, bgCard, textMain, textMuted, accent,
