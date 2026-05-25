@@ -123,22 +123,28 @@
         notify_new_chat(): khi visitor gửi tin nhắn đầu tiên trên web.
         notify_jd_upload(): khi có JD được upload, gửi file + match analysis.
       </file>
-      <file name="nginx.conf">
-        HTTP 80 → redirect HTTPS.
-        HTTPS 443: SSL Let's Encrypt.
-        root: /root/tienmai-bot/frontend/dist
-        location /: SPA fallback → index.html
-        location /admin: serve admin.html
-        location /jobtracker: serve jobtracker.html
-        location /api/: proxy → 127.0.0.1:8000, client_max_body_size 20m
-        location /webhook: proxy → 127.0.0.1:8000
-      </file>
-      <file name="tienmai-api.service">
-        systemd service. WorkingDirectory: /root/tienmai-bot/
-        ExecStart: /root/tienmai-bot/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
-        EnvironmentFile: /root/tienmai-bot/.env
-        Restart=always, RestartSec=5
-      </file>
+      <dir name="deploy/">
+        <file name="nginx.conf">
+          HTTP 80 → redirect HTTPS.
+          HTTPS 443: SSL Let's Encrypt.
+          root: /root/tienmai-bot/frontend/dist
+          location /: SPA fallback → index.html
+          location /admin: serve admin.html
+          location /jobtracker: serve jobtracker.html
+          location /api/: proxy → 127.0.0.1:8000, client_max_body_size 20m
+          location /webhook: proxy → 127.0.0.1:8000
+        </file>
+        <file name="tienmai-api.service">
+          systemd service. WorkingDirectory: /root/tienmai-bot/
+          ExecStart: /root/tienmai-bot/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+          EnvironmentFile: /root/tienmai-bot/.env
+          Restart=always, RestartSec=5
+        </file>
+      </dir>
+      <dir name="scripts/">
+        <file name="seed_admin.py">One-time script: seeds initial admin credentials into MongoDB. Run on VPS: python3 scripts/seed_admin.py</file>
+        <file name="seed_jobtracker.py">One-time script: seeds a Job Tracker test user. Run on VPS: python3 scripts/seed_jobtracker.py</file>
+      </dir>
       <file name=".gitlab-ci.yml">
         stages: [deploy]. Chỉ deploy trên branch main.
         Runner tag: tienmai-space-vps
@@ -150,8 +156,7 @@
         uvicorn==0.46.0, python-telegram-bot==22.7, google-genai==1.75.0
       </file>
       <file name=".gitignore">
-        .env, venv/, __pycache__/, *.pyc, frontend/node_modules/, frontend/dist/,
-        seed_admin.py, seed_jobtracker.py
+        .env, venv/, __pycache__/, *.pyc, frontend/node_modules/, frontend/dist/
       </file>
     </root>
 

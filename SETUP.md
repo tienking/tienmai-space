@@ -371,7 +371,7 @@ certbot renew --dry-run
 The service file is already in the repo:
 
 ```bash
-cp /root/tienmai-bot/tienmai-api.service /etc/systemd/system/tienmai-api.service
+cp /root/tienmai-bot/deploy/tienmai-api.service /etc/systemd/system/tienmai-api.service
 ```
 
 Or create it manually:
@@ -505,7 +505,7 @@ Admin credentials are stored in MongoDB (not in `.env`). Run once on the VPS:
 ```bash
 cd /root/tienmai-bot
 source venv/bin/activate
-python3 seed_admin.py
+python3 scripts/seed_admin.py
 ```
 
 You will be prompted to enter a username and password. After this, log in at `yourdomain.space/admin` and change credentials via **Settings tab** whenever needed.
@@ -564,7 +564,7 @@ EOF
 To create a Job Tracker user for testing:
 
 ```bash
-python3 seed_jobtracker.py
+python3 scripts/seed_jobtracker.py
 ```
 
 In production, Job Tracker users are managed from Admin → (user management, if added) or directly via the seed script.

@@ -78,10 +78,12 @@ tienmai-space/
 ├── config.py                     # Config (secrets from .env + app constants)
 ├── database.py                   # MongoDB operations
 ├── notifications.py              # Telegram push notifications
-├── tienmai-api.service           # Systemd service unit file
-├── nginx.conf                    # Nginx config reference
-├── seed_admin.py                 # One-time: seed initial admin credentials
-├── seed_jobtracker.py            # One-time: seed a Job Tracker test user
+├── deploy/
+│   ├── nginx.conf                # Nginx config reference
+│   └── tienmai-api.service       # Systemd service unit file
+├── scripts/
+│   ├── seed_admin.py             # One-time: seed initial admin credentials
+│   └── seed_jobtracker.py        # One-time: seed a Job Tracker test user
 ├── uploads/
 │   └── resume.pdf                # Portfolio resume (not committed)
 ├── resumes/
