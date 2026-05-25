@@ -25,18 +25,38 @@ function badge(status) {
   return                                { text: "Đã apply",        bg: "#F1EFE8", color: "#5F5E5A" };
 }
 
+// Load saved filter state from localStorage for this user.
+// Sets are serialized as arrays; null means "no filter" (Select All).
+function loadSavedFilters(username) {
+  try { return JSON.parse(localStorage.getItem(`jt_filters_${username}`) || "{}"); }
+  catch { return {}; }
+}
+
 export default function TrackerPage({ username, token }) {
   const isMobile = useIsMobile();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [sortCol, setSortCol] = useState(null);
-  const [sortAsc, setSortAsc] = useState(true);
   const [search, setSearch] = useState("");
-  const [fModes, setFModes] = useState(null);
-  const [fStatuses, setFStatuses] = useState(null);
-  const [fMonths, setFMonths] = useState(null);
-  const [fYears, setFYears] = useState(null);
+
+  // Restore filter/sort state from localStorage on first render.
+  const _saved = loadSavedFilters(username);
+  const [sortCol, setSortCol] = useState(_saved.sortCol ?? null);
+  const [sortAsc, setSortAsc] = useState(_saved.sortAsc ?? true);
+  const [fModes, setFModes] = useState(_saved.fModes ? new Set(_saved.fModes) : null);
+  const [fStatuses, setFStatuses] = useState(_saved.fStatuses ? new Set(_saved.fStatuses) : null);
+  const [fMonths, setFMonths] = useState(_saved.fMonths ? new Set(_saved.fMonths) : null);
+  const [fYears, setFYears] = useState(_saved.fYears ? new Set(_saved.fYears) : null);
+
+  // Persist filter/sort state whenever it changes (search box is intentionally excluded).
+  useEffect(() => {
+    const toArr = s => (s instanceof Set ? [...s] : null);
+    localStorage.setItem(`jt_filters_${username}`, JSON.stringify({
+      sortCol, sortAsc,
+      fModes: toArr(fModes), fStatuses: toArr(fStatuses),
+      fMonths: toArr(fMonths), fYears: toArr(fYears),
+    }));
+  }, [sortCol, sortAsc, fModes, fStatuses, fMonths, fYears, username]);
   const [modal, setModal] = useState(null);
   const [viewJd, setViewJd] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
