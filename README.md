@@ -95,10 +95,25 @@ tienmai-space/
         ├── main.jsx              # Portfolio app entry
         ├── admin.jsx             # Admin app entry
         ├── jobtracker.jsx        # Job Tracker app entry
-        ├── App.jsx               # Portfolio page + chatbot
-        ├── AdminApp.jsx          # Admin dashboard
-        ├── JobTrackerApp.jsx     # Job Tracker app
-        └── index.css             # Global styles
+        ├── App.jsx               # Portfolio root (thin shell)
+        ├── AdminApp.jsx          # Admin root (thin shell)
+        ├── JobTrackerApp.jsx     # Job Tracker root (thin shell)
+        ├── index.css             # Global styles
+        ├── lib/
+        │   └── gallery.js        # Gallery helpers (galleryUrl, galleryCaption, computeGallery)
+        ├── hooks/
+        │   ├── useProfile.js     # Fetch + apply theme/fonts
+        │   └── useAuth.js        # Admin JWT auth
+        └── components/
+            ├── portfolio/        # Lightbox, ChatPopup, JDMatchBanner, ResumePopup,
+            │                     # CertificationsSection, shared (Avatar, Section, Card)
+            ├── admin/            # LoginPage, shared UI, 15 tab components
+            │   └── tabs/         # BasicTab, AboutTab, SkillsTab, ExperienceTab,
+            │                     # EducationTab, ListTab, CertificationTab, GalleryTab,
+            │                     # ResumeTab, ThemeTab, FontsTab, AnalyticsTab,
+            │                     # AITab, JobTrackerTab, SettingsTab
+            └── jobtracker/       # LoginPage, TrackerPage, JtProfilePage, JobModal,
+                                  # JdViewModal, JtChat, MultiSelect, ResumeViewModal
 ```
 
 ---

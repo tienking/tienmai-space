@@ -167,47 +167,80 @@
       <file name="src/admin.jsx">Mount Admin React app (AdminApp component)</file>
       <file name="src/jobtracker.jsx">Mount Job Tracker React app (JobTrackerApp component)</file>
       <file name="src/App.jsx">
-        Portfolio SPA. Fetch /api/profile → render toàn bộ portfolio.
-        Sections: Basic Info, About, Skills, Experience, Education, Projects,
-                  Certifications, Gallery (grid 4 cột + lightbox), Resume.
-        Theme: CSS variables từ profile.theme (màu background, section, text, accent...).
-        Fonts: Google Fonts dynamic load từ profile.fonts.
-        Lightbox: component inline, keyboard navigation.
-        ChatPopup: floating chat với Gemini AI.
-        JD upload: recruiter upload PDF/DOCX/TXT → /api/jd-match → hiển thị kết quả.
-        Gallery items: hỗ trợ cả string URL (legacy) lẫn {url, caption, year} object.
-        computeGallery(): nhóm items theo year giảm dần, items không có year xuống cuối.
-        galleryUrl/galleryCaption/galleryYear helpers: backward-compat với legacy strings.
-        Lightbox navigate theo sortedGallery (thứ tự hiển thị), không phải raw array.
+        Portfolio root — thin shell. Imports từ hooks/useProfile, lib/gallery,
+        và components/portfolio/*. Render layout portfolio chính:
+        Hero, JDMatchBanner, two-col (About/Skills/Experience | Education/Projects/Certs/Gallery).
+        Quản lý state: chatOpen, lightboxIndex, resumeOpen, hasResume.
         Gallery section ẩn khi profile.galleryVisible === false.
       </file>
       <file name="src/AdminApp.jsx">
-        Admin SPA. Login form → JWT stored in localStorage.
+        Admin root — thin shell. Imports useAuth + 15 tab components.
+        Dashboard function: load profile, save(), saveGallery(), render sidebar nav + tab content.
         Tabs: Basic Info, About, Skills, Experience, Education, Projects,
               Certifications, Gallery, Resume, Theme, Fonts, Analytics, AI, JobTracker, Settings.
-        GalleryTab: visibility toggle (galleryVisible), drag-and-drop reorder,
-          year dropdown (range từ năm đầu Experiences tới hiện tại), caption input,
-          add/remove ảnh. normalize() chuyển legacy strings → {url, caption, year}.
-        ThemeTab: color pickers cho từng section, dark/light presets.
-        FontsTab: chọn Display font và Mono font từ danh sách Google Fonts.
-        AnalyticsTab: tổng visitors, messages, biểu đồ 7 ngày, câu hỏi gần đây.
-        AITab: chọn Gemini model active, quản lý available models.
-        JobTrackerTab: tạo/xóa/đổi mật khẩu user Job Tracker.
-        SettingsTab: đổi username/password admin, xem login history.
         saveGallery(): PUT /api/admin/gallery với array [{url, caption, year}].
         save(): PUT /api/admin/profile với partial ProfileUpdate.
       </file>
       <file name="src/JobTrackerApp.jsx">
-        Job Tracker SPA. Giao diện tiếng Việt.
-        Login → JWT stored in localStorage (key: "jt_token").
-        Features: bảng job (công ty, vị trí, địa điểm, hình thức, tháng/năm, trạng thái),
-        thêm/sửa/xóa job, lưu JD text cho từng job, AI chatbot tư vấn,
-        upload resume (PDF), import profile từ resume, chỉnh sửa profile.
-        Trạng thái job: not_applied, applied, viewed, downloaded, interviewing,
-                        waiting, rejected, failed.
-        AI chat: gửi kèm toàn bộ JD của các job + resume (nếu có) làm context.
+        Job Tracker root — thin shell. getTokenData() decode JWT từ localStorage.
+        Router: /jobtracker → LoginPage | /jobtracker/:user → TrackerPage | /jobtracker/:user/profile → JtProfilePage.
       </file>
       <file name="src/index.css">CSS global: font import, reset cơ bản. Phần lớn styling dùng inline styles.</file>
+      <file name="src/lib/gallery.js">
+        Gallery helpers dùng chung cho App.jsx và Lightbox:
+        galleryUrl(item), galleryCaption(item), galleryYear(item) — backward-compat với legacy string URLs.
+        computeGallery(gallery): nhóm items theo year giảm dần, items không có year xuống cuối.
+        Returns { groups: [{year, items}], flat: [...allSorted] }.
+      </file>
+      <file name="src/hooks/useProfile.js">
+        useProfile(): fetch /api/profile → apply theme (CSS vars) và fonts (Google Fonts dynamic load).
+        applyTheme(theme): set --bg, --accent, --text, --accent-dim, --accent-border...
+        applyFonts(fonts): load Google Fonts, set --font-display và --font-mono.
+      </file>
+      <file name="src/hooks/useAuth.js">
+        useAuth(): quản lý admin JWT token trong localStorage.
+        login(username, password): POST /api/admin/login, xử lý rate-limit lockout.
+        logout(): xóa token. getTokenExpiry(token): decode JWT payload.exp.
+      </file>
+      <dir name="src/components/portfolio/">
+        <file name="shared.jsx">Avatar, Section, Card, linkStyle, isCertExpired — UI primitives dùng chung.</file>
+        <file name="Lightbox.jsx">Full-screen lightbox với keyboard nav (←→ Esc), caption, counter.</file>
+        <file name="JDMatchBanner.jsx">Recruiter JD upload banner: drag-and-drop, /api/jd-match, kết quả match %.</file>
+        <file name="ChatPopup.jsx">Export ChatPopup + FloatingButton. Chat Gemini AI với session persistence, file upload.</file>
+        <file name="ResumePopup.jsx">PDF viewer popup qua Google Docs viewer, download button.</file>
+        <file name="CertificationsSection.jsx">Danh sách certs, sort theo date mới nhất, expandable (show 5 → all).</file>
+      </dir>
+      <dir name="src/components/admin/">
+        <file name="shared.jsx">inputStyle, authHeaders(), loadGoogleFont(), TabCard, Field, SmallBtn, Divider, GroupLabel, ColorPicker.</file>
+        <file name="LoginPage.jsx">Admin login form với lockout countdown.</file>
+        <dir name="tabs/">
+          <file name="BasicTab.jsx">Name, title, location, email, phone, socials, avatar URL, openToWork toggle.</file>
+          <file name="AboutTab.jsx">About text textarea.</file>
+          <file name="SkillsTab.jsx">Grouped skills editor (group name + items list).</file>
+          <file name="ExperienceTab.jsx">Experience list với MonthYearPicker, description textarea.</file>
+          <file name="EducationTab.jsx">Education list với YearPicker.</file>
+          <file name="ListTab.jsx">Generic list editor dùng cho Projects (fields: title, tag, description, link).</file>
+          <file name="CertificationTab.jsx">Certifications với MonthYearPicker, credentialId, link.</file>
+          <file name="GalleryTab.jsx">Visibility toggle, drag-and-drop reorder, year dropdown, caption input, add/remove ảnh.</file>
+          <file name="ResumeTab.jsx">Upload/delete resume PDF, resumeVisible toggle.</file>
+          <file name="ThemeTab.jsx">10 presets + ColorPicker cho mọi section kể cả JD Match Banner.</file>
+          <file name="FontsTab.jsx">8 display fonts + 6 mono fonts với live preview.</file>
+          <file name="AnalyticsTab.jsx">Total visitors/messages, 7-day bar chart, recent questions.</file>
+          <file name="AITab.jsx">Chọn active Gemini model, thêm/xóa available models.</file>
+          <file name="JobTrackerTab.jsx">Tạo/xóa/đổi password Job Tracker users, paste JSON jobs.</file>
+          <file name="SettingsTab.jsx">Đổi username/password admin (verify current pw), login history (IP, UA, success/fail).</file>
+        </dir>
+      </dir>
+      <dir name="src/components/jobtracker/">
+        <file name="LoginPage.jsx">Login form tiếng Việt, lưu JWT vào localStorage.</file>
+        <file name="TrackerPage.jsx">Bảng job chính: filter, sort, add/edit/delete, status dropdown, analyze button. Dùng useIsMobile, badge().</file>
+        <file name="JtProfilePage.jsx">Profile editor: 4 tabs (Cá nhân, Kỹ năng, Kinh nghiệm, Học vấn). Resume upload + AI import.</file>
+        <file name="JobModal.jsx">Modal thêm/sửa job. Export emptyJob(). Có JdEditorModal sub-popup.</file>
+        <file name="JdViewModal.jsx">Modal xem JD text full.</file>
+        <file name="JtChat.jsx">Export JtChatBot + JtChatPopup. Chat AI tư vấn job, file upload, clear history. renderMd() markdown đơn giản.</file>
+        <file name="MultiSelect.jsx">Export MultiSelect, MODE_OPTIONS, STATUS_OPTIONS. Dropdown multi-checkbox filter.</file>
+        <file name="ResumeViewModal.jsx">PDF viewer modal trong iframe.</file>
+      </dir>
     </frontend_dir>
   </filestructure>
 
