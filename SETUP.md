@@ -505,10 +505,28 @@ Admin credentials are stored in MongoDB (not in `.env`). Run once on the VPS:
 ```bash
 cd /root/tienmai-bot
 source venv/bin/activate
-python3 scripts/seed_admin.py
+python3 - <<'EOF'
+import asyncio, os, bcrypt
+from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
+
+load_dotenv()
+client = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
+db = client["tienmai"]
+
+USERNAME = "admin"        # change as needed
+PASSWORD = "changeme123"  # change as needed
+
+async def seed():
+    hashed = bcrypt.hashpw(PASSWORD.encode(), bcrypt.gensalt()).decode()
+    await db["admin"].update_one({}, {"$set": {"username": USERNAME, "password": hashed}}, upsert=True)
+    print(f"Admin seeded: {USERNAME}")
+
+asyncio.run(seed())
+EOF
 ```
 
-You will be prompted to enter a username and password. After this, log in at `yourdomain.space/admin` and change credentials via **Settings tab** whenever needed.
+After this, log in at `yourdomain.space/admin` and change credentials via **Settings tab** whenever needed.
 
 ### 15.2 Seed Profile Data
 
@@ -564,10 +582,34 @@ EOF
 To create a Job Tracker user for testing:
 
 ```bash
-python3 scripts/seed_jobtracker.py
+cd /root/tienmai-bot
+source venv/bin/activate
+python3 - <<'EOF'
+import asyncio, os, bcrypt
+from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
+
+load_dotenv()
+client = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
+db = client["tienmai"]
+
+USERNAME = "testuser"     # change as needed
+PASSWORD = "changeme123"  # change as needed
+
+async def seed():
+    existing = await db["jobtracker_users"].find_one({"username": USERNAME})
+    if existing:
+        print(f"User {USERNAME} already exists — skipping.")
+        return
+    hashed = bcrypt.hashpw(PASSWORD.encode(), bcrypt.gensalt()).decode()
+    await db["jobtracker_users"].insert_one({"username": USERNAME, "password": hashed})
+    print(f"Job Tracker user seeded: {USERNAME}")
+
+asyncio.run(seed())
+EOF
 ```
 
-In production, Job Tracker users are managed from Admin → (user management, if added) or directly via the seed script.
+In production, Job Tracker users are managed from Admin → Job Tracker tab.
 
 ---
 

@@ -141,10 +141,6 @@
           Restart=always, RestartSec=5
         </file>
       </dir>
-      <dir name="scripts/">
-        <file name="seed_admin.py">One-time script: seeds initial admin credentials into MongoDB. Run on VPS: python3 scripts/seed_admin.py</file>
-        <file name="seed_jobtracker.py">One-time script: seeds a Job Tracker test user. Run on VPS: python3 scripts/seed_jobtracker.py</file>
-      </dir>
       <file name=".gitlab-ci.yml">
         stages: [deploy]. Chỉ deploy trên branch main.
         Runner tag: tienmai-space-vps
