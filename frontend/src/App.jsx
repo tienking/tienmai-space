@@ -403,34 +403,39 @@ export default function App() {
               </p>
             )}
 
-            {profile.openToWork && (
-              <div style={{
-                display: "inline-flex", alignItems: "center", gap: 7,
-                fontSize: 12, fontWeight: 600, letterSpacing: "0.05em",
-                color: "#fff", background: "#16a34a",
-                borderRadius: 8, padding: "7px 16px", marginBottom: 28,
-                animation: "badgePulse 2.5s ease-in-out infinite",
-              }}>
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#86efac", display: "inline-block" }} />
-                Open to Work
+            {/* Badge + CTA buttons share a column so badge auto-matches button width */}
+            <div style={{
+              display: "inline-flex", flexDirection: "column", gap: 10,
+              marginBottom: 32, animation: "fadeUp .7s ease .32s both",
+            }}>
+              {profile.openToWork && (
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                  fontSize: 13, fontWeight: 600, letterSpacing: "0.05em",
+                  color: "#fff", background: "#16a34a",
+                  borderRadius: 8, padding: "10px 22px",
+                  animation: "badgePulse 2.5s ease-in-out infinite",
+                }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#86efac", display: "inline-block", flexShrink: 0 }} />
+                  Open to Work
+                </div>
+              )}
+              <div className="p-hero-links">
+                {profile.email && (
+                  <a href={`mailto:${profile.email}`} style={btnSolid}
+                    onMouseEnter={e => { e.currentTarget.style.background = AD; e.currentTarget.style.borderColor = AD; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 8px 20px ${A}50`; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = A; e.currentTarget.style.borderColor = A; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
+                    ✉ Email Me
+                  </a>
+                )}
+                {hasResume && profile.resumeVisible !== false && (
+                  <button onClick={() => setResumeOpen(true)} style={btnGhost}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"; e.currentTarget.style.background = "transparent"; }}>
+                    ↓ Resume
+                  </button>
+                )}
               </div>
-            )}
-
-            <div className="p-hero-links" style={{ marginBottom: 32, animation: "fadeUp .7s ease .32s both" }}>
-              {profile.email && (
-                <a href={`mailto:${profile.email}`} style={btnSolid}
-                  onMouseEnter={e => { e.currentTarget.style.background = AD; e.currentTarget.style.borderColor = AD; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 8px 20px ${A}50`; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = A; e.currentTarget.style.borderColor = A; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
-                  ✉ Email Me
-                </a>
-              )}
-              {hasResume && profile.resumeVisible !== false && (
-                <button onClick={() => setResumeOpen(true)} style={btnGhost}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"; e.currentTarget.style.background = "transparent"; }}>
-                  ↓ Resume
-                </button>
-              )}
             </div>
 
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", animation: "fadeUp .7s ease .42s both" }}>
