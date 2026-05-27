@@ -10,6 +10,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         admin: resolve(__dirname, "admin.html"),
         jobtracker: resolve(__dirname, "jobtracker.html"),
+        profile: resolve(__dirname, "profile.html"),
       },
     },
   },
