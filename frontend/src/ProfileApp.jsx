@@ -7,7 +7,7 @@ import { useProfile } from "./hooks/useProfile";
 import { computeGallery, galleryUrl, galleryCaption } from "./lib/gallery";
 import Lightbox from "./components/portfolio/Lightbox";
 import JDMatchBanner from "./components/portfolio/JDMatchBanner";
-import { ChatPopup, FloatingButton } from "./components/portfolio/ChatPopup";
+import { ChatPopup } from "./components/portfolio/ChatPopup";
 import ResumePopup from "./components/portfolio/ResumePopup";
 
 // ── Global styles ────────────────────────────────────────────────────────────
@@ -22,7 +22,8 @@ const GLOBAL_CSS = `
   @keyframes floatY      { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
   @keyframes floatYBadge { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
   @keyframes scrollCue   { 0%,100% { transform:translateX(-50%) translateY(0); opacity:.3; } 50% { transform:translateX(-50%) translateY(7px); opacity:.8; } }
-  @keyframes pulse       { 0%,100% { box-shadow:0 0 0 0 rgba(22,163,74,.4); } 70% { box-shadow:0 0 0 8px rgba(22,163,74,0); } }
+  @keyframes pulse       { 0%,100% { opacity:.45; } 50% { opacity:1; } }
+  @keyframes badgePulse  { 0%,100% { box-shadow:0 0 0 0 rgba(22,163,74,.4); } 70% { box-shadow:0 0 0 8px rgba(22,163,74,0); } }
 
   .p-hero-grid {
     display: grid; grid-template-columns: 1fr; gap: 48px; align-items: center;
@@ -259,6 +260,27 @@ function CertList({ certifications }) {
   );
 }
 
+// ── Floating chat button — explicit orange design (no CSS var deps) ───────────
+function ProfileFloatingButton({ onClick, isOpen }) {
+  return (
+    <button onClick={onClick} style={{
+      position: "fixed", bottom: 24, right: 24, zIndex: 1000,
+      width: 52, height: 52, borderRadius: "50%", border: "none",
+      background: isOpen ? BG_DARK2 : A,
+      outline: isOpen ? `1px solid rgba(255,255,255,0.12)` : "none",
+      boxShadow: isOpen ? "none" : `0 8px 28px ${A}55`,
+      color: isOpen ? "rgba(255,255,255,0.5)" : "#fff",
+      fontSize: isOpen ? 22 : 20, cursor: "pointer",
+      transition: "all 0.25s",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}
+      onMouseEnter={e => { if (!isOpen) e.currentTarget.style.background = AD; }}
+      onMouseLeave={e => { if (!isOpen) e.currentTarget.style.background = A; }}>
+      {isOpen ? "×" : "✦"}
+    </button>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function ProfileApp() {
   const profile = useProfile();
@@ -394,7 +416,7 @@ export default function ProfileApp() {
                 fontSize: 12, fontWeight: 600, letterSpacing: "0.05em",
                 color: "#fff", background: "#16a34a",
                 borderRadius: 8, padding: "7px 16px", marginBottom: 28,
-                animation: "pulse 2.5s ease-in-out infinite",
+                animation: "badgePulse 2.5s ease-in-out infinite",
               }}>
                 <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#86efac", display: "inline-block" }} />
                 Open to Work
@@ -497,30 +519,28 @@ export default function ProfileApp() {
       {/* ══ FOR RECRUITERS (JD Match) ══════════════════════════════════════ */}
       <Sect bg="#f8f8f8" pt={72} pb={72}>
         <SectionLabel text="For Recruiters" />
-        <div style={{ maxWidth: 820 }}>
-          {/* Override CSS vars so JDMatchBanner renders in light + orange theme */}
-          <div style={{
-            "--bg-card":      "#fff",
-            "--bg-surface":   "#f3f4f6",
-            "--border":       `${A}22`,
-            "--border-hover": `${A}50`,
-            "--text":         "#111",
-            "--text-muted":   "#6b7280",
-            "--accent":       A,
-            "--accent-border":`${A}40`,
-            "--font-mono":    "'DM Mono', monospace",
-            "--font-display": "'Syne', sans-serif",
-          }}>
-            <JDMatchBanner theme={{
-              ...t,
-              bannerBg:      "#fff",
-              bannerBorder:  `${A}28`,
-              bannerLabel:   A,
-              bannerTitle:   "#111",
-              bannerText:    "#6b7280",
-              bannerBtnText: A,
-            }} />
-          </div>
+        {/* Override CSS vars so JDMatchBanner renders in light + orange theme */}
+        <div style={{
+          "--bg-card":       "#fff",
+          "--bg-surface":    "#f3f4f6",
+          "--border":        `${A}22`,
+          "--border-hover":  `${A}50`,
+          "--text":          "#111",
+          "--text-muted":    "#6b7280",
+          "--accent":        A,
+          "--accent-border": `${A}40`,
+          "--font-mono":     "'DM Mono', monospace",
+          "--font-display":  "'Syne', sans-serif",
+        }}>
+          <JDMatchBanner theme={{
+            ...t,
+            bannerBg:      "#fff",
+            bannerBorder:  `${A}28`,
+            bannerLabel:   A,
+            bannerTitle:   "#111",
+            bannerText:    "#6b7280",
+            bannerBtnText: A,
+          }} />
         </div>
       </Sect>
 
@@ -839,10 +859,27 @@ export default function ProfileApp() {
       </footer>
 
       {/* ══ Overlays ════════════════════════════════════════════════════════ */}
-      {resumeOpen    && <ResumePopup onClose={() => setResumeOpen(false)} />}
+      {resumeOpen     && <ResumePopup onClose={() => setResumeOpen(false)} />}
       {lbIdx !== null && <Lightbox images={sortedGallery} index={lbIdx} onClose={() => setLbIdx(null)} />}
-      {chatOpen      && <ChatPopup onClose={() => setChatOpen(false)} />}
-      <FloatingButton onClick={() => setChatOpen(p => !p)} isOpen={chatOpen} />
+
+      {/* Chat popup: dark bg + orange accent via CSS var override */}
+      <div style={{
+        "--bg-surface":    BG_DARK2,
+        "--bg-card":       "#272727",
+        "--border":        "rgba(255,255,255,0.09)",
+        "--accent":        A,
+        "--accent-border": `${A}45`,
+        "--accent-dim":    `${A}15`,
+        "--text":          "rgba(255,255,255,0.92)",
+        "--text-muted":    "rgba(255,255,255,0.38)",
+        "--user-bg":       `${A}18`,
+        "--font-display":  "'Syne', sans-serif",
+        "--font-mono":     "'DM Mono', monospace",
+      }}>
+        {chatOpen && <ChatPopup onClose={() => setChatOpen(false)} />}
+      </div>
+
+      <ProfileFloatingButton onClick={() => setChatOpen(p => !p)} isOpen={chatOpen} />
     </>
   );
 }
