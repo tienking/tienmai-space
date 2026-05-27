@@ -11,6 +11,7 @@ Personal portfolio website with AI-powered chatbot and Job Tracker, self-hosted 
 A full-stack personal profile website featuring:
 
 - **Portfolio page** — About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume
+- **Profile page** (`tienmai.space/profile`) — Alternative portfolio view with template-inspired design: dark hero, orange/coral accent, service-card skill grid, dark footer
 - **JD Match Banner** — Recruiters upload a job description and get instant AI analysis: match %, skills breakdown, first-person assessment
 - **AI Chatbot** — Gemini-powered assistant that speaks as Tien Mai in first person; supports file upload
 - **Telegram Bot** — Same AI assistant on Telegram; pushes owner notifications on new chats and JD uploads
@@ -89,14 +90,17 @@ tienmai-space/
     ├── index.html                # Portfolio page entry
     ├── admin.html                # Admin page entry
     ├── jobtracker.html           # Job Tracker page entry
-    ├── vite.config.js            # Vite multi-page config
+    ├── profile.html              # Profile page entry (noindex)
+    ├── vite.config.js            # Vite multi-page config (4 entries)
     └── src/
         ├── main.jsx              # Portfolio app entry
         ├── admin.jsx             # Admin app entry
         ├── jobtracker.jsx        # Job Tracker app entry
+        ├── profile.jsx           # Profile page entry
         ├── App.jsx               # Portfolio root (thin shell)
         ├── AdminApp.jsx          # Admin root (thin shell)
         ├── JobTrackerApp.jsx     # Job Tracker root (thin shell)
+        ├── ProfileApp.jsx        # Profile page — template-inspired design (self-contained)
         ├── index.css             # Global styles
         ├── lib/
         │   └── gallery.js        # Gallery helpers (galleryUrl, galleryCaption, computeGallery)
