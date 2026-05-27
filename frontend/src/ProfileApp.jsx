@@ -494,21 +494,27 @@ export default function ProfileApp() {
         <div style={{ position: "absolute", bottom: 28, left: "50%", fontSize: 22, color: "rgba(255,255,255,0.25)", animation: "scrollCue 2s ease-in-out infinite" }}>↓</div>
       </section>
 
-      {/* ══ JD MATCH ════════════════════════════════════════════════════════ */}
-      <section style={{ background: "#f3f4f6", padding: "52px 24px", borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          {/* CSS var override so JDMatchBanner renders in light mode */}
+      {/* ══ FOR RECRUITERS (JD Match) ══════════════════════════════════════ */}
+      <Sect bg="#f8f8f8" pt={72} pb={72}>
+        <SectionLabel text="For Recruiters" />
+        <div style={{ maxWidth: 820 }}>
+          {/* Override CSS vars so JDMatchBanner renders in light + orange theme */}
           <div style={{
-            "--bg-card": "#fff", "--bg-surface": "#f8f9fa",
-            "--border": "rgba(0,0,0,0.09)", "--border-hover": "rgba(0,0,0,0.16)",
-            "--text": "#111", "--text-muted": "#6b7280",
-            "--accent": A, "--accent-border": `${A}40`,
-            "--font-mono": "'DM Mono',monospace", "--font-display": "'Syne',sans-serif",
+            "--bg-card":      "#fff",
+            "--bg-surface":   "#f3f4f6",
+            "--border":       `${A}22`,
+            "--border-hover": `${A}50`,
+            "--text":         "#111",
+            "--text-muted":   "#6b7280",
+            "--accent":       A,
+            "--accent-border":`${A}40`,
+            "--font-mono":    "'DM Mono', monospace",
+            "--font-display": "'Syne', sans-serif",
           }}>
             <JDMatchBanner theme={{
               ...t,
               bannerBg:      "#fff",
-              bannerBorder:  "#e5e7eb",
+              bannerBorder:  `${A}28`,
               bannerLabel:   A,
               bannerTitle:   "#111",
               bannerText:    "#6b7280",
@@ -516,7 +522,7 @@ export default function ProfileApp() {
             }} />
           </div>
         </div>
-      </section>
+      </Sect>
 
       {/* ══ ABOUT ══════════════════════════════════════════════════════════ */}
       {profile.about && (
