@@ -11,8 +11,6 @@ import ListTab from "./components/admin/tabs/ListTab";
 import CertificationTab from "./components/admin/tabs/CertificationTab";
 import GalleryTab from "./components/admin/tabs/GalleryTab";
 import ResumeTab from "./components/admin/tabs/ResumeTab";
-import ThemeTab from "./components/admin/tabs/ThemeTab";
-import FontsTab from "./components/admin/tabs/FontsTab";
 import AnalyticsTab from "./components/admin/tabs/AnalyticsTab";
 import AITab from "./components/admin/tabs/AITab";
 import JobTrackerTab from "./components/admin/tabs/JobTrackerTab";
@@ -73,8 +71,6 @@ function Dashboard({ token, onLogout }) {
     { id: "certifications", icon: "🏅", label: "Certifications" },
     { id: "gallery",        icon: "🖼️", label: "Gallery" },
     { id: "resume",         icon: "📄", label: "Resume" },
-    { id: "theme",          icon: "🎨", label: "Theme" },
-    { id: "fonts",          icon: "✍️", label: "Fonts" },
     { id: "analytics",      icon: "📊", label: "Analytics" },
     { id: "ai",             icon: "🤖", label: "AI Models" },
     { id: "jobtracker",     icon: "📋", label: "Job Tracker" },
@@ -117,8 +113,6 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "certifications" && <CertificationTab items={profile.certifications || []} onSave={save} saving={saving} />}
           {activeTab === "gallery"        && <GalleryTab gallery={profile.gallery || []} experiences={profile.experiences || []} galleryVisible={profile.galleryVisible !== false} onSave={saveGallery} onSaveProfile={save} saving={saving} />}
           {activeTab === "resume"         && <ResumeTab token={token} resumeVisible={profile.resumeVisible !== false} onSave={save} saving={saving} />}
-          {activeTab === "theme"          && <ThemeTab theme={profile.theme || {}} onSave={save} saving={saving} />}
-          {activeTab === "fonts"          && <FontsTab fonts={profile.fonts || {}} onSave={save} saving={saving} />}
           {activeTab === "analytics"      && <AnalyticsTab token={token} />}
           {activeTab === "ai"             && <AITab token={token} />}
           {activeTab === "jobtracker"     && <JobTrackerTab token={token} />}

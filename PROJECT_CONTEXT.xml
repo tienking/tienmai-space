@@ -132,7 +132,6 @@
           location /admin: serve admin.html
           location /jobtracker: serve jobtracker.html
           location /api/: proxy → 127.0.0.1:8000, client_max_body_size 20m
-          location /profile: serve profile.html
           location /webhook: proxy → 127.0.0.1:8000
         </file>
         <file name="tienmai-api.service">
@@ -159,32 +158,29 @@
 
     <frontend_dir path="frontend/">
       <file name="vite.config.js">
-        Multi-entry build: input = {main: index.html, admin: admin.html, jobtracker: jobtracker.html, profile: profile.html}
+        Multi-entry build: input = {main: index.html, admin: admin.html, jobtracker: jobtracker.html}
         Plugin: @vitejs/plugin-react
       </file>
-      <file name="index.html">Entry point Portfolio app → src/main.jsx</file>
+      <file name="index.html">
+        Entry point Portfolio app → src/main.jsx.
+        Preloads Syne + DM Mono from Google Fonts (App.jsx GLOBAL_CSS uses these).
+      </file>
       <file name="admin.html">Entry point Admin app → src/admin.jsx</file>
       <file name="jobtracker.html">Entry point Job Tracker app → src/jobtracker.jsx</file>
-      <file name="profile.html">Entry point Profile page → src/profile.jsx (noindex, nofollow; Google Fonts: Syne, DM Mono)</file>
-      <file name="src/main.jsx">Mount Portfolio React app (App component)</file>
-      <file name="src/admin.jsx">Mount Admin React app (AdminApp component)</file>
-      <file name="src/jobtracker.jsx">Mount Job Tracker React app (JobTrackerApp component)</file>
-      <file name="src/profile.jsx">Mount Profile page React app (ProfileApp component)</file>
-      <file name="src/App.jsx">
-        Portfolio root — thin shell. Imports từ hooks/useProfile, lib/gallery,
-        và components/portfolio/*. Render layout portfolio chính:
-        Hero, JDMatchBanner, two-col (About/Skills/Experience | Education/Projects/Certs/Gallery).
-        Quản lý state: chatOpen, lightboxIndex, resumeOpen, hasResume.
-        Gallery section ẩn khi profile.galleryVisible === false.
+      <file name="src/main.jsx">
+        Mount Portfolio React app. Does NOT import index.css — App.jsx injects its own GLOBAL_CSS.
       </file>
-      <file name="src/ProfileApp.jsx">
-        Self-contained /profile page — same data as App.jsx but template-inspired design.
-        Design: dark hero (two-col: text left + circular photo right), orange/coral accent (#ec563d),
-        service-card grid for skills, left-border timeline for experience, orange accent bar on project cards,
-        dark footer with social icon circles. No CSS var deps (explicit colors throughout).
-        Reuses: useProfile, computeGallery, Lightbox, JDMatchBanner (light-mode CSS-var override wrapper),
-        ChatPopup, FloatingButton, ResumePopup.
-        Animations: fadeUp (hero), floatY (avatar rings), scrollCue, pulse (open-to-work), scroll-reveal via useReveal().
+      <file name="src/admin.jsx">Mount Admin React app (imports index.css for dark theme CSS vars)</file>
+      <file name="src/jobtracker.jsx">Mount Job Tracker React app (JobTrackerApp component)</file>
+      <file name="src/App.jsx">
+        Portfolio root — template-inspired design (dark hero, orange/coral #ec563d, service-card skills).
+        Self-contained: all colors explicit, no index.css CSS var deps. Injects own GLOBAL_CSS string
+        (reset, keyframes, responsive grid classes, chat popup mobile overrides).
+        Sections: dark Hero (two-col text+avatar), For Recruiters (JDMatchBanner light-mode),
+        About (two-col text+orange info card), Skills (service cards), Experience (timeline),
+        Education, Projects (accent-top-bar cards), Certifications (expandable), Gallery, dark Footer.
+        Local components: useReveal, SectionLabel, Sect, StickyNav, CertList, FloatingButton.
+        Chat popup wrapped in CSS-var override div for dark+orange theme.
       </file>
       <file name="src/AdminApp.jsx">
         Admin root — thin shell. Imports useAuth + 15 tab components.
@@ -236,8 +232,6 @@
           <file name="CertificationTab.jsx">Certifications với MonthYearPicker, credentialId, link.</file>
           <file name="GalleryTab.jsx">Visibility toggle, drag-and-drop reorder, year dropdown, caption input, add/remove ảnh.</file>
           <file name="ResumeTab.jsx">Upload/delete resume PDF, resumeVisible toggle.</file>
-          <file name="ThemeTab.jsx">10 presets + ColorPicker cho mọi section kể cả JD Match Banner.</file>
-          <file name="FontsTab.jsx">8 display fonts + 6 mono fonts với live preview.</file>
           <file name="AnalyticsTab.jsx">Total visitors/messages, 7-day bar chart, recent questions.</file>
           <file name="AITab.jsx">Chọn active Gemini model, thêm/xóa available models.</file>
           <file name="JobTrackerTab.jsx">Tạo/xóa/đổi password Job Tracker users, paste JSON jobs.</file>

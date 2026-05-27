@@ -10,13 +10,12 @@ Personal portfolio website with AI-powered chatbot and Job Tracker, self-hosted 
 
 A full-stack personal profile website featuring:
 
-- **Portfolio page** — About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume
-- **Profile page** (`tienmai.space/profile`) — Alternative portfolio view with template-inspired design: dark hero, orange/coral accent, service-card skill grid, dark footer
+- **Portfolio page** — Dark hero, orange/coral accent, service-card skills, timeline experience, dark footer. Self-contained design (no CSS var theme system)
 - **JD Match Banner** — Recruiters upload a job description and get instant AI analysis: match %, skills breakdown, first-person assessment
 - **AI Chatbot** — Gemini-powered assistant that speaks as Tien Mai in first person; supports file upload
 - **Telegram Bot** — Same AI assistant on Telegram; pushes owner notifications on new chats and JD uploads
 - **Job Tracker** — Private authenticated app for tracking job applications: pipeline board, profile editor, AI resume extraction, JD analysis chatbot
-- **Admin Dashboard** — Full CMS for profile content, theme, fonts, analytics, and account settings
+- **Admin Dashboard** — Full CMS for profile content, analytics, and account settings (Theme + Fonts tabs removed — portfolio uses a fixed design)
 
 ---
 
@@ -87,20 +86,17 @@ tienmai-space/
 ├── resumes/
 │   └── {username}.pdf            # Job Tracker user resumes (not committed)
 └── frontend/
-    ├── index.html                # Portfolio page entry
+    ├── index.html                # Portfolio page entry (loads Syne + DM Mono fonts)
     ├── admin.html                # Admin page entry
     ├── jobtracker.html           # Job Tracker page entry
-    ├── profile.html              # Profile page entry (noindex)
-    ├── vite.config.js            # Vite multi-page config (4 entries)
+    ├── vite.config.js            # Vite multi-page config (3 entries)
     └── src/
-        ├── main.jsx              # Portfolio app entry
-        ├── admin.jsx             # Admin app entry
+        ├── main.jsx              # Portfolio app entry (no index.css — App.jsx has GLOBAL_CSS)
+        ├── admin.jsx             # Admin app entry (imports index.css for dark theme)
         ├── jobtracker.jsx        # Job Tracker app entry
-        ├── profile.jsx           # Profile page entry
-        ├── App.jsx               # Portfolio root (thin shell)
-        ├── AdminApp.jsx          # Admin root (thin shell)
+        ├── App.jsx               # Portfolio root — template-inspired design (self-contained)
+        ├── AdminApp.jsx          # Admin root — 13 tabs (Theme + Fonts removed)
         ├── JobTrackerApp.jsx     # Job Tracker root (thin shell)
-        ├── ProfileApp.jsx        # Profile page — template-inspired design (self-contained)
         ├── index.css             # Global styles
         ├── lib/
         │   └── gallery.js        # Gallery helpers (galleryUrl, galleryCaption, computeGallery)
@@ -110,11 +106,10 @@ tienmai-space/
         └── components/
             ├── portfolio/        # Lightbox, ChatPopup, JDMatchBanner, ResumePopup,
             │                     # CertificationsSection, shared (Avatar, Section, Card)
-            ├── admin/            # LoginPage, shared UI, 15 tab components
+            ├── admin/            # LoginPage, shared UI, 13 tab components
             │   └── tabs/         # BasicTab, AboutTab, SkillsTab, ExperienceTab,
             │                     # EducationTab, ListTab, CertificationTab, GalleryTab,
-            │                     # ResumeTab, ThemeTab, FontsTab, AnalyticsTab,
-            │                     # AITab, JobTrackerTab, SettingsTab
+            │                     # ResumeTab, AnalyticsTab, AITab, JobTrackerTab, SettingsTab
             └── jobtracker/       # LoginPage, TrackerPage, JtProfilePage, JobModal,
                                   # JdViewModal, JtChat, MultiSelect, ResumeViewModal
 ```
@@ -124,7 +119,7 @@ tienmai-space/
 ## Features
 
 ### Portfolio Page (`tienmai.space`)
-- Responsive dark/light theme with full admin customization
+- Fixed design: dark hero, orange/coral accent (#ec563d), light content sections
 - Avatar, name, title, location, social links, Open to Work badge
 - Resume button → PDF popup viewer + download
 - Sections: About, Skills (grouped), Experience, Education, Projects, Certifications, Gallery
@@ -136,7 +131,7 @@ tienmai-space/
 - Upload a JD (PDF, DOCX, TXT) via click or drag-and-drop
 - AI returns: match %, matching skills, missing skills, first-person assessment
 - Color-coded result (green ≥50%, red <50%); result persists across page refreshes via localStorage
-- All colors configurable from Admin → Theme
+- All colors fixed in code (App.jsx) — no runtime theming
 
 ### AI Chatbot
 - Speaks in first person as Tien Mai — not as a third-party AI assistant
@@ -160,10 +155,8 @@ tienmai-space/
 
 ### Admin Dashboard (`tienmai.space/admin`)
 - JWT login with brute force protection: 5 failed attempts → 5-minute lockout (countdown shown)
-- **Tabs:** Basic Info, About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume, Theme, Fonts, Analytics, AI Models, Job Tracker, Settings
+- **Tabs:** Basic Info, About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume, Analytics, AI Models, Job Tracker, Settings
 - **Gallery tab:** visibility toggle, drag-and-drop reordering, per-image year (dropdown from first job year to current) and caption
-- **Theme editor:** 10 presets (5 dark + 5 light), full color picker for every section including JD Match Banner
-- **Font selector:** 8 display fonts + 6 mono fonts with live preview
 - **Analytics:** total visitors, total messages, 7-day visitor chart, recent questions list
 - **Settings tab:** change username and password (verifies current password first, invalidates all active sessions on change), login history (IP, device, success/fail per attempt)
 
