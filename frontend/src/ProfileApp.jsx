@@ -862,8 +862,11 @@ export default function ProfileApp() {
       {resumeOpen     && <ResumePopup onClose={() => setResumeOpen(false)} />}
       {lbIdx !== null && <Lightbox images={sortedGallery} index={lbIdx} onClose={() => setLbIdx(null)} />}
 
-      {/* Chat popup: dark bg + orange accent via CSS var override */}
+      {/* Chat popup: dark bg + orange accent via CSS var override.
+          `color` is set as a real inherited property (not a CSS var) so
+          elements that don't reference var(--text) still get white text. */}
       <div style={{
+        color:             "rgba(255,255,255,0.92)",
         "--bg-surface":    BG_DARK2,
         "--bg-card":       "#272727",
         "--border":        "rgba(255,255,255,0.09)",
@@ -871,7 +874,7 @@ export default function ProfileApp() {
         "--accent-border": `${A}45`,
         "--accent-dim":    `${A}15`,
         "--text":          "rgba(255,255,255,0.92)",
-        "--text-muted":    "rgba(255,255,255,0.38)",
+        "--text-muted":    "rgba(255,255,255,0.45)",
         "--user-bg":       `${A}18`,
         "--font-display":  "'Syne', sans-serif",
         "--font-mono":     "'DM Mono', monospace",
