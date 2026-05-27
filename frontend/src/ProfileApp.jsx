@@ -207,7 +207,7 @@ function CertList({ certifications, t }) {
         }}
           onMouseEnter={e => { e.currentTarget.style.background = "#B45309"; e.currentTarget.style.color = "#fff"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "#fffbeb"; e.currentTarget.style.color = "#B45309"; }}>
-          {expanded ? "↑ Thu gọn" : `↓ Xem tất cả ${sorted.length} chứng chỉ`}
+          {expanded ? "↑ Show less" : `↓ Show all ${sorted.length} certifications`}
         </button>
       )}
     </div>
@@ -388,13 +388,30 @@ export default function ProfileApp() {
       {/* ── JD MATCH BANNER ─────────────────────────────────────────────── */}
       <section style={{ background: "#fff", padding: "48px 24px", borderTop: "1px solid #f0f0ee", borderBottom: "1px solid #f0f0ee" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <JDMatchBanner theme={t} />
+          {/* Override dark CSS vars so JDMatchBanner renders in light theme */}
+          <div style={{
+            "--bg-card": "#fff", "--bg-surface": "#f8f9fa",
+            "--border": "rgba(0,0,0,0.09)", "--border-hover": "rgba(0,0,0,0.16)",
+            "--text": "#111", "--text-muted": "#6b7280",
+            "--accent": "#6366f1", "--accent-border": "rgba(99,102,241,.3)",
+            "--font-mono": "'DM Mono',monospace", "--font-display": "'Syne',sans-serif",
+          }}>
+            <JDMatchBanner theme={{
+              ...t,
+              bannerBg:      "#fff",
+              bannerBorder:  "#e5e7eb",
+              bannerLabel:   "#6366f1",
+              bannerTitle:   "#111",
+              bannerText:    "#6b7280",
+              bannerBtnText: "#6366f1",
+            }} />
+          </div>
         </div>
       </section>
 
       {/* ── ABOUT ───────────────────────────────────────────────────────── */}
       {profile.about && (
-        <FullSection id="about" bg="#EEF2FF">
+        <FullSection id="about" bg="#fff">
           <Heading label="About" accent={t.labelAbout || ACCENTS.about} />
           <p style={{ fontSize: "clamp(.95rem,2vw,1.05rem)", color: "#374151", lineHeight: 1.95, whiteSpace: "pre-wrap", maxWidth: 780 }}>
             {profile.about}
@@ -404,7 +421,7 @@ export default function ProfileApp() {
 
       {/* ── SKILLS ──────────────────────────────────────────────────────── */}
       {profile.skills?.length > 0 && (
-        <FullSection id="skills" bg="#FFF7ED">
+        <FullSection id="skills" bg="#fafaf8">
           <Heading label="Skills" accent={t.labelSkills || ACCENTS.skills} />
           {profile.skills[0]?.group !== undefined ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
@@ -439,7 +456,7 @@ export default function ProfileApp() {
 
       {/* ── EXPERIENCE ──────────────────────────────────────────────────── */}
       {profile.experiences?.length > 0 && (
-        <FullSection id="experience" bg="#F0FDF4">
+        <FullSection id="experience" bg="#fff">
           <Heading label="Experience" accent={t.labelExperience || ACCENTS.experience} />
           <div style={{ position: "relative", paddingLeft: 28 }}>
             {/* Timeline vertical line */}
@@ -473,7 +490,7 @@ export default function ProfileApp() {
 
       {/* ── EDUCATION ───────────────────────────────────────────────────── */}
       {profile.educations?.length > 0 && (
-        <FullSection id="education" bg="#FDF4FF">
+        <FullSection id="education" bg="#fafaf8">
           <Heading label="Education" accent={t.labelEducation || ACCENTS.education} />
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {profile.educations.map((edu, i) => (
@@ -493,7 +510,7 @@ export default function ProfileApp() {
 
       {/* ── PROJECTS ────────────────────────────────────────────────────── */}
       {profile.projects?.length > 0 && (
-        <FullSection id="projects" bg="#EFF6FF">
+        <FullSection id="projects" bg="#fff">
           <Heading label="Projects" accent={t.labelProjects || ACCENTS.projects} />
           <div className="p-proj-grid">
             {profile.projects.map((p, i) => (
@@ -514,7 +531,7 @@ export default function ProfileApp() {
 
       {/* ── CERTIFICATIONS ──────────────────────────────────────────────── */}
       {profile.certifications?.length > 0 && (
-        <FullSection id="certifications" bg="#FFFBEB">
+        <FullSection id="certifications" bg="#fafaf8">
           <Heading label="Certifications" accent={t.labelCertifications || ACCENTS.certifications} />
           <CertList certifications={profile.certifications} t={t} />
         </FullSection>
@@ -522,7 +539,7 @@ export default function ProfileApp() {
 
       {/* ── GALLERY ─────────────────────────────────────────────────────── */}
       {sortedGallery.length > 0 && profile.galleryVisible !== false && (
-        <FullSection id="gallery" bg="#F9FAFB">
+        <FullSection id="gallery" bg="#fff">
           <Heading label="Gallery" accent={t.labelGallery || ACCENTS.gallery} />
           {galleryGroups.map(({ year, items }, gIdx) => (
             <div key={year ?? "noyear"} style={{ marginBottom: gIdx < galleryGroups.length - 1 ? 32 : 0 }}>
