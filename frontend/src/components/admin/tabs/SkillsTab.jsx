@@ -55,9 +55,9 @@ function IconPicker({ value, onChange }) {
           position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 200,
           background: "var(--bg-surface)", border: "1px solid var(--border)",
           borderRadius: 12, padding: 10,
-          width: 252, maxHeight: 192, overflowY: "auto",
+          width: 244, maxHeight: 192, overflowY: "auto", overflowX: "hidden",
           boxShadow: "0 8px 28px rgba(0,0,0,0.45)",
-          display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4,
+          display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4,
           scrollbarWidth: "thin",
         }}>
           {SKILL_ICONS.map(icon => (
