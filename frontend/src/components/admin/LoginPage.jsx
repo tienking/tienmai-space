@@ -58,7 +58,7 @@ export default function LoginPage({ onLogin }) {
           </div>
         )}
         <button onClick={handleSubmit} disabled={loading || isLocked}
-          style={{ width: "100%", padding: "11px", borderRadius: 10, border: "none", background: isLocked ? "var(--border)" : "var(--accent)", color: "#0a0a0b", fontSize: 14, fontWeight: 500, cursor: (loading || isLocked) ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: loading ? 0.7 : 1 }}>
+          style={{ width: "100%", padding: "11px", borderRadius: 10, border: "none", background: isLocked ? "var(--border)" : "var(--accent)", color: "#fff", fontSize: 14, fontWeight: 500, cursor: (loading || isLocked) ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: loading ? 0.7 : 1 }}>
           {loading ? "Signing in..." : isLocked ? `Locked (${mins}:${secs})` : "Sign in"}
         </button>
       </div>

@@ -118,7 +118,7 @@ export default function AITab({ token }) {
             placeholder="gemini-..."
             style={{ ...inputStyle, flex: 1, fontFamily: "var(--font-mono)" }}
           />
-          <button onClick={addModel} style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", flexShrink: 0 }}>Add</button>
+          <button onClick={addModel} style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", flexShrink: 0 }}>Add</button>
         </div>
       </Field>
     </div>

@@ -68,7 +68,7 @@ export default function ResumeTab({ token, resumeVisible, onSave, saving }) {
           {hasResume && <a href="/api/resume/file" target="_blank" style={{ marginLeft: "auto", fontSize: 12, color: "var(--accent)", textDecoration: "none", fontFamily: "var(--font-mono)" }}>Preview →</a>}
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ padding: "8px 18px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, fontWeight: 500, cursor: uploading ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: uploading ? 0.7 : 1 }}>
+          <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ padding: "8px 18px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: uploading ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: uploading ? 0.7 : 1 }}>
             {uploading ? "Uploading..." : hasResume ? "Replace PDF" : "Upload PDF"}
           </button>
           {hasResume && (

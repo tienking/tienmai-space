@@ -26,7 +26,7 @@ export function TabCard({ title, children, onSave, saving }) {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>{title}</h2>
-        <button onClick={onSave} disabled={saving} style={{ padding: "8px 20px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, fontWeight: 500, cursor: saving ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: saving ? 0.7 : 1 }}>
+        <button onClick={onSave} disabled={saving} style={{ padding: "8px 20px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: saving ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: saving ? 0.7 : 1 }}>
           {saving ? "Saving..." : "Save"}
         </button>
       </div>

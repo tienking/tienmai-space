@@ -108,7 +108,7 @@ export default function SettingsTab({ token, onLogout }) {
         )}
 
         <button onClick={handleSave} disabled={saving}
-          style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "var(--font-display)" }}>
+          style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "var(--font-display)" }}>
           {saving ? "Saving..." : "Update"}
         </button>
       </div>

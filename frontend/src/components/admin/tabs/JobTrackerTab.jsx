@@ -73,7 +73,7 @@ export default function JobTrackerTab({ token }) {
           style={{ ...inputStyle, fontFamily: "var(--font-mono)" }} />
         <input placeholder="Password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
           style={inputStyle} onKeyDown={e => e.key === "Enter" && addUser()} />
-        <button onClick={addUser} disabled={adding} style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>
+        <button onClick={addUser} disabled={adding} style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>
           {adding ? "..." : "Add"}
         </button>
       </div>
@@ -109,7 +109,7 @@ export default function JobTrackerTab({ token }) {
                 onChange={e => setEditingPw(p => ({ ...p, [u.username]: e.target.value }))}
                 style={{ ...inputStyle, flex: 1, fontSize: 12 }} />
               <button onClick={() => updatePw(u.username)}
-                style={{ fontSize: 12, padding: "6px 12px", borderRadius: 6, border: "none", background: "var(--accent)", color: "#0a0a0b", cursor: "pointer" }}>
+                style={{ fontSize: 12, padding: "6px 12px", borderRadius: 6, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}>
                 Change password
               </button>
             </div>
@@ -125,7 +125,7 @@ export default function JobTrackerTab({ token }) {
                   style={{ ...inputStyle, width: "100%", resize: "vertical", fontFamily: "var(--font-mono)", fontSize: 11 }} />
                 <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                   <button onClick={() => saveJobs(u.username)} disabled={jobsSaving}
-                    style={{ fontSize: 12, padding: "6px 14px", borderRadius: 6, border: "none", background: "var(--accent)", color: "#0a0a0b", cursor: "pointer" }}>
+                    style={{ fontSize: 12, padding: "6px 14px", borderRadius: 6, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}>
                     {jobsSaving ? "Saving..." : "Save jobs"}
                   </button>
                   {jobsSaved && <span style={{ fontSize: 12, color: "var(--accent)", alignSelf: "center" }}>✓ Saved</span>}

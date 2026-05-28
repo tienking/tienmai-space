@@ -86,7 +86,7 @@ export default function GalleryTab({ gallery, experiences, galleryVisible, onSav
       <Field label="Add image URL (Cloudinary)">
         <div style={{ display: "flex", gap: 8 }}>
           <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} onKeyDown={e => e.key === "Enter" && add()} />
-          <button onClick={add} style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#0a0a0b", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", flexShrink: 0 }}>Add</button>
+          <button onClick={add} style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", flexShrink: 0 }}>Add</button>
         </div>
       </Field>
       <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
