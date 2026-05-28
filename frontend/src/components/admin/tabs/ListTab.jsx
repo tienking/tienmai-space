@@ -10,7 +10,9 @@ export default function ListTab({ title, field, items, onSave, saving, fields })
   const moveDown = i => { if (i === list.length - 1) return; const l = [...list]; [l[i], l[i + 1]] = [l[i + 1], l[i]]; setList(l); };
 
   return (
-    <TabCard title={title} onSave={() => onSave({ [field]: list })} saving={saving}>
+    <TabCard title={title} onSave={() => onSave({ [field]: list })} saving={saving}
+      footer={<button onClick={add} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>+ Add {title.endsWith("s") ? title.slice(0, -1) : title}</button>}
+    >
       {list.map((item, i) => (
         <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
@@ -31,9 +33,6 @@ export default function ListTab({ title, field, items, onSave, saving, fields })
           ))}
         </div>
       ))}
-      <button onClick={add} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>
-        + Add {title.endsWith("s") ? title.slice(0, -1) : title}
-      </button>
     </TabCard>
   );
 }

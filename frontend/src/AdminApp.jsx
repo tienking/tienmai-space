@@ -87,7 +87,7 @@ const ADMIN_CSS = `
 `;
 
 // Scroll pane for tabs that don't use TabCard (no pinned header needed)
-const SP = { flex: 1, minHeight: 0, overflowY: "auto", padding: "24px 0 40px" };
+const SP = { flex: 1, minHeight: 0, overflowY: "auto", padding: "24px 10px 40px 0" };
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 

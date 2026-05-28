@@ -21,25 +21,29 @@ export function loadGoogleFont(fontName) {
   document.head.appendChild(link);
 }
 
-export function TabCard({ title, children, onSave, saving }) {
+export function TabCard({ title, children, footer, onSave, saving }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-      {/* Pinned header — sits outside the scroll region so scrollbar starts below it */}
+      {/* Pinned header */}
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
-        flexShrink: 0,
-        padding: "24px 0 14px",
-        borderBottom: "1px solid var(--border)",
+        flexShrink: 0, padding: "24px 0 14px", borderBottom: "1px solid var(--border)",
       }}>
         <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>{title}</h2>
         <button onClick={onSave} disabled={saving} style={{ padding: "8px 20px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: saving ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: saving ? 0.7 : 1 }}>
           {saving ? "Saving..." : "Save"}
         </button>
       </div>
-      {/* Scrollable content — scrollbar starts here, below the header */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "20px 0 40px" }}>
+      {/* Scrollable cards — paddingRight creates gap between cards and scrollbar */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "20px 10px 16px 0" }}>
         {children}
       </div>
+      {/* Pinned footer — Add New button lives here, outside the scroll region */}
+      {footer && (
+        <div style={{ flexShrink: 0, padding: "12px 0 20px" }}>
+          {footer}
+        </div>
+      )}
     </div>
   );
 }

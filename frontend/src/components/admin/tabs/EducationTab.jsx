@@ -46,7 +46,9 @@ export default function EducationTab({ items, onSave, saving }) {
   );
 
   return (
-    <TabCard title="Education" onSave={handleSave} saving={saving}>
+    <TabCard title="Education" onSave={handleSave} saving={saving}
+      footer={<button onClick={add} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>+ Add Education</button>}
+    >
       {list.map((item, i) => (
         <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
@@ -77,9 +79,6 @@ export default function EducationTab({ items, onSave, saving }) {
           )}
         </div>
       ))}
-      <button onClick={add} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>
-        + Add Education
-      </button>
     </TabCard>
   );
 }

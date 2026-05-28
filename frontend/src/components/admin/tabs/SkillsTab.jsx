@@ -127,7 +127,9 @@ export default function SkillsTab({ profile, onSave, saving }) {
   };
 
   return (
-    <TabCard title="Skills" onSave={handleSave} saving={saving}>
+    <TabCard title="Skills" onSave={handleSave} saving={saving}
+      footer={<button onClick={addGroup} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>+ Add Group</button>}
+    >
       {groups.map((g, i) => (
         <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
@@ -155,9 +157,6 @@ export default function SkillsTab({ profile, onSave, saving }) {
           </Field>
         </div>
       ))}
-      <button onClick={addGroup} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>
-        + Add Group
-      </button>
     </TabCard>
   );
 }

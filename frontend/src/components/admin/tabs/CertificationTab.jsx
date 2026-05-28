@@ -61,7 +61,9 @@ export default function CertificationTab({ items, onSave, saving }) {
   );
 
   return (
-    <TabCard title="Certifications" onSave={handleSave} saving={saving}>
+    <TabCard title="Certifications" onSave={handleSave} saving={saving}
+      footer={<button onClick={add} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>+ Add Certification</button>}
+    >
       {list.map((item, i) => (
         <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
@@ -95,9 +97,6 @@ export default function CertificationTab({ items, onSave, saving }) {
           <Field label="Credential URL"><input value={item.link || ""} onChange={e => update(i, "link", e.target.value)} placeholder="https://..." style={inputStyle} /></Field>
         </div>
       ))}
-      <button onClick={add} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>
-        + Add Certification
-      </button>
     </TabCard>
   );
 }
