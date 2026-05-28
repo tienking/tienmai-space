@@ -51,35 +51,48 @@ function IconPicker({ value, onChange }) {
       </button>
 
       {open && (
-        <div style={{
-          position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 200,
-          background: "var(--bg-surface)", border: "1px solid var(--border)",
-          borderRadius: 12, padding: 10,
-          width: 244, maxHeight: 192, overflowY: "auto", overflowX: "hidden",
-          boxShadow: "0 8px 28px rgba(0,0,0,0.45)",
-          display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4,
-          scrollbarWidth: "thin",
-        }}>
-          {SKILL_ICONS.map(icon => (
-            <button
-              key={icon}
-              type="button"
-              title={icon}
-              onClick={() => { onChange(icon); setOpen(false); }}
-              style={{
-                fontSize: 18, lineHeight: 1, padding: "5px 4px", borderRadius: 6,
-                border: value === icon ? "2px solid var(--accent)" : "1px solid transparent",
-                background: value === icon ? "var(--accent-dim)" : "transparent",
-                cursor: "pointer", transition: "background .1s",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}
-              onMouseEnter={e => { if (icon !== value) e.currentTarget.style.background = "var(--bg-card)"; }}
-              onMouseLeave={e => { if (icon !== value) e.currentTarget.style.background = "transparent"; }}
-            >
-              {icon}
-            </button>
-          ))}
-        </div>
+        <>
+          <style>{`
+            .ikp-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
+            .ikp-scroll::-webkit-scrollbar { width: 4px; }
+            .ikp-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 10px; }
+            .ikp-scroll::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
+          `}</style>
+          {/* outer: border + radius + shadow — overflow:hidden clips scroll container at corners */}
+          <div style={{
+            position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 200,
+            border: "1px solid var(--border)", borderRadius: 12,
+            boxShadow: "0 8px 28px rgba(0,0,0,0.45)", overflow: "hidden", width: 252,
+          }}>
+            {/* inner: scrollable grid */}
+            <div className="ikp-scroll" style={{
+              background: "var(--bg-surface)",
+              maxHeight: 192, overflowY: "auto", overflowX: "hidden",
+              padding: "10px 8px 10px 10px",
+              display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4,
+            }}>
+              {SKILL_ICONS.map(icon => (
+                <button
+                  key={icon}
+                  type="button"
+                  title={icon}
+                  onClick={() => { onChange(icon); setOpen(false); }}
+                  style={{
+                    fontSize: 18, lineHeight: 1, padding: "5px 4px", borderRadius: 6,
+                    border: value === icon ? "2px solid var(--accent)" : "1px solid transparent",
+                    background: value === icon ? "var(--accent-dim)" : "transparent",
+                    cursor: "pointer", transition: "background .1s",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                  onMouseEnter={e => { if (icon !== value) e.currentTarget.style.background = "var(--bg-card)"; }}
+                  onMouseLeave={e => { if (icon !== value) e.currentTarget.style.background = "transparent"; }}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
