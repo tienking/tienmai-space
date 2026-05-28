@@ -183,8 +183,9 @@
         Chat popup wrapped in CSS-var override div for dark+orange theme.
       </file>
       <file name="src/AdminApp.jsx">
-        Admin root — thin shell. Imports useAuth + 15 tab components.
+        Admin root — thin shell. Imports useAuth + 13 tab components.
         Dashboard function: load profile, save(), saveGallery(), render sidebar nav + tab content.
+        Responsive: ADMIN_CSS injected via style tag. On ≤640px sidebar becomes horizontal scrollable tab strip.
         Tabs: Basic Info, About, Skills, Experience, Education, Projects,
               Certifications, Gallery, Resume, Theme, Fonts, Analytics, AI, JobTracker, Settings.
         saveGallery(): PUT /api/admin/gallery với array [{url, caption, year}].
@@ -225,7 +226,7 @@
         <dir name="tabs/">
           <file name="BasicTab.jsx">Name, title, location, email, phone, socials, avatar URL, openToWork toggle.</file>
           <file name="AboutTab.jsx">About text textarea.</file>
-          <file name="SkillsTab.jsx">Grouped skills editor (group name + items list).</file>
+          <file name="SkillsTab.jsx">Grouped skills editor (group name + emoji icon picker + items list). Icon stored as grp.icon field.</file>
           <file name="ExperienceTab.jsx">Experience list với MonthYearPicker, description textarea.</file>
           <file name="EducationTab.jsx">Education list với YearPicker.</file>
           <file name="ListTab.jsx">Generic list editor dùng cho Projects (fields: title, tag, description, link).</file>
@@ -384,7 +385,8 @@
         <field name="resumeVisible" type="bool">Hiển thị nút Resume trên portfolio</field>
         <field name="galleryVisible" type="bool">Hiển thị section Gallery trên portfolio (mặc định true nếu không có field)</field>
         <field name="skills" type="array">
-          Có 2 format: ["skill1", "skill2"] (flat) hoặc [{group, items: [...]}] (grouped)
+          Có 2 format: ["skill1", "skill2"] (flat) hoặc [{group, icon, items: [...]}] (grouped).
+          icon là emoji string (e.g. "⚙️") — được chọn qua icon picker trong SkillsTab.
         </field>
         <field name="experiences" type="array">
           [{role, company, period, description}]

@@ -602,7 +602,7 @@ export default function App() {
                   onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 14px 36px ${A}1a`; e.currentTarget.style.transform = "translateY(-5px)"; e.currentTarget.style.borderColor = `${A}50`; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = ""; e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = "#e5e7eb"; }}>
                   <div style={{ width: 54, height: 54, borderRadius: "50%", background: `${A}10`, border: `2px solid ${A}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 18 }}>
-                    {GROUP_ICONS[gi % GROUP_ICONS.length]}
+                    {grp.icon || GROUP_ICONS[gi % GROUP_ICONS.length]}
                   </div>
                   <p style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 14, fontFamily: "'Syne', sans-serif" }}>
                     {grp.group}

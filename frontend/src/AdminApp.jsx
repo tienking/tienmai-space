@@ -16,6 +16,64 @@ import AITab from "./components/admin/tabs/AITab";
 import JobTrackerTab from "./components/admin/tabs/JobTrackerTab";
 import SettingsTab from "./components/admin/tabs/SettingsTab";
 
+const ADMIN_CSS = `
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .admin-header {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-surface);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .admin-body {
+    display: flex; max-width: 1000px; margin: 0 auto; padding: 24px;
+  }
+
+  .admin-nav {
+    width: 160px; flex-shrink: 0; margin-right: 24px;
+  }
+
+  .admin-nav-btn {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; text-align: left;
+    padding: 9px 12px; border-radius: 10px; border: none;
+    font-size: 13px; cursor: pointer;
+    font-family: var(--font-display);
+    margin-bottom: 4px; transition: all 0.15s;
+  }
+
+  .admin-content { flex: 1; min-width: 0; }
+
+  .admin-view-link { display: inline; }
+
+  @media (max-width: 640px) {
+    .admin-header { padding: 10px 16px; }
+
+    .admin-body { flex-direction: column; padding: 0; }
+
+    .admin-nav {
+      width: 100%; margin-right: 0;
+      display: flex; flex-direction: row;
+      overflow-x: auto; padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none; -ms-overflow-style: none;
+    }
+    .admin-nav::-webkit-scrollbar { display: none; }
+
+    .admin-nav-btn {
+      width: auto; flex-shrink: 0;
+      margin-bottom: 0; margin-right: 4px;
+      white-space: nowrap; border-radius: 20px;
+      padding: 7px 12px;
+    }
+
+    .admin-content { padding: 16px; }
+
+    .admin-view-link { display: none; }
+  }
+`;
+
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 
 function Dashboard({ token, onLogout }) {
@@ -79,8 +137,9 @@ function Dashboard({ token, onLogout }) {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <div style={{ padding: "14px 24px", borderBottom: "1px solid var(--border)", background: "var(--bg-surface)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <style>{ADMIN_CSS}</style>
+
+      <div className="admin-header">
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <p style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--accent)", letterSpacing: "0.1em" }}>ADMIN</p>
           <span style={{ color: "var(--border)" }}>·</span>
@@ -88,22 +147,30 @@ function Dashboard({ token, onLogout }) {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {saved && <span style={{ fontSize: 12, color: "var(--accent)", fontFamily: "var(--font-mono)" }}>✓ Saved</span>}
-          <a href="/" target="_blank" style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "none" }}>View site →</a>
+          <a href="/" target="_blank" className="admin-view-link" style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "none" }}>View site →</a>
           <button onClick={onLogout} style={{ fontSize: 12, color: "var(--text-muted)", background: "none", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontFamily: "var(--font-display)" }}>Sign out</button>
         </div>
       </div>
 
-      <div style={{ display: "flex", maxWidth: 1000, margin: "0 auto", padding: "24px" }}>
-        <div style={{ width: 160, flexShrink: 0, marginRight: 24 }}>
+      <div className="admin-body">
+        <nav className="admin-nav">
           {tabs.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 10, border: "none", background: activeTab === tab.id ? "var(--accent-dim)" : "none", color: activeTab === tab.id ? "var(--accent)" : "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", marginBottom: 4, transition: "all 0.15s" }}>
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="admin-nav-btn"
+              style={{
+                background: activeTab === tab.id ? "var(--accent-dim)" : "none",
+                color: activeTab === tab.id ? "var(--accent)" : "var(--text-muted)",
+              }}
+            >
               <span style={{ width: 18, flexShrink: 0, textAlign: "center", fontSize: 14 }}>{tab.icon}</span>
               <span>{tab.label}</span>
             </button>
           ))}
-        </div>
+        </nav>
 
-        <div style={{ flex: 1 }}>
+        <div className="admin-content">
           {activeTab === "basic"          && <BasicTab profile={profile} onSave={save} saving={saving} />}
           {activeTab === "about"          && <AboutTab profile={profile} onSave={save} saving={saving} />}
           {activeTab === "skills"         && <SkillsTab profile={profile} onSave={save} saving={saving} />}
