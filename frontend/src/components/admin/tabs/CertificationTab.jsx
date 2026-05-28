@@ -2,6 +2,11 @@ import { useState } from "react";
 import { TabCard, Field, SmallBtn, inputStyle } from "../shared";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTH_LABELS = {
+  Jan: "January", Feb: "February", Mar: "March", Apr: "April",
+  May: "May", Jun: "June", Jul: "July", Aug: "August",
+  Sep: "September", Oct: "October", Nov: "November", Dec: "December",
+};
 
 export default function CertificationTab({ items, onSave, saving }) {
   const currentYear = new Date().getFullYear();
@@ -49,11 +54,11 @@ export default function CertificationTab({ items, onSave, saving }) {
 
   const MonthYearPicker = ({ monthKey, yearKey, item, idx }) => (
     <div style={{ display: "flex", gap: 8 }}>
-      <select value={item[monthKey]} onChange={e => update(idx, monthKey, e.target.value)} style={{ ...inputStyle, flex: 1 }}>
+      <select value={item[monthKey]} onChange={e => update(idx, monthKey, e.target.value)} style={{ ...inputStyle, width: "auto" }}>
         <option value="">Month</option>
-        {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+        {MONTHS.map(m => <option key={m} value={m}>{MONTH_LABELS[m]}</option>)}
       </select>
-      <select value={item[yearKey]} onChange={e => update(idx, yearKey, e.target.value)} style={{ ...inputStyle, flex: 1 }}>
+      <select value={item[yearKey]} onChange={e => update(idx, yearKey, e.target.value)} style={{ ...inputStyle, width: "auto" }}>
         <option value="">Year</option>
         {years.map(y => <option key={y} value={y}>{y}</option>)}
       </select>

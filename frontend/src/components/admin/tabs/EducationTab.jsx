@@ -39,7 +39,7 @@ export default function EducationTab({ items, onSave, saving }) {
   };
 
   const YearPicker = ({ yearKey, item, idx, placeholder }) => (
-    <select value={item[yearKey]} onChange={e => update(idx, yearKey, e.target.value)} style={inputStyle}>
+    <select value={item[yearKey]} onChange={e => update(idx, yearKey, e.target.value)} style={{ ...inputStyle, width: "auto" }}>
       <option value="">{placeholder}</option>
       {years.map(y => <option key={y} value={y}>{y}</option>)}
     </select>
