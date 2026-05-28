@@ -24,7 +24,14 @@ export function loadGoogleFont(fontName) {
 export function TabCard({ title, children, onSave, saving }) {
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        position: "sticky", top: 0, zIndex: 10,
+        background: "var(--bg)",
+        padding: "24px 0 14px",
+        marginBottom: 16,
+        borderBottom: "1px solid var(--border)",
+      }}>
         <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>{title}</h2>
         <button onClick={onSave} disabled={saving} style={{ padding: "8px 20px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: saving ? "default" : "pointer", fontFamily: "var(--font-display)", opacity: saving ? 0.7 : 1 }}>
           {saving ? "Saving..." : "Save"}

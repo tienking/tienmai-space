@@ -19,20 +19,26 @@ import SettingsTab from "./components/admin/tabs/SettingsTab";
 const ADMIN_CSS = `
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ── Fixed chrome ── */
   .admin-header {
-    padding: 14px 24px;
+    padding: 14px 24px; flex-shrink: 0;
     border-bottom: 1px solid var(--border);
     background: var(--bg-surface);
     display: flex; align-items: center; justify-content: space-between;
   }
 
+  /* ── Split-pane body ── */
   .admin-body {
-    display: flex; max-width: 1000px; margin: 0 auto; padding: 24px;
+    display: flex; width: 100%; max-width: 1000px; margin: 0 auto;
+    flex: 1; overflow: hidden; padding: 0 24px;
   }
 
   .admin-nav {
     width: 160px; flex-shrink: 0; margin-right: 24px;
+    padding: 24px 0;
+    overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;
   }
+  .admin-nav::-webkit-scrollbar { display: none; }
 
   .admin-nav-btn {
     display: flex; align-items: center; gap: 8px;
@@ -43,19 +49,23 @@ const ADMIN_CSS = `
     margin-bottom: 4px; transition: all 0.15s;
   }
 
-  .admin-content { flex: 1; min-width: 0; }
+  .admin-content {
+    flex: 1; min-width: 0;
+    overflow-y: auto; padding-bottom: 40px;
+  }
 
   .admin-view-link { display: inline; }
 
+  /* ── Mobile: stacked, horizontal tab strip ── */
   @media (max-width: 640px) {
     .admin-header { padding: 10px 16px; }
 
-    .admin-body { flex-direction: column; padding: 0; }
+    .admin-body { flex-direction: column; padding: 0; overflow: hidden; }
 
     .admin-nav {
-      width: 100%; margin-right: 0;
+      width: 100%; margin-right: 0; padding: 8px 12px;
       display: flex; flex-direction: row;
-      overflow-x: auto; padding: 8px 12px;
+      overflow-x: auto; overflow-y: hidden;
       border-bottom: 1px solid var(--border);
       scrollbar-width: none; -ms-overflow-style: none;
     }
@@ -64,11 +74,10 @@ const ADMIN_CSS = `
     .admin-nav-btn {
       width: auto; flex-shrink: 0;
       margin-bottom: 0; margin-right: 4px;
-      white-space: nowrap; border-radius: 20px;
-      padding: 7px 12px;
+      white-space: nowrap; border-radius: 20px; padding: 7px 12px;
     }
 
-    .admin-content { padding: 16px; }
+    .admin-content { padding: 0 16px 40px; overflow-y: auto; }
 
     .admin-view-link { display: none; }
   }
@@ -136,7 +145,7 @@ function Dashboard({ token, onLogout }) {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", background: "var(--bg)" }}>
       <style>{ADMIN_CSS}</style>
 
       <div className="admin-header">
