@@ -57,16 +57,14 @@ const GLOBAL_CSS = `
   .p-hero-links { display: flex; gap: 10px; flex-wrap: wrap; }
   @media(max-width: 480px) { .p-hero-links { justify-content: center; } }
 
-  /* Chat popup — mobile full-screen */
+  /* Chat popup — mobile: float above the toggle button */
   @media(max-width: 480px) {
     .chat-popup {
-      position: fixed !important; bottom: 0 !important; right: 0 !important;
-      left: 0 !important; width: 100% !important; height: 75vh !important;
-      border-radius: 20px 20px 0 0 !important;
-      border-left: none !important; border-right: none !important; border-bottom: none !important;
+      position: fixed !important; bottom: 84px !important; right: 0 !important;
+      left: 0 !important; width: 100% !important;
+      height: 75vh !important; max-height: calc(100vh - 108px) !important;
+      border-radius: 20px !important;
     }
-    /* Hide floating button when chat is open on mobile — popup header has its own × */
-    .chat-float-open { display: none !important; }
   }
 `;
 

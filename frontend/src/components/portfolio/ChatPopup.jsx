@@ -152,7 +152,7 @@ export function ChatPopup({ onClose }) {
         </div>
       </div>
 
-      <div ref={chatContainerRef} style={{ flex: 1, overflowY: "auto", padding: "14px 12px" }}>
+      <div ref={chatContainerRef} style={{ flex: 1, overflowY: "auto", padding: "14px 12px", overscrollBehavior: "contain" }}>
         {messages.map((msg, i) => <ChatMessage key={i} msg={msg} />)}
         {messages.length === 1 && !loading && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 33 }}>
