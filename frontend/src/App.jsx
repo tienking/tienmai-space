@@ -65,6 +65,8 @@ const GLOBAL_CSS = `
       border-radius: 20px 20px 0 0 !important;
       border-left: none !important; border-right: none !important; border-bottom: none !important;
     }
+    /* Hide floating button when chat is open on mobile — popup header has its own × */
+    .chat-float-open { display: none !important; }
   }
 `;
 
@@ -262,7 +264,7 @@ function CertList({ certifications }) {
 // ── Floating chat button ──────────────────────────────────────────────────────
 function FloatingButton({ onClick, isOpen }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={onClick} className={isOpen ? "chat-float-open" : ""} style={{
       position: "fixed", bottom: 24, right: 24, zIndex: 1000,
       width: 52, height: 52, borderRadius: "50%", border: "none",
       background: isOpen ? BG_DARK2 : A,
