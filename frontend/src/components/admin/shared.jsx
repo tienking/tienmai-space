@@ -23,13 +23,12 @@ export function loadGoogleFont(fontName) {
 
 export function TabCard({ title, children, onSave, saving }) {
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      {/* Pinned header — sits outside the scroll region so scrollbar starts below it */}
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
-        position: "sticky", top: 0, zIndex: 10,
-        background: "var(--bg)",
+        flexShrink: 0,
         padding: "24px 0 14px",
-        marginBottom: 16,
         borderBottom: "1px solid var(--border)",
       }}>
         <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>{title}</h2>
@@ -37,7 +36,10 @@ export function TabCard({ title, children, onSave, saving }) {
           {saving ? "Saving..." : "Save"}
         </button>
       </div>
-      {children}
+      {/* Scrollable content — scrollbar starts here, below the header */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "20px 0 40px" }}>
+        {children}
+      </div>
     </div>
   );
 }

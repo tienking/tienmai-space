@@ -49,9 +49,11 @@ const ADMIN_CSS = `
     margin-bottom: 4px; transition: all 0.15s;
   }
 
+  /* content column — does NOT scroll; inner TabCard/scrollPane handles it */
   .admin-content {
-    flex: 1; min-width: 0;
-    overflow-y: auto; padding-bottom: 40px;
+    flex: 1; min-width: 0; min-height: 0;
+    display: flex; flex-direction: column;
+    overflow: hidden;
   }
 
   .admin-view-link { display: inline; }
@@ -77,11 +79,15 @@ const ADMIN_CSS = `
       white-space: nowrap; border-radius: 20px; padding: 7px 12px;
     }
 
-    .admin-content { padding: 0 16px 40px; overflow-y: auto; }
+    /* mobile horizontal padding lives here so TabCard header aligns with nav */
+    .admin-content { padding: 0 16px; }
 
     .admin-view-link { display: none; }
   }
 `;
+
+// Scroll pane for tabs that don't use TabCard (no pinned header needed)
+const SP = { flex: 1, minHeight: 0, overflowY: "auto", padding: "24px 0 40px" };
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -180,6 +186,7 @@ function Dashboard({ token, onLogout }) {
         </nav>
 
         <div className="admin-content">
+          {/* TabCard tabs — scroll is internal to TabCard */}
           {activeTab === "basic"          && <BasicTab profile={profile} onSave={save} saving={saving} />}
           {activeTab === "about"          && <AboutTab profile={profile} onSave={save} saving={saving} />}
           {activeTab === "skills"         && <SkillsTab profile={profile} onSave={save} saving={saving} />}
@@ -188,11 +195,12 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "projects"       && <ListTab title="Projects" field="projects" items={profile.projects || []} onSave={save} saving={saving} fields={["title", "tag", "description", "link"]} />}
           {activeTab === "certifications" && <CertificationTab items={profile.certifications || []} onSave={save} saving={saving} />}
           {activeTab === "gallery"        && <GalleryTab gallery={profile.gallery || []} experiences={profile.experiences || []} galleryVisible={profile.galleryVisible !== false} onSave={saveGallery} onSaveProfile={save} saving={saving} />}
-          {activeTab === "resume"         && <ResumeTab token={token} resumeVisible={profile.resumeVisible !== false} onSave={save} saving={saving} />}
-          {activeTab === "analytics"      && <AnalyticsTab token={token} />}
-          {activeTab === "ai"             && <AITab token={token} />}
-          {activeTab === "jobtracker"     && <JobTrackerTab token={token} />}
-          {activeTab === "settings"       && <SettingsTab token={token} onLogout={onLogout} />}
+          {/* Non-TabCard tabs — wrapped in a scroll pane so scrollbar starts at top of content */}
+          {activeTab === "resume"      && <div style={SP}><ResumeTab token={token} resumeVisible={profile.resumeVisible !== false} onSave={save} saving={saving} /></div>}
+          {activeTab === "analytics"   && <div style={SP}><AnalyticsTab token={token} /></div>}
+          {activeTab === "ai"          && <div style={SP}><AITab token={token} /></div>}
+          {activeTab === "jobtracker"  && <div style={SP}><JobTrackerTab token={token} /></div>}
+          {activeTab === "settings"    && <div style={SP}><SettingsTab token={token} onLogout={onLogout} /></div>}
         </div>
       </div>
     </div>
