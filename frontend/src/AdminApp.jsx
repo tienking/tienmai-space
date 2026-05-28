@@ -29,8 +29,8 @@ const ADMIN_CSS = `
 
   /* ── Split-pane body ── */
   .admin-body {
-    display: flex; width: 100%; max-width: 1000px; margin: 0 auto;
-    flex: 1; overflow: hidden; padding: 0 24px;
+    display: flex; width: 100%; max-width: 1400px; margin: 0 auto;
+    flex: 1; overflow: hidden; padding: 0 32px;
   }
 
   .admin-nav {
