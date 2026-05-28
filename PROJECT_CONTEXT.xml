@@ -165,7 +165,7 @@
         Entry point Portfolio app → src/main.jsx.
         Preloads Syne + DM Mono from Google Fonts (App.jsx GLOBAL_CSS uses these).
       </file>
-      <file name="admin.html">Entry point Admin app → src/admin.jsx</file>
+      <file name="admin.html">Entry point Admin app → src/admin.jsx. Loads Google Fonts (Syne + DM Mono) via preconnect + link tags — same as index.html.</file>
       <file name="jobtracker.html">Entry point Job Tracker app → src/jobtracker.jsx</file>
       <file name="src/main.jsx">
         Mount Portfolio React app. Does NOT import index.css — App.jsx injects its own GLOBAL_CSS.
@@ -185,9 +185,10 @@
       <file name="src/AdminApp.jsx">
         Admin root — thin shell. Imports useAuth + 13 tab components.
         Dashboard function: load profile, save(), saveGallery(), render sidebar nav + tab content.
+        Layout: sticky header + nav + tab title+Save; only inner card list scrolls (flex-column + overflow:hidden pattern).
         Responsive: ADMIN_CSS injected via style tag. On ≤640px sidebar becomes horizontal scrollable tab strip.
         Tabs: Basic Info, About, Skills, Experience, Education, Projects,
-              Certifications, Gallery, Resume, Theme, Fonts, Analytics, AI, JobTracker, Settings.
+              Certifications, Gallery, Resume, Analytics, AI Models, Job Tracker, Settings.
         saveGallery(): PUT /api/admin/gallery với array [{url, caption, year}].
         save(): PUT /api/admin/profile với partial ProfileUpdate.
       </file>
@@ -398,7 +399,10 @@
           [{title, tag, description, link}]
         </field>
         <field name="certifications" type="array">
-          [{name, issuer, issueMonth, issueYear, expMonth, expYear, noExpiry, credentialId, link}]
+          [{name, issuer, date, credentialId, link}]
+          date is a formatted string, e.g. "Jan 2024" or "Jan 2024 · Expires Jan 2026" or "Jan 2024" (no expiry).
+          CertificationTab UI parses date into issueMonth/issueYear/expMonth/expYear/noExpiry for editing,
+          then rebuilds the date string on save — those UI fields are not stored in DB.
         </field>
         <field name="gallery" type="array">
           Mỗi item: {url: string, caption: string, year: int|null}
