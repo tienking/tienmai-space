@@ -79,8 +79,8 @@ function IconPicker({ value, onChange }) {
             <div className="ikp-scroll" style={{
               background: "var(--bg-surface)",
               maxHeight: 192, overflowY: "auto", overflowX: "hidden",
-              padding: "10px 8px 10px 10px",
-              display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4,
+              padding: "10px 14px 10px 10px",
+              display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4,
             }}>
               {SKILL_ICONS.map(icon => (
                 <button
