@@ -71,7 +71,7 @@ function IconPicker({ value, onChange }) {
           `}</style>
           {/* outer: border + radius + shadow — overflow:hidden clips scroll container at corners */}
           <div style={{
-            position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 200,
+            position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 200,
             border: "1px solid var(--border)", borderRadius: 12,
             boxShadow: "0 8px 28px rgba(0,0,0,0.45)", overflow: "hidden", width: 252,
           }}>
