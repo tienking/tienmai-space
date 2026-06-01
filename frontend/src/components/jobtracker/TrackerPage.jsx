@@ -212,6 +212,10 @@ export default function TrackerPage({ username, token }) {
           <MultiSelect label="Trạng thái" options={STATUS_OPTIONS} selected={fStatuses} onChange={setFStatuses} />
           <MultiSelect label="Tháng" options={uniqueMonths.map(m => ({ value: m, label: `Tháng ${m}` }))} selected={fMonths} onChange={setFMonths} />
           <MultiSelect label="Năm" options={uniqueYears.map(y => ({ value: y, label: String(y) }))} selected={fYears} onChange={setFYears} />
+          <button onClick={() => { setSearch(""); setFModes(null); setFStatuses(null); setFMonths(null); setFYears(null); setSortCol(null); setSortAsc(true); }}
+            style={{ fontSize: 12, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "var(--font-display)" }}>
+            Reset
+          </button>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
             <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{filtered.length} jobs</span>
             <button onClick={() => setModal({ mode: "add" })}
