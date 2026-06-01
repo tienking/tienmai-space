@@ -165,9 +165,9 @@ export default function TrackerPage({ username, token }) {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <p style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--accent)", letterSpacing: "0.12em" }}>JOB TRACKER</p>
-            <span style={{ color: "var(--border)", fontSize: 16 }}>·</span>
-            <p style={{ fontSize: 15, fontWeight: 600 }}>{username}</p>
+            <p style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--accent)", letterSpacing: "0.08em" }}>JOB TRACKER</p>
+            <span style={{ color: "var(--border)" }}>·</span>
+            <p style={{ fontSize: 13, fontWeight: 600 }}>{username}</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {saving && <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>lưu...</span>}
