@@ -6,20 +6,19 @@ export const emptyJob = () => ({
   status: "applied", jd: "",
 });
 
-// Sub-popup: edit JD text (z-index 200, on top of JobModal)
 function JdEditorModal({ value, onSave, onClose }) {
   const [text, setText] = useState(value || "");
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: "#fff", borderRadius: 12, padding: "24px", width: 600, maxWidth: "96vw", boxShadow: "0 8px 32px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", gap: 12 }}>
-        <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>Nội dung JD</h2>
+      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "24px", width: 600, maxWidth: "96vw", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: 12 }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0, color: "var(--text)" }}>Nội dung JD</h2>
         <textarea value={text} onChange={e => setText(e.target.value)}
           placeholder="Paste Job Description vào đây..."
-          style={{ width: "100%", height: "50vh", fontSize: 13, padding: "10px", borderRadius: 8, border: "0.5px solid #ccc", fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6 }} />
+          style={{ width: "100%", height: "50vh", fontSize: 13, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border)", fontFamily: "var(--font-display)", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6, background: "var(--bg)", color: "var(--text)" }} />
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <button onClick={onClose} style={{ padding: "8px 18px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Huỷ</button>
-          <button onClick={() => onSave(text.trim() || null)} style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Lưu JD</button>
+          <button onClick={onClose} style={{ padding: "8px 20px", borderRadius: 8, border: "1px solid var(--border)", background: "none", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>Huỷ</button>
+          <button onClick={() => onSave(text.trim() || null)} style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>Lưu JD</button>
         </div>
       </div>
     </div>
@@ -31,8 +30,8 @@ export default function JobModal({ initial, onSave, onClose }) {
   const [showJdEditor, setShowJdEditor] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const inp = { fontSize: 13, padding: "7px 10px", borderRadius: 6, border: "0.5px solid #ccc", width: "100%", boxSizing: "border-box", fontFamily: "inherit", outline: "none" };
-  const lbl = { fontSize: 12, color: "#555", display: "block", marginBottom: 4, marginTop: 12 };
+  const inp = { fontSize: 13, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", width: "100%", boxSizing: "border-box", fontFamily: "var(--font-display)", outline: "none", background: "var(--bg)", color: "var(--text)" };
+  const lbl = { fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5, marginTop: 14 };
 
   const handleSave = () => {
     if (!form.title.trim() || !form.company.trim()) return;
@@ -41,18 +40,18 @@ export default function JobModal({ initial, onSave, onClose }) {
 
   return (
     <>
-      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}
         onClick={e => e.target === e.currentTarget && onClose()}>
-        <div style={{ background: "#fff", borderRadius: 12, padding: "28px 28px 24px", width: 480, maxWidth: "94vw", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
-          <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{initial ? "Sửa job" : "Thêm job mới"}</h2>
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "28px 28px 24px", width: 480, maxWidth: "94vw", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 12px 48px rgba(0,0,0,0.5)" }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4, color: "var(--text)", fontFamily: "var(--font-display)" }}>{initial ? "Sửa job" : "Thêm job mới"}</h2>
 
-          <label style={lbl}>Vị trí <span style={{ color: "#c00" }}>*</span></label>
+          <label style={lbl}>Vị trí <span style={{ color: "var(--accent)" }}>*</span></label>
           <input value={form.title} onChange={e => set("title", e.target.value)} style={inp} placeholder="Software Engineer" />
 
           <label style={lbl}>URL</label>
           <input value={form.url} onChange={e => set("url", e.target.value)} style={inp} placeholder="https://linkedin.com/jobs/..." />
 
-          <label style={lbl}>Công ty <span style={{ color: "#c00" }}>*</span></label>
+          <label style={lbl}>Công ty <span style={{ color: "var(--accent)" }}>*</span></label>
           <input value={form.company} onChange={e => set("company", e.target.value)} style={inp} placeholder="Google" />
 
           <label style={lbl}>Trạng thái</label>
@@ -90,15 +89,15 @@ export default function JobModal({ initial, onSave, onClose }) {
 
           <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
             <button onClick={() => setShowJdEditor(true)}
-              style={{ fontSize: 12, padding: "5px 14px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ fontSize: 12, padding: "6px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "none", cursor: "pointer", fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>
               {form.jd ? "Sửa JD" : "+ Thêm JD"}
             </button>
-            {form.jd && <span style={{ fontSize: 11, color: "#888" }}>Đã có JD ({form.jd.length} ký tự)</span>}
+            {form.jd && <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Đã có JD ({form.jd.length} ký tự)</span>}
           </div>
 
-          <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "flex-end" }}>
-            <button onClick={onClose} style={{ padding: "8px 18px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Huỷ</button>
-            <button onClick={handleSave} style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Lưu</button>
+          <div style={{ display: "flex", gap: 8, marginTop: 22, justifyContent: "flex-end" }}>
+            <button onClick={onClose} style={{ padding: "8px 20px", borderRadius: 8, border: "1px solid var(--border)", background: "none", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>Huỷ</button>
+            <button onClick={handleSave} style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>Lưu</button>
           </div>
         </div>
       </div>

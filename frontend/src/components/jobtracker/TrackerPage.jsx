@@ -15,18 +15,16 @@ function useIsMobile() {
 }
 
 function badge(status) {
-  if (status === "not_applied")  return { text: "Chưa apply",      bg: "#FFF3E0", color: "#7C4500" };
-  if (status === "viewed")       return { text: "Đã xem CV",       bg: "#E6F1FB", color: "#0C447C" };
-  if (status === "downloaded")   return { text: "Đã tải CV",       bg: "#EAF3DE", color: "#27500A" };
-  if (status === "interviewing") return { text: "Đang phỏng vấn",  bg: "#F5F0FF", color: "#6D28D9" };
-  if (status === "waiting")      return { text: "Chờ kết quả",     bg: "#FFFBEB", color: "#B45309" };
-  if (status === "rejected")     return { text: "Đã từ chối",      bg: "#FFF5F5", color: "#E57373" };
-  if (status === "failed")       return { text: "Rớt",             bg: "#FFEBEE", color: "#B71C1C" };
-  return                                { text: "Đã apply",        bg: "#F1EFE8", color: "#5F5E5A" };
+  if (status === "not_applied")  return { text: "Chưa apply",      bg: "rgba(249,115,22,0.15)",  color: "#fb923c" };
+  if (status === "viewed")       return { text: "Đã xem CV",       bg: "rgba(96,165,250,0.15)",  color: "#60a5fa" };
+  if (status === "downloaded")   return { text: "Đã tải CV",       bg: "rgba(74,222,128,0.15)",  color: "#4ade80" };
+  if (status === "interviewing") return { text: "Đang phỏng vấn",  bg: "rgba(167,139,250,0.15)", color: "#a78bfa" };
+  if (status === "waiting")      return { text: "Chờ kết quả",     bg: "rgba(251,191,36,0.15)",  color: "#fbbf24" };
+  if (status === "rejected")     return { text: "Đã từ chối",      bg: "rgba(248,113,113,0.15)", color: "#f87171" };
+  if (status === "failed")       return { text: "Rớt",             bg: "rgba(239,68,68,0.15)",   color: "#ef4444" };
+  return                                { text: "Đã apply",        bg: "rgba(156,163,175,0.12)", color: "#9ca3af" };
 }
 
-// Load saved filter state from localStorage for this user.
-// Sets are serialized as arrays; null means "no filter" (Select All).
 function loadSavedFilters(username) {
   try { return JSON.parse(localStorage.getItem(`jt_filters_${username}`) || "{}"); }
   catch { return {}; }
@@ -39,7 +37,6 @@ export default function TrackerPage({ username, token }) {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
 
-  // Restore filter/sort state from localStorage on first render.
   const _saved = loadSavedFilters(username);
   const [sortCol, setSortCol] = useState(_saved.sortCol ?? null);
   const [sortAsc, setSortAsc] = useState(_saved.sortAsc ?? true);
@@ -48,7 +45,6 @@ export default function TrackerPage({ username, token }) {
   const [fMonths, setFMonths] = useState(_saved.fMonths ? new Set(_saved.fMonths) : null);
   const [fYears, setFYears] = useState(_saved.fYears ? new Set(_saved.fYears) : null);
 
-  // Persist filter/sort state whenever it changes (search box is intentionally excluded).
   useEffect(() => {
     const toArr = s => (s instanceof Set ? [...s] : null);
     localStorage.setItem(`jt_filters_${username}`, JSON.stringify({
@@ -57,6 +53,7 @@ export default function TrackerPage({ username, token }) {
       fMonths: toArr(fMonths), fYears: toArr(fYears),
     }));
   }, [sortCol, sortAsc, fModes, fStatuses, fMonths, fYears, username]);
+
   const [modal, setModal] = useState(null);
   const [viewJd, setViewJd] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -137,12 +134,6 @@ export default function TrackerPage({ username, token }) {
     return toDate(b) - toDate(a);
   });
 
-  const sel = { fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", color: "#333", fontFamily: "inherit" };
-  const thBase = { background: "#f5f5f3", color: "#666", fontWeight: 500, fontSize: 11, padding: "8px 10px", borderBottom: "0.5px solid #e0e0dc", userSelect: "none", whiteSpace: "nowrap", position: "sticky", top: 0, zIndex: 1 };
-  const thL = { ...thBase, textAlign: "left", cursor: "pointer" };
-  const thC = { ...thBase, textAlign: "center", cursor: "pointer" };
-  const thNC = { ...thBase, textAlign: "center" };
-
   const counts = {
     na: jobs.filter(j => j.status === "not_applied").length,
     a:  jobs.filter(j => j.status === "applied").length,
@@ -154,27 +145,38 @@ export default function TrackerPage({ username, token }) {
     fl: jobs.filter(j => j.status === "failed").length,
   };
 
+  const filterInput = { fontSize: 12, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text)", fontFamily: "var(--font-display)", outline: "none" };
+  const thBase = { background: "var(--bg-surface)", color: "var(--text-muted)", fontWeight: 500, fontSize: 11, padding: "9px 10px", borderBottom: "1px solid var(--border)", userSelect: "none", whiteSpace: "nowrap", position: "sticky", top: 0, zIndex: 1 };
+  const thL = { ...thBase, textAlign: "left", cursor: "pointer" };
+  const thC = { ...thBase, textAlign: "center", cursor: "pointer" };
+  const thNC = { ...thBase, textAlign: "center" };
+
   if (loading) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f5f5f3", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
-      <p style={{ color: "#888" }}>Đang tải...</p>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
+      <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--accent)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
   return (
-    <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", fontSize: 13, background: "#f5f5f3", color: "#1a1a18", height: "100vh", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
-      {/* Sticky top section */}
-      <div style={{ padding: isMobile ? "16px 16px 0" : "24px 24px 0", flexShrink: 0 }}>
+    <div style={{ fontFamily: "var(--font-display)", fontSize: 13, background: "var(--bg)", color: "var(--text)", height: "100vh", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
+
+      <div style={{ padding: isMobile ? "16px 16px 0" : "20px 24px 0", flexShrink: 0 }}>
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 500 }}>Job Tracker</h1>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 12, color: "#888" }}>{username}</span>
+            <p style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--accent)", letterSpacing: "0.12em" }}>JOB TRACKER</p>
+            <span style={{ color: "var(--border)", fontSize: 16 }}>·</span>
+            <p style={{ fontSize: 15, fontWeight: 600 }}>{username}</p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {saving && <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>lưu...</span>}
             <button onClick={() => window.location.href = `/jobtracker/${username}/profile`}
-              style={{ fontSize: 12, color: "#555", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ fontSize: 12, color: "var(--text-muted)", background: "none", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontFamily: "var(--font-display)" }}>
               Hồ sơ
             </button>
             <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
-              style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ fontSize: 12, color: "var(--text-muted)", background: "none", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontFamily: "var(--font-display)" }}>
               Sign out
             </button>
           </div>
@@ -183,66 +185,65 @@ export default function TrackerPage({ username, token }) {
         {/* Stats */}
         <div style={isMobile
           ? { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, marginBottom: 12 }
-          : { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+          : { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
           {[
-            { num: jobs.length,     label: "Tổng jobs" },
-            { num: counts.na,       label: "Chưa apply",      color: "#7C4500" },
-            { num: counts.a,        label: "Đã apply",        color: "#5F5E5A" },
-            { num: counts.v,        label: "Đã xem CV",       color: "#0C447C" },
-            { num: counts.d,        label: "Đã tải CV",       color: "#27500A" },
-            { num: counts.iv,       label: "Đang phỏng vấn",  color: "#6D28D9" },
-            { num: counts.wt,       label: "Chờ kết quả",     color: "#B45309" },
-            { num: counts.rj,       label: "Đã từ chối",      color: "#E57373" },
-            { num: counts.fl,       label: "Rớt",             color: "#B71C1C" },
-            { num: filtered.length, label: "Đang hiển thị" },
+            { num: jobs.length,     label: "Tổng" },
+            { num: counts.na,       label: "Chưa apply",    color: "#fb923c" },
+            { num: counts.a,        label: "Đã apply",      color: "#9ca3af" },
+            { num: counts.v,        label: "Đã xem CV",     color: "#60a5fa" },
+            { num: counts.d,        label: "Đã tải CV",     color: "#4ade80" },
+            { num: counts.iv,       label: "Phỏng vấn",     color: "#a78bfa" },
+            { num: counts.wt,       label: "Chờ kết quả",  color: "#fbbf24" },
+            { num: counts.rj,       label: "Từ chối",       color: "#f87171" },
+            { num: counts.fl,       label: "Rớt",           color: "#ef4444" },
+            { num: filtered.length, label: "Hiển thị" },
           ].map(({ num, label, color }) => (
-            <div key={label} style={{ background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 8, padding: isMobile ? "8px 10px" : "10px 16px", minWidth: isMobile ? 0 : 100 }}>
-              <div style={{ fontSize: isMobile ? 18 : 22, fontWeight: 500, color: color || "#1a1a18" }}>{num}</div>
-              <div style={{ fontSize: isMobile ? 10 : 11, color: "#888", marginTop: 2, lineHeight: 1.3 }}>{label}</div>
+            <div key={label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, padding: isMobile ? "8px 10px" : "10px 14px", minWidth: isMobile ? 0 : 88 }}>
+              <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 600, color: color || "var(--text)" }}>{num}</div>
+              <div style={{ fontSize: isMobile ? 9 : 11, color: "var(--text-muted)", marginTop: 2, lineHeight: 1.3 }}>{label}</div>
             </div>
           ))}
         </div>
 
         {/* Filters */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Tìm theo tên job / công ty..." style={{ ...sel, width: isMobile ? "100%" : 220 }} />
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center", paddingBottom: 12, borderBottom: "1px solid var(--border)" }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Tên job / công ty..." style={{ ...filterInput, width: isMobile ? "100%" : 200 }} />
           <MultiSelect label="Hình thức" options={MODE_OPTIONS} selected={fModes} onChange={setFModes} />
           <MultiSelect label="Trạng thái" options={STATUS_OPTIONS} selected={fStatuses} onChange={setFStatuses} />
           <MultiSelect label="Tháng" options={uniqueMonths.map(m => ({ value: m, label: `Tháng ${m}` }))} selected={fMonths} onChange={setFMonths} />
           <MultiSelect label="Năm" options={uniqueYears.map(y => ({ value: y, label: String(y) }))} selected={fYears} onChange={setFYears} />
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-            {saving && <span style={{ fontSize: 12, color: "#888" }}>Đang lưu...</span>}
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{filtered.length} jobs</span>
             <button onClick={() => setModal({ mode: "add" })}
-              style={{ fontSize: 12, padding: "5px 14px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ fontSize: 12, padding: "6px 14px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer", fontFamily: "var(--font-display)" }}>
               + Thêm job
             </button>
-            <span style={{ fontSize: 12, color: "#888" }}>{filtered.length} {filtered.length === 1 ? "job" : "jobs"}</span>
           </div>
         </div>
       </div>
 
       {/* Scrollable content */}
-      <div style={{ flex: 1, overflow: "auto", padding: isMobile ? "0 16px 88px" : "0 24px 88px" }}>
+      <div style={{ flex: 1, overflow: "auto", padding: isMobile ? "12px 16px 88px" : "12px 24px 88px" }}>
 
         {/* Mobile: card list */}
         {isMobile ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {!filtered.length
-              ? <p style={{ textAlign: "center", color: "#888", padding: 32 }}>Không tìm thấy kết quả.</p>
+              ? <p style={{ textAlign: "center", color: "var(--text-muted)", padding: 32 }}>Không tìm thấy kết quả.</p>
               : filtered.map((j, i) => {
                 const b = badge(j.status);
                 return (
-                  <div key={j._idx} style={{ background: "#fff", borderRadius: 10, border: "0.5px solid #e0e0dc", padding: "12px 14px" }}>
+                  <div key={j._idx} style={{ background: "var(--bg-card)", borderRadius: 10, border: "1px solid var(--border)", padding: "12px 14px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, color: "#aaa", marginBottom: 2 }}>{i + 1}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 2, fontFamily: "var(--font-mono)" }}>#{i + 1}</div>
                         {j.url
-                          ? <a href={j.url} target="_blank" rel="noreferrer" style={{ color: "#185FA5", textDecoration: "none", fontSize: 13, fontWeight: 500, lineHeight: 1.4 }}>{j.title}</a>
-                          : <span style={{ fontSize: 13, fontWeight: 500 }}>{j.title}</span>}
-                        <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{j.company}</div>
+                          ? <a href={j.url} target="_blank" rel="noreferrer" style={{ color: "var(--accent)", textDecoration: "none", fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>{j.title}</a>
+                          : <span style={{ fontSize: 13, fontWeight: 600 }}>{j.title}</span>}
+                        <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{j.company}</div>
                       </div>
                       <select value={j.status} onChange={e => handleStatusChange(j._idx, e.target.value)}
-                        style={{ padding: "3px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "inherit", outline: "none", flexShrink: 0 }}>
+                        style={{ padding: "3px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "var(--font-display)", outline: "none", flexShrink: 0 }}>
                         <option value="not_applied">Chưa apply</option>
                         <option value="applied">Đã apply</option>
                         <option value="viewed">Đã xem CV</option>
@@ -254,16 +255,16 @@ export default function TrackerPage({ username, token }) {
                       </select>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: 11, color: "#aaa" }}>{j.loc} · {j.mode} · {String(j.month).padStart(2, "0")}/{j.year}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{j.loc} · {j.mode} · {String(j.month).padStart(2, "0")}/{j.year}</span>
                       <div style={{ display: "flex", gap: 6 }}>
                         {j.jd && <button onClick={() => setViewJd({ title: j.title, jd: j.jd })}
-                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>JD</button>}
+                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: "1px solid var(--border)", background: "none", cursor: "pointer", fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>JD</button>}
                         <button onClick={() => handleAnalyze(j)}
-                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #185FA5", background: "#fff", color: "#185FA5", cursor: "pointer", fontFamily: "inherit", visibility: (j.status === "rejected" || j.status === "failed") ? "hidden" : "visible" }}>Phân tích</button>
+                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: "1px solid var(--accent-border)", background: "var(--accent-dim)", color: "var(--accent)", cursor: "pointer", fontFamily: "var(--font-display)", visibility: (j.status === "rejected" || j.status === "failed") ? "hidden" : "visible" }}>Phân tích</button>
                         <button onClick={() => setModal({ mode: "edit", index: j._idx })}
-                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Sửa</button>
+                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: "1px solid var(--border)", background: "none", cursor: "pointer", fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>Sửa</button>
                         <button onClick={() => handleDelete(j._idx)}
-                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>Xoá</button>
+                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)", color: "#f87171", cursor: "pointer", fontFamily: "var(--font-display)" }}>Xoá</button>
                       </div>
                     </div>
                   </div>
@@ -272,7 +273,7 @@ export default function TrackerPage({ username, token }) {
           </div>
         ) : (
           /* Desktop: table */
-          <div style={{ background: "#fff", borderRadius: 10, border: "0.5px solid #e0e0dc" }}>
+          <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)", overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
               <colgroup>
                 <col style={{ width: "3%" }} /><col style={{ width: "22%" }} /><col style={{ width: "16%" }} />
@@ -295,29 +296,29 @@ export default function TrackerPage({ username, token }) {
               </thead>
               <tbody>
                 {!filtered.length
-                  ? <tr><td colSpan={10} style={{ padding: 32, textAlign: "center", color: "#888" }}>Không tìm thấy kết quả.</td></tr>
+                  ? <tr><td colSpan={10} style={{ padding: 32, textAlign: "center", color: "var(--text-muted)" }}>Không tìm thấy kết quả.</td></tr>
                   : filtered.map((j, i) => {
                     const b = badge(j.status);
                     const dimmed = j.status === "rejected" || j.status === "failed";
-                    const dc = dimmed ? "#B71C1C" : "#888";
+                    const dc = dimmed ? "#f87171" : "var(--text-muted)";
                     return (
-                      <tr key={j._idx} style={{ borderBottom: "0.5px solid #f0f0ec" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "#fafaf8"}
+                      <tr key={j._idx} style={{ borderBottom: "1px solid var(--border)" }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
                         onMouseLeave={e => e.currentTarget.style.background = ""}>
-                        <td style={{ padding: "6px 10px", color: dc, textAlign: "center" }}>{i + 1}</td>
-                        <td style={{ padding: "6px 10px" }}>
-                          {j.url ? <a href={j.url} target="_blank" rel="noreferrer" style={{ color: "#185FA5", textDecoration: "none" }}>{j.title}</a> : j.title}
+                        <td style={{ padding: "7px 10px", color: dc, textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 11 }}>{i + 1}</td>
+                        <td style={{ padding: "7px 10px" }}>
+                          {j.url ? <a href={j.url} target="_blank" rel="noreferrer" style={{ color: "var(--accent)", textDecoration: "none" }}>{j.title}</a> : <span style={{ color: "var(--text)" }}>{j.title}</span>}
                         </td>
-                        <td style={{ padding: "6px 10px", color: dc }}>{j.company}</td>
-                        <td style={{ padding: "6px 10px", color: dc, textAlign: "center" }}>{j.loc}</td>
-                        <td style={{ padding: "6px 10px", textAlign: "center" }}>
-                          <span style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, border: "0.5px solid #ddd", color: dimmed ? "#B71C1C" : "#666" }}>{j.mode}</span>
+                        <td style={{ padding: "7px 10px", color: dc }}>{j.company}</td>
+                        <td style={{ padding: "7px 10px", color: dc, textAlign: "center" }}>{j.loc}</td>
+                        <td style={{ padding: "7px 10px", textAlign: "center" }}>
+                          <span style={{ padding: "2px 7px", borderRadius: 6, fontSize: 11, border: "1px solid var(--border)", color: dimmed ? "#f87171" : "var(--text-muted)" }}>{j.mode}</span>
                         </td>
-                        <td style={{ padding: "6px 10px", color: dc, textAlign: "center" }}>{String(j.month).padStart(2, "0")}</td>
-                        <td style={{ padding: "6px 10px", color: dc, textAlign: "center" }}>{j.year}</td>
-                        <td style={{ padding: "4px 10px" }}>
+                        <td style={{ padding: "7px 10px", color: dc, textAlign: "center" }}>{String(j.month).padStart(2, "0")}</td>
+                        <td style={{ padding: "7px 10px", color: dc, textAlign: "center" }}>{j.year}</td>
+                        <td style={{ padding: "5px 10px" }}>
                           <select value={j.status} onChange={e => handleStatusChange(j._idx, e.target.value)}
-                            style={{ padding: "2px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "inherit", outline: "none" }}>
+                            style={{ padding: "3px 6px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: b.bg, color: b.color, border: "none", cursor: "pointer", fontFamily: "var(--font-display)", outline: "none" }}>
                             <option value="not_applied">Chưa apply</option>
                             <option value="applied">Đã apply</option>
                             <option value="viewed">Đã xem CV</option>
@@ -328,24 +329,24 @@ export default function TrackerPage({ username, token }) {
                             <option value="failed">Rớt</option>
                           </select>
                         </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center" }}>
+                        <td style={{ padding: "7px 8px", textAlign: "center" }}>
                           {j.jd &&
                             <button onClick={() => setViewJd({ title: j.title, jd: j.jd })}
-                              style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+                              style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "none", cursor: "pointer", fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>
                               JD
                             </button>}
                         </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "7px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
                           <button onClick={() => handleAnalyze(j)}
-                            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #185FA5", background: "#fff", color: "#185FA5", cursor: "pointer", marginRight: 4, fontFamily: "inherit", visibility: (j.status === "rejected" || j.status === "failed") ? "hidden" : "visible" }}>
+                            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid var(--accent-border)", background: "var(--accent-dim)", color: "var(--accent)", cursor: "pointer", marginRight: 4, fontFamily: "var(--font-display)", visibility: (j.status === "rejected" || j.status === "failed") ? "hidden" : "visible" }}>
                             Phân tích
                           </button>
                           <button onClick={() => setModal({ mode: "edit", index: j._idx })}
-                            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", marginRight: 4, fontFamily: "inherit" }}>
+                            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "none", cursor: "pointer", marginRight: 4, fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>
                             Sửa
                           </button>
                           <button onClick={() => handleDelete(j._idx)}
-                            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>
+                            style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)", color: "#f87171", cursor: "pointer", fontFamily: "var(--font-display)" }}>
                             Xoá
                           </button>
                         </td>
@@ -357,14 +358,13 @@ export default function TrackerPage({ username, token }) {
           </div>
         )}
 
-        {/* Modals */}
         {modal?.mode === "add" && <JobModal onSave={handleAdd} onClose={() => setModal(null)} />}
         {modal?.mode === "edit" && <JobModal initial={jobs[modal.index]} onSave={handleEdit} onClose={() => setModal(null)} />}
         {viewJd && <JdViewModal title={viewJd.title} jd={viewJd.jd} onClose={() => setViewJd(null)} />}
       </div>
 
       {analyzeAlert && (
-        <div style={{ position: "fixed", bottom: 90, left: "50%", transform: "translateX(-50%)", zIndex: 2000, background: "#1a1a18", color: "#fff", padding: "10px 20px", borderRadius: 8, fontSize: 13, boxShadow: "0 4px 16px rgba(0,0,0,0.25)", whiteSpace: "nowrap", pointerEvents: "none" }}>
+        <div style={{ position: "fixed", bottom: 90, left: "50%", transform: "translateX(-50%)", zIndex: 2000, background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text)", padding: "10px 20px", borderRadius: 10, fontSize: 13, boxShadow: "0 4px 20px rgba(0,0,0,0.4)", whiteSpace: "nowrap", pointerEvents: "none" }}>
           {analyzeAlert}
         </div>
       )}

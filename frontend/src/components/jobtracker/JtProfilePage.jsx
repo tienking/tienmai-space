@@ -67,10 +67,7 @@ export default function JtProfilePage({ username, token }) {
     setResumeUrl(URL.createObjectURL(blob));
   };
   const handleCloseResume = () => { URL.revokeObjectURL(resumeUrl); setResumeUrl(null); };
-  const handleFileSelected = (e) => {
-    const file = e.target.files[0]; e.target.value = "";
-    if (file) setPendingFile(file);
-  };
+  const handleFileSelected = (e) => { const file = e.target.files[0]; e.target.value = ""; if (file) setPendingFile(file); };
 
   const handleUpload = async (withImport) => {
     const file = pendingFile; setPendingFile(null);
@@ -83,16 +80,9 @@ export default function JtProfilePage({ username, token }) {
       setResumeExists(true);
       if (withImport && data.profile) {
         const p = data.profile;
-        setInfo(f => ({
-          name: p.name || f.name, title: p.title || f.title, location: p.location || f.location,
-          email: p.email || f.email, phone: p.phone || f.phone, linkedin: p.linkedin || f.linkedin,
-          about: p.about || f.about,
-        }));
+        setInfo(f => ({ name: p.name || f.name, title: p.title || f.title, location: p.location || f.location, email: p.email || f.email, phone: p.phone || f.phone, linkedin: p.linkedin || f.linkedin, about: p.about || f.about }));
         if (p.skills?.length)      setSkills(p.skills);
-        if (p.experiences?.length) setExperiences(p.experiences.map(e => {
-          const parsed = parsePeriod(e.period || "");
-          return { role: e.role || "", company: e.company || "", description: e.description || "", ...parsed };
-        }));
+        if (p.experiences?.length) setExperiences(p.experiences.map(e => { const parsed = parsePeriod(e.period || ""); return { role: e.role || "", company: e.company || "", description: e.description || "", ...parsed }; }));
         if (p.educations?.length)  setEducations(p.educations);
       }
     } catch {}
@@ -107,18 +97,16 @@ export default function JtProfilePage({ username, token }) {
 
   const save = async (data) => {
     setSaving(true);
-    await fetch(`/api/jobtracker/profile/${username}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(data),
-    });
+    await fetch(`/api/jobtracker/profile/${username}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(data) });
     setSaving(false); setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const inp = { fontSize: 13, padding: "7px 10px", borderRadius: 6, border: "0.5px solid #ccc", width: "100%", boxSizing: "border-box", fontFamily: "inherit", outline: "none", background: "#fff" };
-  const lbl = { fontSize: 12, color: "#555", display: "block", marginBottom: 4, marginTop: 12 };
-  const card = { background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 10, padding: "16px 18px", marginBottom: 10 };
+  const inp = { fontSize: 13, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", width: "100%", boxSizing: "border-box", fontFamily: "var(--font-display)", outline: "none", background: "var(--bg)", color: "var(--text)" };
+  const lbl = { fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 5, marginTop: 14 };
+  const card = { background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "16px 18px", marginBottom: 12 };
+  const selStyle = { fontSize: 12, padding: "6px 8px", borderRadius: 7, border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)", fontFamily: "var(--font-display)", outline: "none", cursor: "pointer" };
+
   const tabs = ["info", "skills", "exp", "edu"];
   const tabLabels = { info: "Cá nhân", skills: "Kỹ năng", exp: "Kinh nghiệm", edu: "Học vấn" };
 
@@ -131,39 +119,47 @@ export default function JtProfilePage({ username, token }) {
   const setExp = (i, k, v) => setExperiences(prev => prev.map((e, idx) => idx === i ? { ...e, [k]: v } : e));
   const setEdu = (i, k, v) => setEducations(prev => prev.map((e, idx) => idx === i ? { ...e, [k]: v } : e));
 
+  const SaveRow = ({ onSave }) => (
+    <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+      {saved && <span style={{ fontSize: 12, color: "var(--accent)", fontFamily: "var(--font-mono)" }}>✓ Đã lưu</span>}
+      <button onClick={onSave} disabled={saving}
+        style={{ fontSize: 13, padding: "8px 22px", borderRadius: 9, border: "none", background: "var(--accent)", color: "#fff", cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1, fontFamily: "var(--font-display)" }}>
+        {saving ? "Đang lưu..." : "Lưu"}
+      </button>
+    </div>
+  );
+
   return (
-    <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", fontSize: 13, background: "#f5f5f3", color: "#1a1a18", minHeight: "100vh" }}>
-      {/* Header */}
+    <div style={{ fontFamily: "var(--font-display)", fontSize: 13, background: "var(--bg)", color: "var(--text)", minHeight: "100vh" }}>
+
       <div style={{ padding: "20px 24px 0", maxWidth: 720, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button onClick={() => window.location.href = `/jobtracker/${username}`}
-              style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ fontSize: 12, color: "var(--text-muted)", background: "none", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontFamily: "var(--font-display)" }}>
               ← Quay lại
             </button>
-            <h1 style={{ fontSize: 18, fontWeight: 500, margin: 0 }}>Hồ sơ cá nhân</h1>
+            <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: "var(--text)" }}>Hồ sơ cá nhân</h1>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 12, color: "#888" }}>{username}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{username}</span>
             <button onClick={() => { localStorage.removeItem("jt_token"); window.location.href = "/jobtracker"; }}
-              style={{ fontSize: 12, color: "#888", background: "none", border: "0.5px solid #ccc", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ fontSize: 12, color: "var(--text-muted)", background: "none", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontFamily: "var(--font-display)" }}>
               Sign out
             </button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 0, borderBottom: "0.5px solid #e0e0dc", marginBottom: 20 }}>
+        <div style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 20 }}>
           {tabs.map(t => (
             <button key={t} onClick={() => setTab(t)}
-              style={{ fontSize: 13, padding: "8px 18px", background: "none", border: "none", borderBottom: tab === t ? "2px solid #1a1a18" : "2px solid transparent", color: tab === t ? "#1a1a18" : "#888", cursor: "pointer", fontFamily: "inherit", fontWeight: tab === t ? 500 : 400, marginBottom: -1 }}>
+              style={{ fontSize: 13, padding: "8px 18px", background: "none", border: "none", borderBottom: tab === t ? "2px solid var(--accent)" : "2px solid transparent", color: tab === t ? "var(--accent)" : "var(--text-muted)", cursor: "pointer", fontFamily: "var(--font-display)", fontWeight: tab === t ? 600 : 400, marginBottom: -1 }}>
               {tabLabels[t]}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Content */}
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 24px 40px" }}>
 
         {/* Tab: Cá nhân */}
@@ -182,24 +178,23 @@ export default function JtProfilePage({ username, token }) {
                 style={{ ...inp, height: 100, resize: "vertical", lineHeight: 1.6 }} />
             </div>
 
-            {/* Resume section */}
-            <div style={{ ...card }}>
+            <div style={card}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>Resume (PDF)</div>
-                  <div style={{ fontSize: 12, color: resumeExists ? "#27500A" : "#aaa" }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>Resume (PDF)</div>
+                  <div style={{ fontSize: 12, color: importing ? "var(--text-muted)" : resumeExists ? "#4ade80" : "var(--text-muted)" }}>
                     {importing ? "Đang phân tích resume..." : resumeExists ? "Đã có resume" : "Chưa upload resume"}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                   {resumeExists && !importing && <>
                     <button onClick={handleViewResume}
-                      style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Xem</button>
+                      style={{ fontSize: 12, padding: "5px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "none", cursor: "pointer", fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>Xem</button>
                     <button onClick={handleDeleteResume}
-                      style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #fca5a5", background: "#fff", color: "#dc2626", cursor: "pointer", fontFamily: "inherit" }}>Xóa</button>
+                      style={{ fontSize: 12, padding: "5px 12px", borderRadius: 8, border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)", color: "#f87171", cursor: "pointer", fontFamily: "var(--font-display)" }}>Xóa</button>
                   </>}
                   <button onClick={() => fileInputRef.current?.click()} disabled={importing}
-                    style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: importing ? "default" : "pointer", opacity: importing ? 0.5 : 1, fontFamily: "inherit" }}>
+                    style={{ fontSize: 12, padding: "5px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "none", cursor: importing ? "default" : "pointer", opacity: importing ? 0.5 : 1, fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>
                     {importing ? "Đang xử lý..." : "↑ Upload"}
                   </button>
                   <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileSelected} style={{ display: "none" }} />
@@ -207,33 +202,27 @@ export default function JtProfilePage({ username, token }) {
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
-              {saved && <span style={{ fontSize: 12, color: "#27500A" }}>Đã lưu ✓</span>}
-              <button onClick={() => save(info)} disabled={saving}
-                style={{ fontSize: 13, padding: "7px 20px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit" }}>
-                {saving ? "Đang lưu..." : "Lưu"}
-              </button>
-            </div>
+            <SaveRow onSave={() => save(info)} />
           </div>
         )}
         {resumeUrl && <ResumeViewModal url={resumeUrl} onClose={handleCloseResume} />}
 
         {pendingFile && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}
             onClick={e => e.target === e.currentTarget && setPendingFile(null)}>
-            <div style={{ background: "#fff", borderRadius: 12, padding: "28px 28px 24px", width: 400, maxWidth: "92vw", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
-              <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Upload Resume</h2>
-              <p style={{ fontSize: 13, color: "#555", lineHeight: 1.6, marginBottom: 20 }}>
+            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "28px 28px 24px", width: 400, maxWidth: "92vw", boxShadow: "0 12px 48px rgba(0,0,0,0.5)" }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, color: "var(--text)" }}>Upload Resume</h2>
+              <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>
                 Bạn có muốn AI phân tích Resume và tự động điền thông tin vào hồ sơ không?<br />
-                <span style={{ fontSize: 12, color: "#aaa" }}>Chọn "Chỉ upload" nếu chỉ muốn lưu file.</span>
+                <span style={{ fontSize: 12, opacity: 0.7 }}>Chọn "Chỉ upload" nếu chỉ muốn lưu file.</span>
               </p>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                 <button onClick={() => handleUpload(false)}
-                  style={{ padding: "8px 18px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                  style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid var(--border)", background: "none", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)", color: "var(--text-muted)" }}>
                   Chỉ upload
                 </button>
                 <button onClick={() => handleUpload(true)}
-                  style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                  style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>
                   Phân tích và điền thông tin
                 </button>
               </div>
@@ -250,28 +239,22 @@ export default function JtProfilePage({ username, token }) {
                   onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
                   placeholder="Nhập kỹ năng rồi Enter..." style={{ ...inp, flex: 1 }} />
                 <button onClick={addSkill}
-                  style={{ fontSize: 12, padding: "7px 16px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                  style={{ fontSize: 12, padding: "8px 16px", borderRadius: 8, border: "1px solid var(--border)", background: "none", cursor: "pointer", fontFamily: "var(--font-display)", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
                   + Thêm
                 </button>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                {skills.length === 0 && <span style={{ fontSize: 12, color: "#aaa" }}>Chưa có kỹ năng nào.</span>}
+                {skills.length === 0 && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Chưa có kỹ năng nào.</span>}
                 {skills.map((s, i) => (
-                  <span key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, padding: "4px 10px", borderRadius: 20, border: "0.5px solid #ccc", background: "#f5f5f3" }}>
+                  <span key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, padding: "4px 10px", borderRadius: 20, border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)" }}>
                     {s}
                     <button onClick={() => setSkills(prev => prev.filter((_, idx) => idx !== i))}
-                      style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                      style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
                   </span>
                 ))}
               </div>
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
-              {saved && <span style={{ fontSize: 12, color: "#27500A" }}>Đã lưu ✓</span>}
-              <button onClick={() => save({ skills })} disabled={saving}
-                style={{ fontSize: 13, padding: "7px 20px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit" }}>
-                {saving ? "Đang lưu..." : "Lưu"}
-              </button>
-            </div>
+            <SaveRow onSave={() => save({ skills })} />
           </div>
         )}
 
@@ -281,38 +264,34 @@ export default function JtProfilePage({ username, token }) {
             {experiences.map((e, i) => (
               <div key={i} style={{ ...card, position: "relative" }}>
                 <button onClick={() => setExperiences(prev => prev.filter((_, idx) => idx !== i))}
-                  style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
+                  style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <div><label style={lbl}>Vị trí / Chức danh</label><input value={e.role} onChange={ev => setExp(i, "role", ev.target.value)} style={inp} placeholder="Senior Data Analyst" /></div>
                   <div><label style={lbl}>Công ty</label><input value={e.company} onChange={ev => setExp(i, "company", ev.target.value)} style={inp} placeholder="Công ty ABC" /></div>
                   <div style={{ gridColumn: "1/-1" }}>
                     <label style={lbl}>Thời gian</label>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                      <select value={e.startMonth} onChange={ev => setExp(i, "startMonth", ev.target.value)}
-                        style={{ fontSize: 12, padding: "6px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontFamily: "inherit", outline: "none", cursor: "pointer" }}>
+                      <select value={e.startMonth} onChange={ev => setExp(i, "startMonth", ev.target.value)} style={selStyle}>
                         <option value="">Tháng</option>
                         {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
-                      <select value={e.startYear} onChange={ev => setExp(i, "startYear", ev.target.value)}
-                        style={{ fontSize: 12, padding: "6px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontFamily: "inherit", outline: "none", cursor: "pointer" }}>
+                      <select value={e.startYear} onChange={ev => setExp(i, "startYear", ev.target.value)} style={selStyle}>
                         <option value="">Năm</option>
                         {EXP_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
                       </select>
-                      <span style={{ color: "#aaa", fontSize: 12 }}>→</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: 12 }}>→</span>
                       {!e.current && <>
-                        <select value={e.endMonth} onChange={ev => setExp(i, "endMonth", ev.target.value)}
-                          style={{ fontSize: 12, padding: "6px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontFamily: "inherit", outline: "none", cursor: "pointer" }}>
+                        <select value={e.endMonth} onChange={ev => setExp(i, "endMonth", ev.target.value)} style={selStyle}>
                           <option value="">Tháng</option>
                           {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
-                        <select value={e.endYear} onChange={ev => setExp(i, "endYear", ev.target.value)}
-                          style={{ fontSize: 12, padding: "6px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: "#fff", fontFamily: "inherit", outline: "none", cursor: "pointer" }}>
+                        <select value={e.endYear} onChange={ev => setExp(i, "endYear", ev.target.value)} style={selStyle}>
                           <option value="">Năm</option>
                           {EXP_YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
                         </select>
                       </>}
-                      <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#555", cursor: "pointer", userSelect: "none" }}>
-                        <input type="checkbox" checked={e.current} onChange={ev => setExp(i, "current", ev.target.checked)} />
+                      <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--text-muted)", cursor: "pointer", userSelect: "none" }}>
+                        <input type="checkbox" checked={e.current} onChange={ev => setExp(i, "current", ev.target.checked)} style={{ accentColor: "var(--accent)" }} />
                         Hiện tại
                       </label>
                     </div>
@@ -320,20 +299,15 @@ export default function JtProfilePage({ username, token }) {
                 </div>
                 <label style={lbl}>Mô tả công việc</label>
                 <textarea value={e.description} onChange={ev => setExp(i, "description", ev.target.value)}
-                  placeholder="Mô tả trách nhiệm, thành tích..." style={{ ...inp, height: 80, resize: "vertical", lineHeight: 1.6 }} />
+                  placeholder="Mô tả trách nhiệm, thành tích..."
+                  style={{ ...inp, height: 80, resize: "vertical", lineHeight: 1.6 }} />
               </div>
             ))}
             <button onClick={() => setExperiences(prev => [...prev, EMPTY_EXP()])}
-              style={{ width: "100%", padding: "10px", borderRadius: 8, border: "0.5px dashed #ccc", background: "#fff", color: "#888", cursor: "pointer", fontSize: 13, fontFamily: "inherit", marginBottom: 12 }}>
+              style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 13, fontFamily: "var(--font-display)", marginBottom: 14 }}>
               + Thêm kinh nghiệm
             </button>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
-              {saved && <span style={{ fontSize: 12, color: "#27500A" }}>Đã lưu ✓</span>}
-              <button onClick={() => save({ experiences: experiences.map(({ startMonth, startYear, endMonth, endYear, current, ...rest }) => ({ ...rest, period: buildPeriod(startMonth, startYear, endMonth, endYear, current) })) })} disabled={saving}
-                style={{ fontSize: 13, padding: "7px 20px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit" }}>
-                {saving ? "Đang lưu..." : "Lưu"}
-              </button>
-            </div>
+            <SaveRow onSave={() => save({ experiences: experiences.map(({ startMonth, startYear, endMonth, endYear, current, ...rest }) => ({ ...rest, period: buildPeriod(startMonth, startYear, endMonth, endYear, current) })) })} />
           </div>
         )}
 
@@ -343,7 +317,7 @@ export default function JtProfilePage({ username, token }) {
             {educations.map((e, i) => (
               <div key={i} style={{ ...card, position: "relative" }}>
                 <button onClick={() => setEducations(prev => prev.filter((_, idx) => idx !== i))}
-                  style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
+                  style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <div style={{ gridColumn: "1/-1" }}><label style={lbl}>Bằng cấp / Chương trình học</label><input value={e.degree} onChange={ev => setEdu(i, "degree", ev.target.value)} style={inp} placeholder="Cử nhân Kinh tế" /></div>
                   <div><label style={lbl}>Trường</label><input value={e.school} onChange={ev => setEdu(i, "school", ev.target.value)} style={inp} placeholder="ĐH Kinh tế TP.HCM" /></div>
@@ -352,16 +326,10 @@ export default function JtProfilePage({ username, token }) {
               </div>
             ))}
             <button onClick={() => setEducations(prev => [...prev, EMPTY_EDU()])}
-              style={{ width: "100%", padding: "10px", borderRadius: 8, border: "0.5px dashed #ccc", background: "#fff", color: "#888", cursor: "pointer", fontSize: 13, fontFamily: "inherit", marginBottom: 12 }}>
+              style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px dashed var(--border)", background: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 13, fontFamily: "var(--font-display)", marginBottom: 14 }}>
               + Thêm học vấn
             </button>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
-              {saved && <span style={{ fontSize: 12, color: "#27500A" }}>Đã lưu ✓</span>}
-              <button onClick={() => save({ educations })} disabled={saving}
-                style={{ fontSize: 13, padding: "7px 20px", borderRadius: 6, border: "none", background: "#1a1a18", color: "#fff", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit" }}>
-                {saving ? "Đang lưu..." : "Lưu"}
-              </button>
-            </div>
+            <SaveRow onSave={() => save({ educations })} />
           </div>
         )}
       </div>

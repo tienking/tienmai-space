@@ -50,19 +50,19 @@ export default function MultiSelect({ label, options, selected, onChange }) {
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button onClick={() => setOpen(o => !o)}
-        style={{ fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "0.5px solid #ccc", background: open ? "#f5f5f3" : "#fff", color: "#333", fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap" }}>
+        style={{ fontSize: 12, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--border)", background: open ? "var(--bg-card)" : "var(--bg-surface)", color: "var(--text-muted)", fontFamily: "var(--font-display)", cursor: "pointer", whiteSpace: "nowrap" }}>
         {btnLabel} {open ? "▴" : "▾"}
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 200, background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", padding: "6px 0", minWidth: 160 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 14px", cursor: "pointer", fontSize: 12, userSelect: "none" }}>
-            <input type="checkbox" checked={allSelected} ref={el => { if (el) el.indeterminate = someSelected; }} onChange={toggleAll} />
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 200, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", padding: "6px 0", minWidth: 170 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12, userSelect: "none", color: "var(--text-muted)" }}>
+            <input type="checkbox" checked={allSelected} ref={el => { if (el) el.indeterminate = someSelected; }} onChange={toggleAll} style={{ accentColor: "var(--accent)" }} />
             Tất cả
           </label>
-          <div style={{ height: "0.5px", background: "#f0f0ec", margin: "4px 0" }} />
+          <div style={{ height: 1, background: "var(--border)", margin: "4px 0" }} />
           {options.map(opt => (
-            <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 14px", cursor: "pointer", fontSize: 12, userSelect: "none" }}>
-              <input type="checkbox" checked={isChecked(opt.value)} onChange={() => toggle(opt.value)} />
+            <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12, userSelect: "none", color: "var(--text)" }}>
+              <input type="checkbox" checked={isChecked(opt.value)} onChange={() => toggle(opt.value)} style={{ accentColor: "var(--accent)" }} />
               {opt.label}
             </label>
           ))}

@@ -1,17 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 
-// ── Simple markdown renderer for chat messages ─────────────────────────────────
 function renderMd(text) {
   return text.split('\n').map((line, i) => {
     const bullet = /^[*-] /.test(line);
     const raw = bullet ? line.slice(2) : line;
-
     const parts = raw.split(/(\*\*.*?\*\*)/g).map((seg, j) =>
       seg.startsWith('**') && seg.endsWith('**')
         ? <strong key={j}>{seg.slice(2, -2)}</strong>
         : seg
     );
-
     if (bullet) return (
       <div key={i} style={{ display: "flex", gap: 6, marginBottom: 3 }}>
         <span style={{ flexShrink: 0 }}>•</span><span>{parts}</span>
@@ -29,8 +26,10 @@ function JtChatMessage({ msg }) {
   const isUser = msg.role === "user";
   return (
     <div style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start", marginBottom: 10 }}>
-      {!isUser && <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "#f0f0ec", border: "0.5px solid #e0e0dc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#888", marginRight: 7, fontWeight: 500 }}>AI</div>}
-      <div style={{ maxWidth: "80%", padding: "9px 13px", fontSize: 13, lineHeight: 1.6, background: isUser ? "#1a1a18" : "#fff", border: `0.5px solid ${isUser ? "#1a1a18" : "#e0e0dc"}`, borderRadius: isUser ? "14px 14px 3px 14px" : "14px 14px 14px 3px", color: isUser ? "#fff" : "#1a1a18", wordBreak: "break-word" }}>
+      {!isUser && (
+        <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "var(--bg)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "var(--accent)", marginRight: 7, fontWeight: 700, fontFamily: "var(--font-mono)", letterSpacing: "0.05em" }}>AI</div>
+      )}
+      <div style={{ maxWidth: "80%", padding: "9px 13px", fontSize: 13, lineHeight: 1.6, background: isUser ? "var(--accent)" : "var(--bg-card)", border: `1px solid ${isUser ? "transparent" : "var(--border)"}`, borderRadius: isUser ? "14px 14px 3px 14px" : "14px 14px 14px 3px", color: isUser ? "#fff" : "var(--text)", wordBreak: "break-word" }}>
         {isUser ? msg.content : renderMd(msg.content)}
       </div>
     </div>
@@ -47,7 +46,6 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze, isMob
   const chatFileRef = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const lastSentAnalyzeRef = useRef(null);
-  // Generation counter: bump on clearChat to discard in-flight responses
   const requestGenRef = useRef(0);
 
   useEffect(() => {
@@ -70,7 +68,6 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze, isMob
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analyzeMsg, messages]);
 
-  // Only scroll down when user sends (loading starts), not when AI responds
   const prevLoadingRef = useRef(false);
   useEffect(() => {
     if (loading && !prevLoadingRef.current) {
@@ -82,16 +79,14 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze, isMob
   useEffect(() => {
     const el = chatContainerRef.current;
     if (!el) return;
-    const onScroll = () => {
-      setIsAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 50);
-    };
+    const onScroll = () => { setIsAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 50); };
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
   const clearChat = () => {
     fetch(`/api/jobtracker/chat/${username}/history`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
-    requestGenRef.current++;  // invalidate any in-flight request
+    requestGenRef.current++;
     setMessages([JT_WELCOME]);
     setLoading(false);
   };
@@ -100,15 +95,13 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze, isMob
     const headers = { Authorization: `Bearer ${token}` };
     if (file) {
       const fd = new FormData();
-      fd.append("file", file);
-      fd.append("message", text || "");
-      fd.append("session_id", "main");
+      fd.append("file", file); fd.append("message", text || ""); fd.append("session_id", "main");
       const res = await fetch(`/api/jobtracker/chat/${username}/file`, { method: "POST", headers, body: fd });
       return (await res.json()).reply;
     }
     const hasDisplay = display && display !== text;
     const body = { message: hasDisplay ? display : text, session_id: "main" };
-    if (hasDisplay) body.analyze_context = text;  // full JD goes to AI, display label goes to DB
+    if (hasDisplay) body.analyze_context = text;
     const res = await fetch(`/api/jobtracker/chat/${username}`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(body) });
     return (await res.json()).reply;
   };
@@ -124,7 +117,7 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze, isMob
     const gen = requestGenRef.current;
     try {
       const reply = await sendToApi(text, file, display);
-      if (requestGenRef.current !== gen) return;  // discarded by clearChat
+      if (requestGenRef.current !== gen) return;
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch {
       if (requestGenRef.current !== gen) return;
@@ -133,35 +126,38 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze, isMob
     setLoading(false);
   };
 
+  const canSend = (input.trim() || selectedFile) && !loading;
+
   return (
-    <div style={{ position: "fixed", bottom: isMobile ? 84 : 84, right: isMobile ? 16 : 40, left: isMobile ? 16 : "auto", zIndex: 999, width: isMobile ? "auto" : "clamp(408px, 40vw, 696px)", height: isMobile ? "70vh" : 624, background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.15)", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
-      <div style={{ padding: "10px 14px", borderBottom: "0.5px solid #e0e0dc", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fafaf8", flexShrink: 0 }}>
+    <div style={{ position: "fixed", bottom: isMobile ? 84 : 84, right: isMobile ? 16 : 40, left: isMobile ? 16 : "auto", zIndex: 999, width: isMobile ? "auto" : "clamp(408px, 40vw, 696px)", height: isMobile ? "70vh" : 624, background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "var(--font-display)" }}>
+
+      <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-card)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#1a1a18" }} />
-          <span style={{ fontSize: 13, fontWeight: 500 }}>AI Trợ lý</span>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--accent)" }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>AI Trợ lý</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <button onClick={clearChat} title="Cuộc trò chuyện mới" style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 15, lineHeight: 1, padding: "0 4px" }}>↺</button>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 4px" }}>×</button>
+          <button onClick={clearChat} title="Cuộc trò chuyện mới" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 15, lineHeight: 1, padding: "0 6px" }}>↺</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 6px" }}>×</button>
         </div>
       </div>
 
-      <div ref={chatContainerRef} style={{ flex: 1, overflowY: "auto", padding: "14px 12px", position: "relative" }}>
+      <div ref={chatContainerRef} style={{ flex: 1, overflowY: "auto", padding: "14px 12px", position: "relative", overscrollBehavior: "contain" }}>
         {messages === null
-          ? <div style={{ textAlign: "center", color: "#aaa", fontSize: 12, marginTop: 20 }}>Đang tải...</div>
+          ? <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 12, marginTop: 20 }}>Đang tải...</div>
           : messages.map((msg, i) => <JtChatMessage key={i} msg={msg} />)}
         {messages?.length === 1 && !loading && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 33 }}>
             {JT_SUGGESTED.map(q => (
               <button key={q} onClick={() => handleSend(q)}
-                style={{ fontSize: 12, padding: "5px 11px", borderRadius: 20, border: "0.5px solid #ccc", background: "#f5f5f3", color: "#555", cursor: "pointer", fontFamily: "inherit" }}>{q}</button>
+                style={{ fontSize: 12, padding: "5px 12px", borderRadius: 20, border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-muted)", cursor: "pointer", fontFamily: "var(--font-display)" }}>{q}</button>
             ))}
           </div>
         )}
         {loading && (
           <div style={{ display: "flex", alignItems: "center" }}>
-            <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "#f0f0ec", border: "0.5px solid #e0e0dc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#888", marginRight: 7, fontWeight: 500 }}>AI</div>
-            <div style={{ padding: "9px 13px", background: "#fff", border: "0.5px solid #e0e0dc", borderRadius: "14px 14px 14px 3px", color: "#aaa", fontSize: 13 }}>...</div>
+            <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "var(--bg)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "var(--accent)", marginRight: 7, fontWeight: 700, fontFamily: "var(--font-mono)" }}>AI</div>
+            <div style={{ padding: "9px 13px", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "14px 14px 14px 3px", color: "var(--text-muted)", fontSize: 13 }}>...</div>
           </div>
         )}
         <div ref={bottomRef} />
@@ -169,32 +165,32 @@ function JtChatPopup({ username, token, onClose, analyzeMsg, clearAnalyze, isMob
 
       {!isAtBottom && (
         <div style={{ display: "flex", justifyContent: "center", padding: "4px 0", flexShrink: 0 }}>
-          <button onClick={() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }}
-            style={{ fontSize: 12, padding: "4px 14px", borderRadius: 20, border: "0.5px solid #ccc", background: "#fff", color: "#555", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", fontFamily: "inherit" }}>
+          <button onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+            style={{ fontSize: 12, padding: "4px 14px", borderRadius: 20, border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-muted)", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", fontFamily: "var(--font-display)" }}>
             ↓ Cuối
           </button>
         </div>
       )}
 
       {selectedFile && (
-        <div style={{ padding: "6px 12px", borderTop: "0.5px solid #e0e0dc", display: "flex", alignItems: "center", gap: 8, background: "#f5f5f3", flexShrink: 0 }}>
-          <span style={{ fontSize: 12, color: "#555", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>📎 {selectedFile.name}</span>
-          <button onClick={() => setSelectedFile(null)} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>×</button>
+        <div style={{ padding: "6px 12px", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8, background: "var(--bg-card)", flexShrink: 0 }}>
+          <span style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>📎 {selectedFile.name}</span>
+          <button onClick={() => setSelectedFile(null)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>×</button>
         </div>
       )}
 
-      <div style={{ padding: "10px 12px", borderTop: "0.5px solid #e0e0dc", display: "flex", gap: 7, alignItems: "center", flexShrink: 0 }}>
+      <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border)", display: "flex", gap: 7, alignItems: "center", flexShrink: 0, background: "var(--bg-card)" }}>
         <button onClick={() => chatFileRef.current?.click()} disabled={loading}
-          style={{ width: 34, height: 34, borderRadius: 8, border: "0.5px solid #ccc", background: "#fff", color: "#888", cursor: loading ? "default" : "pointer", fontSize: 15, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+          style={{ width: 34, height: 34, borderRadius: 8, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", cursor: loading ? "default" : "pointer", fontSize: 15, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
           title="Đính kèm JD (PDF, Word, Text)">📎</button>
         <input ref={chatFileRef} type="file" accept=".pdf,.docx,.txt" onChange={e => { if (e.target.files[0]) setSelectedFile(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
         <textarea value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder={selectedFile ? "Thêm ghi chú (tùy chọn)..." : "Nhập tin nhắn..."}
           rows={1}
-          style={{ flex: 1, border: "0.5px solid #ccc", borderRadius: 8, padding: "8px 12px", fontSize: 13, fontFamily: "inherit", resize: "none", outline: "none", lineHeight: 1.5, background: "#fff", color: "#1a1a18" }} />
-        <button onClick={() => handleSend()} disabled={loading || (!input.trim() && !selectedFile)}
-          style={{ width: 34, height: 34, borderRadius: 8, border: "none", background: (input.trim() || selectedFile) && !loading ? "#1a1a18" : "#e0e0dc", color: "#fff", cursor: (input.trim() || selectedFile) && !loading ? "pointer" : "default", fontSize: 16, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>↑</button>
+          style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", fontSize: 13, fontFamily: "var(--font-display)", resize: "none", outline: "none", lineHeight: 1.5, background: "var(--bg)", color: "var(--text)" }} />
+        <button onClick={() => handleSend()} disabled={!canSend}
+          style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${canSend ? "var(--accent)" : "var(--border)"}`, background: canSend ? "var(--accent)" : "none", color: canSend ? "#fff" : "var(--text-muted)", cursor: canSend ? "pointer" : "default", fontSize: 16, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>↑</button>
       </div>
     </div>
   );
@@ -205,7 +201,7 @@ export function JtChatBot({ username, token, open, onToggle, analyzeMsg, clearAn
     <>
       {open && <JtChatPopup username={username} token={token} onClose={() => onToggle(false)} analyzeMsg={analyzeMsg} clearAnalyze={clearAnalyze} isMobile={isMobile} />}
       <button onClick={() => onToggle(o => !o)}
-        style={{ position: "fixed", bottom: 24, right: 40, zIndex: 1000, width: 48, height: 48, borderRadius: "50%", border: open ? "0.5px solid #ccc" : "none", background: open ? "#fff" : "#1a1a18", color: open ? "#888" : "#fff", fontSize: open ? 22 : 18, cursor: "pointer", boxShadow: open ? "none" : "0 4px 16px rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", fontFamily: "inherit" }}>
+        style={{ position: "fixed", bottom: 24, right: 40, zIndex: 1000, width: 48, height: 48, borderRadius: "50%", border: open ? "1px solid var(--border)" : "none", background: open ? "var(--bg-card)" : "var(--accent)", color: open ? "var(--text-muted)" : "#fff", fontSize: open ? 22 : 18, cursor: "pointer", boxShadow: open ? "none" : "0 4px 20px rgba(236,86,61,0.4)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", fontFamily: "var(--font-display)" }}>
         {open ? "×" : "✦"}
       </button>
     </>
