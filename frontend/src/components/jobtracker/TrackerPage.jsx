@@ -233,7 +233,7 @@ export default function TrackerPage({ username, token }) {
               : filtered.map((j, i) => {
                 const b = badge(j.status);
                 return (
-                  <div key={j._idx} style={{ background: b.bg, borderRadius: 10, border: `1px solid ${b.color}30`, padding: "12px 14px" }}>
+                  <div key={j._idx} style={{ background: "var(--bg-card)", borderRadius: 10, border: "1px solid var(--border)", padding: "12px 14px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 2, fontFamily: "var(--font-mono)" }}>#{i + 1}</div>
@@ -302,9 +302,9 @@ export default function TrackerPage({ username, token }) {
                     const dimmed = j.status === "rejected" || j.status === "failed";
                     const dc = dimmed ? "#f87171" : "var(--text-muted)";
                     return (
-                      <tr key={j._idx} style={{ borderBottom: "1px solid var(--border)", background: b.bg }}
-                        onMouseEnter={e => e.currentTarget.style.background = b.bg.replace(/[\d.]+\)$/, a => Math.min(parseFloat(a) * 2, 1) + ")")}
-                        onMouseLeave={e => e.currentTarget.style.background = b.bg}>
+                      <tr key={j._idx} style={{ borderBottom: "1px solid var(--border)" }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+                        onMouseLeave={e => e.currentTarget.style.background = ""}>
                         <td style={{ padding: "7px 10px", color: dc, textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 11 }}>{i + 1}</td>
                         <td style={{ padding: "7px 10px" }}>
                           {j.url ? <a href={j.url} target="_blank" rel="noreferrer" style={{ color: "var(--accent)", textDecoration: "none" }}>{j.title}</a> : <span style={{ color: "var(--text)" }}>{j.title}</span>}
