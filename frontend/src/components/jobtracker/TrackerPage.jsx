@@ -300,7 +300,7 @@ export default function TrackerPage({ username, token }) {
                   : filtered.map((j, i) => {
                     const b = badge(j.status);
                     const dimmed = j.status === "rejected" || j.status === "failed";
-                    const dc = dimmed ? "#f87171" : "var(--text-muted)";
+                    const dc = b.color;
                     return (
                       <tr key={j._idx} style={{ borderBottom: "1px solid var(--border)" }}
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
