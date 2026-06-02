@@ -217,7 +217,7 @@ export default function TrackerPage({ username, token }) {
             Reset
           </button>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{filtered.length} jobs</span>
+            <span style={{ fontSize: 22, color: "var(--text-muted)" }}>{filtered.length} jobs</span>
             <button onClick={() => setModal({ mode: "add" })}
               style={{ fontSize: 12, padding: "6px 14px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer", fontFamily: "var(--font-display)" }}>
               + Thêm job
