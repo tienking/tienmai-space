@@ -178,19 +178,29 @@ JWT_SECRET=              # Random 64-char string — used for admin and Job Trac
 
 ## Local Development
 
+**Windows (quickest):** double-click `start-dev.bat` — opens backend and frontend in separate terminals automatically.
+
+**Manual:**
+
 ```bash
 # Backend
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+source venv/bin/activate       # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env       # fill in your values
-uvicorn main:app --reload
+cp .env.example .env           # fill in your values
+
+# Set SKIP_WEBHOOK=1 to skip Telegram webhook setup (not needed locally)
+SKIP_WEBHOOK=1 uvicorn main:app --port 8000   # Linux/Mac
+# Windows PowerShell:
+$env:SKIP_WEBHOOK="1"; python -m uvicorn main:app --port 8000
 
 # Frontend (separate terminal)
 cd frontend
 npm install
-npm run dev
+npm run dev                    # proxies /api/ to http://127.0.0.1:8000
 ```
+
+> **MongoDB Atlas:** add your local machine's IP to the Atlas Network Access whitelist, otherwise the backend can't connect to the database.
 
 ---
 

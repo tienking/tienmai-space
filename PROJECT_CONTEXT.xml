@@ -77,7 +77,7 @@
         cấu hình Telegram webhook bot.
         Telegram handler: nhận tin nhắn → gọi Gemini → lưu MongoDB → reply.
         Webhook endpoint: POST /webhook (Telegram push updates).
-        Startup: set_webhook cho Telegram bot.
+        Startup: set_webhook cho Telegram bot — bỏ qua nếu env var SKIP_WEBHOOK=1 (local dev).
       </file>
       <file name="api.py">
         Toàn bộ API routes (APIRouter). Gồm:
@@ -160,6 +160,7 @@
       <file name="vite.config.js">
         Multi-entry build: input = {main: index.html, admin: admin.html, jobtracker: jobtracker.html}
         Plugin: @vitejs/plugin-react
+        Dev proxy: /api/ and /webhook → http://127.0.0.1:8000 (local dev only, ignored in production build)
       </file>
       <file name="index.html">
         Entry point Portfolio app → src/main.jsx.
@@ -171,7 +172,7 @@
         Mount Portfolio React app. Does NOT import index.css — App.jsx injects its own GLOBAL_CSS.
       </file>
       <file name="src/admin.jsx">Mount Admin React app (imports index.css for dark theme CSS vars)</file>
-      <file name="src/jobtracker.jsx">Mount Job Tracker React app (JobTrackerApp component)</file>
+      <file name="src/jobtracker.jsx">Mount Job Tracker React app (imports index.css for dark theme CSS vars)</file>
       <file name="src/App.jsx">
         Portfolio root — template-inspired design (dark hero, orange/coral #ec563d, service-card skills).
         Self-contained: all colors explicit, no index.css CSS var deps. Injects own GLOBAL_CSS string
