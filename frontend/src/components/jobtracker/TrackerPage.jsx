@@ -199,8 +199,8 @@ export default function TrackerPage({ username, token }) {
             { num: filtered.length, label: "Hiển thị" },
           ].map(({ num, label, color }) => (
             <div key={label} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, padding: isMobile ? "8px 10px" : "10px 14px", minWidth: isMobile ? 0 : 88 }}>
-              <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 600, color: color || "var(--text)" }}>{num}</div>
-              <div style={{ fontSize: isMobile ? 9 : 11, color: "var(--text-muted)", marginTop: 2, lineHeight: 1.3 }}>{label}</div>
+              <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 600, color: color || "var(--text)" }}>{num}</div>
+              <div style={{ fontSize: isMobile ? 10 : 12, color: "var(--text-muted)", marginTop: 2, lineHeight: 1.3 }}>{label}</div>
             </div>
           ))}
         </div>
