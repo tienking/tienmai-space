@@ -1,5 +1,6 @@
 .env
 venv/
+tienmai-space/
 __pycache__/
 *.pyc
 frontend/node_modules/
