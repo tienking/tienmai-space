@@ -59,9 +59,13 @@ bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messa
 @app.on_event("startup")
 async def startup():
     """Initialize bot and set webhook on startup."""
+    import os
     await bot_app.initialize()
-    await bot_app.bot.set_webhook(WEBHOOK_URL)
-    print(f"Telegram bot started. Webhook set to: {WEBHOOK_URL}")
+    if os.getenv("SKIP_WEBHOOK") == "1":
+        print("Telegram webhook skipped (local dev mode)")
+    else:
+        await bot_app.bot.set_webhook(WEBHOOK_URL)
+        print(f"Telegram bot started. Webhook set to: {WEBHOOK_URL}")
 
 @app.on_event("shutdown")
 async def shutdown():
