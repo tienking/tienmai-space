@@ -640,7 +640,7 @@ export default function App() {
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               {profile.experiences.map((exp, i) => (
                 <div key={i} style={{ position: "relative" }}>
-                  <div style={{ position: "absolute", left: -31, top: 20, width: 14, height: 14, borderRadius: "50%", background: A, border: "3px solid #fff", boxShadow: `0 0 0 3px ${A}28` }} />
+                  <div style={{ position: "absolute", left: -28, top: 20, width: 14, height: 14, borderRadius: "50%", background: A, border: "3px solid #fff", boxShadow: `0 0 0 3px ${A}28` }} />
                   <div style={{ background: "#fff", borderRadius: 14, padding: "20px 22px", border: "1px solid #e5e7eb", borderLeft: `4px solid ${A}`, transition: "all .25s" }}
                     onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 10px 28px ${A}1a`; e.currentTarget.style.transform = "translateX(6px)"; }}
                     onMouseLeave={e => { e.currentTarget.style.boxShadow = ""; e.currentTarget.style.transform = ""; }}>
