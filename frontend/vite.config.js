@@ -13,9 +13,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main:       resolve(__dirname, "index.html"),
-        admin:      resolve(__dirname, "admin.html"),
-        jobtracker: resolve(__dirname, "jobtracker.html"),
+        main:  resolve(__dirname, "index.html"),
+        admin: resolve(__dirname, "admin.html"),
       },
     },
   },

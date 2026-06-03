@@ -1,6 +1,6 @@
 # tienmai.space
 
-Personal portfolio website with AI-powered chatbot and Job Tracker, self-hosted on a VPS.
+Personal portfolio website with an AI-powered chatbot, self-hosted on a VPS.
 
 🌐 **Live:** [tienmai.space](https://tienmai.space)
 
@@ -14,8 +14,9 @@ A full-stack personal profile website featuring:
 - **JD Match Banner** — Recruiters upload a job description and get instant AI analysis: match %, skills breakdown, first-person assessment
 - **AI Chatbot** — Gemini-powered assistant that speaks as Tien Mai in first person; supports file upload
 - **Telegram Bot** — Same AI assistant on Telegram; pushes owner notifications on new chats and JD uploads
-- **Job Tracker** — Private authenticated app for tracking job applications: pipeline board, profile editor, AI resume extraction, JD analysis chatbot
 - **Admin Dashboard** — Full CMS for profile content, analytics, and account settings (Theme + Fonts tabs removed — portfolio uses a fixed design)
+
+> **Note:** The Job Tracker was split out into its own standalone project (repo `job-tracker`, served at `/jobtracker` via a separate backend on port 8001).
 
 ---
 
@@ -74,7 +75,7 @@ tienmai-space/
 ├── requirements.txt              # Python dependencies
 ├── main.py                       # FastAPI app entry + Telegram bot
 ├── api.py                        # All API routes
-├── auth.py                       # JWT auth (admin + Job Tracker)
+├── auth.py                       # JWT auth (admin)
 ├── config.py                     # Config (secrets from .env + app constants)
 ├── database.py                   # MongoDB operations
 ├── notifications.py              # Telegram push notifications
@@ -83,20 +84,15 @@ tienmai-space/
 │   └── tienmai-api.service       # Systemd service unit file
 ├── uploads/
 │   └── resume.pdf                # Portfolio resume (not committed)
-├── resumes/
-│   └── {username}.pdf            # Job Tracker user resumes (not committed)
 └── frontend/
     ├── index.html                # Portfolio page entry (loads Syne + DM Mono fonts)
     ├── admin.html                # Admin page entry
-    ├── jobtracker.html           # Job Tracker page entry
-    ├── vite.config.js            # Vite multi-page config (3 entries)
+    ├── vite.config.js            # Vite multi-page config (2 entries)
     └── src/
         ├── main.jsx              # Portfolio app entry (no index.css — App.jsx has GLOBAL_CSS)
         ├── admin.jsx             # Admin app entry (imports index.css for dark theme)
-        ├── jobtracker.jsx        # Job Tracker app entry
         ├── App.jsx               # Portfolio root — template-inspired design (self-contained)
-        ├── AdminApp.jsx          # Admin root — 13 tabs (Theme + Fonts removed)
-        ├── JobTrackerApp.jsx     # Job Tracker root (thin shell)
+        ├── AdminApp.jsx          # Admin root — 12 tabs (Theme + Fonts removed)
         ├── index.css             # Global styles
         ├── lib/
         │   └── gallery.js        # Gallery helpers (galleryUrl, galleryCaption, computeGallery)
@@ -106,12 +102,10 @@ tienmai-space/
         └── components/
             ├── portfolio/        # Lightbox, ChatPopup, JDMatchBanner, ResumePopup,
             │                     # CertificationsSection, shared (Avatar, Section, Card)
-            ├── admin/            # LoginPage, shared UI, 13 tab components
-            │   └── tabs/         # BasicTab, AboutTab, SkillsTab, ExperienceTab,
-            │                     # EducationTab, ListTab, CertificationTab, GalleryTab,
-            │                     # ResumeTab, AnalyticsTab, AITab, JobTrackerTab, SettingsTab
-            └── jobtracker/       # LoginPage, TrackerPage, JtProfilePage, JobModal,
-                                  # JdViewModal, JtChat, MultiSelect, ResumeViewModal
+            └── admin/            # LoginPage, shared UI, 12 tab components
+                └── tabs/         # BasicTab, AboutTab, SkillsTab, ExperienceTab,
+                                  # EducationTab, ListTab, CertificationTab, GalleryTab,
+                                  # ResumeTab, AnalyticsTab, AITab, SettingsTab
 ```
 
 ---
@@ -145,17 +139,9 @@ tienmai-space/
 - Webhook-based (not polling)
 - Owner notifications: new web visitor starts chatting; JD uploaded (file + full analysis forwarded to owner via Telegram)
 
-### Job Tracker (`tienmai.space/jobtracker`)
-- Private app — separate JWT-authenticated user accounts (no relation to admin account)
-- **Tracker board** — Table view with filter (mode, status, month, year), sort by column, search by title/company; filter and sort state persists per user across page reloads (via localStorage); add notes and job descriptions per card
-- **Profile tab** — Name, title, contact info, skills, work experience (month/year dropdowns), education
-- **AI Resume extraction** — Upload PDF/DOCX resume → AI auto-fills all profile fields; preserves exact summary text verbatim
-- **AI Chatbot** — Reads entire resume + all JDs; evaluates fit honestly (not flattering), calls out gaps, recommends Nên apply / Không nên / Cân nhắc
-- New conversation button clears UI and deletes MongoDB history for that user
-
 ### Admin Dashboard (`tienmai.space/admin`)
 - JWT login with brute force protection: 5 failed attempts → 5-minute lockout (countdown shown)
-- **Tabs:** Basic Info, About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume, Analytics, AI Models, Job Tracker, Settings
+- **Tabs:** Basic Info, About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume, Analytics, AI Models, Settings
 - **Gallery tab:** visibility toggle, drag-and-drop reordering, per-image year (dropdown from first job year to current) and caption
 - **Analytics:** total visitors, total messages, 7-day visitor chart, recent questions list
 - **Settings tab:** change username and password (verifies current password first, invalidates all active sessions on change), login history (IP, device, success/fail per attempt)
@@ -169,7 +155,7 @@ TELEGRAM_TOKEN=
 TELEGRAM_CHAT_ID=        # Your personal Telegram user ID (for owner notifications)
 GEMINI_API_KEY=
 MONGODB_URL=
-JWT_SECRET=              # Random 64-char string — used for admin and Job Tracker tokens
+JWT_SECRET=              # Random 64-char string — used for admin tokens
 ```
 
 > Admin credentials are stored in MongoDB, not in `.env`. Set them once via `seed_admin.py` on first deploy, then change them through Admin → Settings tab.

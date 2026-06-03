@@ -32,7 +32,7 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 ### Scopes (optional, use when helpful)
 
-`gallery` · `admin` · `portfolio` · `api` · `jobtracker` · `auth` · `theme` · `db`
+`gallery` · `admin` · `portfolio` · `api` · `auth` · `theme` · `db`
 
 ### Examples
 
@@ -83,7 +83,7 @@ Only use `type: docs` when the commit touches documentation files **exclusively*
 
 - **Comments**: English only.
 - **Frontend styling**: 100% inline styles — no CSS classes, no Tailwind, no CSS modules.
-- **UI language**: Portfolio + Admin = English · Job Tracker = Tiếng Việt.
+- **UI language**: Portfolio + Admin = English.
 - **Pydantic v2**: Use `request: Request` + `await request.json()` for endpoints that accept `List[Any]` or mixed-type arrays — Pydantic v2 coerces aggressively.
 
 ## After Deploy

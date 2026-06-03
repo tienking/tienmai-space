@@ -13,7 +13,6 @@ import GalleryTab from "./components/admin/tabs/GalleryTab";
 import ResumeTab from "./components/admin/tabs/ResumeTab";
 import AnalyticsTab from "./components/admin/tabs/AnalyticsTab";
 import AITab from "./components/admin/tabs/AITab";
-import JobTrackerTab from "./components/admin/tabs/JobTrackerTab";
 import SettingsTab from "./components/admin/tabs/SettingsTab";
 
 const ADMIN_CSS = `
@@ -146,7 +145,6 @@ function Dashboard({ token, onLogout }) {
     { id: "resume",         icon: "📄", label: "Resume" },
     { id: "analytics",      icon: "📊", label: "Analytics" },
     { id: "ai",             icon: "🤖", label: "AI Models" },
-    { id: "jobtracker",     icon: "📋", label: "Job Tracker" },
     { id: "settings",       icon: "⚙️", label: "Settings" },
   ];
 
@@ -199,7 +197,6 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "resume"      && <div style={SP}><ResumeTab token={token} resumeVisible={profile.resumeVisible !== false} onSave={save} saving={saving} /></div>}
           {activeTab === "analytics"   && <div style={SP}><AnalyticsTab token={token} /></div>}
           {activeTab === "ai"          && <div style={SP}><AITab token={token} /></div>}
-          {activeTab === "jobtracker"  && <div style={SP}><JobTrackerTab token={token} /></div>}
           {activeTab === "settings"    && <div style={SP}><SettingsTab token={token} onLogout={onLogout} /></div>}
         </div>
       </div>

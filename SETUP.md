@@ -266,11 +266,9 @@ This creates `frontend/dist/` with all compiled static files.
 
 ```bash
 mkdir -p /root/tienmai-bot/uploads
-mkdir -p /root/tienmai-bot/resumes
 ```
 
 - `uploads/` — stores the portfolio resume PDF
-- `resumes/` — stores Job Tracker user resume PDFs (one per user, named `{username}.pdf`)
 
 ---
 
@@ -308,11 +306,6 @@ server {
     location /admin {
         alias /root/tienmai-bot/frontend/dist;
         try_files /admin.html /admin.html;
-    }
-
-    location /jobtracker {
-        alias /root/tienmai-bot/frontend/dist;
-        try_files /jobtracker.html /jobtracker.html;
     }
 
     location /api/ {
@@ -577,40 +570,6 @@ asyncio.run(seed())
 EOF
 ```
 
-### 15.3 Seed Job Tracker Users (Optional)
-
-To create a Job Tracker user for testing:
-
-```bash
-cd /root/tienmai-bot
-source venv/bin/activate
-python3 - <<'EOF'
-import asyncio, os, bcrypt
-from motor.motor_asyncio import AsyncIOMotorClient
-from dotenv import load_dotenv
-
-load_dotenv()
-client = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
-db = client["tienmai"]
-
-USERNAME = "testuser"     # change as needed
-PASSWORD = "changeme123"  # change as needed
-
-async def seed():
-    existing = await db["jobtracker_users"].find_one({"username": USERNAME})
-    if existing:
-        print(f"User {USERNAME} already exists — skipping.")
-        return
-    hashed = bcrypt.hashpw(PASSWORD.encode(), bcrypt.gensalt()).decode()
-    await db["jobtracker_users"].insert_one({"username": USERNAME, "password": hashed})
-    print(f"Job Tracker user seeded: {USERNAME}")
-
-asyncio.run(seed())
-EOF
-```
-
-In production, Job Tracker users are managed from Admin → Job Tracker tab.
-
 ---
 
 ## 16. Verify Everything Works
@@ -629,10 +588,6 @@ Run through this checklist:
 □ Telegram bot responds when messaged
 □ Telegram notification received when chatbot is used on website
 □ Telegram notification received when JD is uploaded
-□ https://yourdomain.space/jobtracker   → Job Tracker login page loads
-□ Job Tracker: login, add a job, move it through pipeline
-□ Job Tracker: upload resume → AI fills profile fields
-□ Job Tracker: chatbot reads JDs and responds
 □ Push to GitLab main → pipeline triggers → site updates
 ```
 
