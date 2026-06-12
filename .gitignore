@@ -7,3 +7,5 @@ __pycache__/
 frontend/node_modules/
 frontend/dist/
 template/
+CLAUDE.md
+PROJECT_CONTEXT.xml
