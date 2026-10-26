@@ -776,6 +776,9 @@ export default function App() {
           <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono', monospace" }}>
             Built with React &amp; FastAPI · tienmai.space
           </p>
+          <p style={{ fontSize: 10, color: "rgba(255,255,255,0.15)", fontFamily: "'DM Mono', monospace", marginTop: 6 }}>
+            v {__APP_VERSION__}
+          </p>
         </div>
       </footer>
 
