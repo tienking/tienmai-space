@@ -140,7 +140,7 @@ tienmai-space/
 - Owner notifications: new web visitor starts chatting; JD uploaded (file + full analysis forwarded to owner via Telegram)
 
 ### Admin Dashboard (`tienmai.space/admin`)
-- JWT login with brute force protection: 5 failed attempts → 5-minute lockout (countdown shown)
+- JWT login with brute force protection: 5 failed attempts per client IP → 5-minute lockout (countdown shown); real IP taken from nginx's `X-Real-IP`
 - **Tabs:** Basic Info, About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume, Analytics, AI Models, Settings
 - **Gallery tab:** visibility toggle, drag-and-drop reordering, per-image year (dropdown from first job year to current) and caption
 - **Analytics:** total visitors, total messages, 7-day visitor chart, recent questions list

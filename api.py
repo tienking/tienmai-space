@@ -29,6 +29,14 @@ _login_attempts: dict = {}  # ip -> {"count": int, "locked_until": float}
 _MAX_ATTEMPTS = 5
 _LOCKOUT_SECONDS = 300  # 5 minutes
 
+def _client_ip(req: Request) -> str:
+    # Behind nginx the socket peer is always 127.0.0.1; nginx overwrites X-Real-IP
+    # with the real $remote_addr, so it can't be spoofed by the client.
+    host = req.client.host if req.client else ""
+    if host in ("127.0.0.1", "::1"):
+        return req.headers.get("x-real-ip") or host
+    return host
+
 def _check_login_rate(ip: str):
     entry = _login_attempts.get(ip)
     if not entry:
@@ -42,10 +50,16 @@ def _check_login_rate(ip: str):
         )
 
 def _record_login_failure(ip: str):
-    entry = _login_attempts.get(ip, {"count": 0, "locked_until": 0.0})
+    now = _now()
+    if len(_login_attempts) > 10000:  # drop stale entries so the dict can't grow unbounded
+        for k in [k for k, v in _login_attempts.items() if v["locked_until"] < now]:
+            _login_attempts.pop(k, None)
+    entry = _login_attempts.get(ip)
+    if not entry or (entry["locked_until"] and entry["locked_until"] <= now):
+        entry = {"count": 0, "locked_until": 0.0}  # fresh window after a lockout expires
     entry["count"] += 1
     if entry["count"] >= _MAX_ATTEMPTS:
-        entry["locked_until"] = _now() + _LOCKOUT_SECONDS
+        entry["locked_until"] = now + _LOCKOUT_SECONDS
     _login_attempts[ip] = entry
 
 def _reset_login_attempts(ip: str):
@@ -354,7 +368,7 @@ async def jd_match(file: UploadFile = File(...)):
 @router.post("/api/admin/login")
 async def admin_login(request: LoginRequest, req: Request):
     """Admin login - returns JWT token."""
-    ip = req.client.host
+    ip = _client_ip(req)
     ua = req.headers.get("user-agent", "")
     _check_login_rate(ip)
     if not await authenticate_user(request.username, request.password):
