@@ -14,6 +14,7 @@ import ResumeTab from "./components/admin/tabs/ResumeTab";
 import AnalyticsTab from "./components/admin/tabs/AnalyticsTab";
 import AITab from "./components/admin/tabs/AITab";
 import SettingsTab from "./components/admin/tabs/SettingsTab";
+import AppsTab from "./components/admin/tabs/AppsTab";
 
 const ADMIN_CSS = `
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -145,6 +146,7 @@ function Dashboard({ token, onLogout }) {
     { id: "resume",         icon: "📄", label: "Resume" },
     { id: "analytics",      icon: "📊", label: "Analytics" },
     { id: "ai",             icon: "🤖", label: "AI Models" },
+    { id: "apps",           icon: "🚀", label: "Live Apps" },
     { id: "settings",       icon: "⚙️", label: "Settings" },
   ];
 
@@ -197,6 +199,7 @@ function Dashboard({ token, onLogout }) {
           {activeTab === "resume"      && <div style={SP}><ResumeTab token={token} resumeVisible={profile.resumeVisible !== false} onSave={save} saving={saving} /></div>}
           {activeTab === "analytics"   && <div style={SP}><AnalyticsTab token={token} /></div>}
           {activeTab === "ai"          && <div style={SP}><AITab token={token} /></div>}
+          {activeTab === "apps"        && <div style={SP}><AppsTab /></div>}
           {activeTab === "settings"    && <div style={SP}><SettingsTab token={token} onLogout={onLogout} /></div>}
         </div>
       </div>

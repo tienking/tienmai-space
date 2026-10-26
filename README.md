@@ -105,7 +105,7 @@ tienmai-space/
             └── admin/            # LoginPage, shared UI, 12 tab components
                 └── tabs/         # BasicTab, AboutTab, SkillsTab, ExperienceTab,
                                   # EducationTab, ListTab, CertificationTab, GalleryTab,
-                                  # ResumeTab, AnalyticsTab, AITab, SettingsTab
+                                  # ResumeTab, AnalyticsTab, AITab, AppsTab, SettingsTab
 ```
 
 ---
@@ -141,9 +141,10 @@ tienmai-space/
 
 ### Admin Dashboard (`tienmai.space/admin`)
 - JWT login with brute force protection: 5 failed attempts per client IP → 5-minute lockout (countdown shown); real IP taken from nginx's `X-Real-IP`
-- **Tabs:** Basic Info, About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume, Analytics, AI Models, Settings
+- **Tabs:** Basic Info, About, Skills, Experience, Education, Projects, Certifications, Gallery, Resume, Analytics, AI Models, Live Apps, Settings
 - **Gallery tab:** visibility toggle, drag-and-drop reordering, per-image year (dropdown from first job year to current) and caption
 - **Analytics:** total visitors, total messages, 7-day visitor chart, recent questions list
+- **Live Apps tab:** cards for every app deployed on tienmai.space (Portfolio, Job Tracker, AI Dashboard, Crypto News) with Online/Offline status and links to open each app / its admin page in a new tab
 - **Settings tab:** change username and password (verifies current password first, invalidates all active sessions on change), login history (IP, device, success/fail per attempt)
 
 ---
