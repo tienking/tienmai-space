@@ -206,7 +206,7 @@ export function ChatPopup({ onClose }) {
           onFocus={e => e.target.style.borderColor = "var(--accent-border)"}
           onBlur={e => e.target.style.borderColor = "var(--border)"}
         />
-        <button onClick={handleSend} disabled={loading || (!input.trim() && !selectedFile)} style={{ width: 36, height: 36, borderRadius: 9, border: "1px solid var(--border)", background: (input.trim() || selectedFile) && !loading ? "var(--accent)" : "var(--bg-card)", color: (input.trim() || selectedFile) && !loading ? "#0a0a0b" : "var(--text-muted)", cursor: (input.trim() || selectedFile) && !loading ? "pointer" : "default", fontSize: 16, transition: "all 0.2s", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>↑</button>
+        <button onClick={() => handleSend()} disabled={loading || (!input.trim() && !selectedFile)} style={{ width: 36, height: 36, borderRadius: 9, border: "1px solid var(--border)", background: (input.trim() || selectedFile) && !loading ? "var(--accent)" : "var(--bg-card)", color: (input.trim() || selectedFile) && !loading ? "#0a0a0b" : "var(--text-muted)", cursor: (input.trim() || selectedFile) && !loading ? "pointer" : "default", fontSize: 16, transition: "all 0.2s", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>↑</button>
       </div>
     </div>
   );
