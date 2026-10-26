@@ -192,7 +192,7 @@ npm run dev                    # proxies /api/ to http://127.0.0.1:8000
 
 ## Deployment
 
-> **Which build is live?** The UI shows `v <commit> · <build time>` at the bottom of the portfolio footer, stamped by `frontend/vite.config.js` at build time. After the CI pipeline finishes it should match `git log -1 --format=%h` — if not, the deploy didn't run or the build failed.
+> **Which version is live?** The UI shows `v<x.y.z>` at the bottom of the portfolio footer — the `version` from `frontend/package.json`, bumped on every code change. After the CI pipeline finishes it should match `package.json` on `main` — if not, the deploy didn't run or the build failed.
 
 Hosted on **Hostinger VPS** with auto-deploy via GitLab CI/CD.
 

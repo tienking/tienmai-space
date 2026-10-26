@@ -777,7 +777,7 @@ export default function App() {
             Built with React &amp; FastAPI · tienmai.space
           </p>
           <p style={{ fontSize: 10, color: "rgba(255,255,255,0.15)", fontFamily: "'DM Mono', monospace", marginTop: 6 }}>
-            v {__APP_VERSION__}
+            v{__APP_VERSION__}
           </p>
         </div>
       </footer>
